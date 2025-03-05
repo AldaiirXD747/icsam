@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Teams from "./pages/Teams";
+import Matches from "./pages/Matches";
+import Statistics from "./pages/Statistics";
+import Standings from "./pages/Standings";
+import Championship from "./pages/Championship";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +22,15 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/matches" element={<Matches />} />
+          <Route path="/statistics" element={<Statistics />} />
+          <Route path="/standings" element={<Standings />} />
+          <Route path="/championships/:championshipId" element={<Championship />} />
+          <Route path="/championships/:championshipId/teams" element={<Teams />} />
+          <Route path="/championships/:championshipId/matches" element={<Matches />} />
+          <Route path="/championships/:championshipId/statistics" element={<Statistics />} />
+          <Route path="/championships/:championshipId/standings" element={<Standings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
