@@ -160,7 +160,7 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Histórico de Partidas</h2>
           <div className="space-y-4">
             {team.matchHistory.map((match) => (
@@ -201,7 +201,7 @@ const TeamDetail = () => {
   );
 };
 
-const teamsData = [
+const teamsData: Team[] = [
   {
     id: 1,
     name: 'Guerreiros',
@@ -957,7 +957,7 @@ const teamsData = [
         date: '16/02/2025',
         opponent: 'Estrela',
         opponentLogo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
-        result: 'win' as 'win' | 'loss' | 'draw',
+        result: 'win',
         score: {
           team: 2,
           opponent: 0,
