@@ -30,7 +30,7 @@ const HeroSection = () => {
           </div>
           <div className="lg:w-1/2 flex justify-center animate-fade-in">
             <img 
-              src="https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/instituto-criancas.jpg" 
+              src="/lovable-uploads/9ed392b8-8a39-4ee2-99c1-74b33ce2b4d5.png" 
               alt="Instituto Criança Santa Maria" 
               className="w-full max-w-md rounded-2xl shadow-xl transform transition-transform duration-300 hover:scale-105"
             />

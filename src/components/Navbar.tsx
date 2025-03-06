@@ -33,9 +33,9 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
-            src="https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/cropped-LOGO-INSTITUTO-CORTADA-1.png" 
+            src="/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png" 
             alt="Instituto Criança Santa Maria" 
-            className="h-12 mr-2"
+            className="h-14 mr-2"
           />
           <div className="hidden md:block">
             <h1 className="text-blue-primary text-lg font-semibold">Instituto</h1>

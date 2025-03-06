@@ -10,9 +10,9 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center mb-4">
               <img 
-                src="https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/cropped-LOGO-INSTITUTO-CORTADA-1.png" 
+                src="/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png" 
                 alt="Instituto Criança Santa Maria" 
-                className="h-12 mr-3 bg-white p-1 rounded"
+                className="h-16 mr-3 bg-white p-1 rounded"
               />
               <div>
                 <h2 className="text-xl font-bold">Instituto Criança</h2>
@@ -60,9 +60,9 @@ const Footer = () => {
                 <Link to="/statistics" className="text-gray-300 hover:text-lime-primary transition-colors">Estatísticas</Link>
               </li>
               <li>
-                <a href="https://institutocriancasantamaria.com.br/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-lime-primary transition-colors">
-                  Site Oficial
-                </a>
+                <Link to="/login" className="text-gray-300 hover:text-lime-primary transition-colors">
+                  Área Administrativa
+                </Link>
               </li>
             </ul>
           </div>
@@ -83,9 +83,9 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin className="text-lime-primary mr-2 h-5 w-5 shrink-0 mt-0.5" />
                 <span className="text-gray-300">
-                  Campo Sintético - Quadra 120, Santa Maria, DF
+                  Quadra 320 Conjunto - E lote 01, Santa Maria, DF
                   <a 
-                    href="https://maps.app.goo.gl/aTubWnA4QMfVt3JR9" 
+                    href="https://maps.app.goo.gl/DCN2rJ3GmN2CwmXL7" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="block text-lime-primary hover:underline mt-1"
@@ -98,11 +98,17 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-blue-light mt-12 pt-8 text-center text-sm text-gray-300">
-          <p>&copy; {new Date().getFullYear()} Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16). Todos os direitos reservados.</p>
-          <p className="mt-2">
-            Desenvolvido para promover o esporte e a inclusão social
-          </p>
+        <div className="mt-12 pt-8 border-t border-blue-light flex flex-col md:flex-row items-center justify-between">
+          <div className="mb-6 md:mb-0">
+            <img 
+              src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
+              alt="GDF - Governo do Distrito Federal" 
+              className="h-14 bg-white rounded p-1"
+            />
+          </div>
+          <div className="text-center text-sm text-gray-300">
+            <p>&copy; {new Date().getFullYear()} Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16). Todos os direitos reservados.</p>
+          </div>
         </div>
       </div>
     </footer>
