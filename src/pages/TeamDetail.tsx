@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Calendar, MapPin, Trophy, Users, User, ArrowLeft } from 'lucide-react';
 
-// Define interfaces
 interface Player {
   id: number;
   name: string;
@@ -57,7 +56,6 @@ const TeamDetail = () => {
   const [team, setTeam] = useState<Team | null>(null);
 
   useEffect(() => {
-    // For now, we'll use the mock data directly
     const mockTeam = teamsData.find(t => t.id === Number(teamId));
     setTeam(mockTeam || null);
   }, [teamId]);
@@ -78,13 +76,11 @@ const TeamDetail = () => {
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        {/* Back Button */}
         <Link to="/teams" className="flex items-center mb-6 text-blue-600 hover:text-blue-800">
           <ArrowLeft className="w-5 h-5 mr-2" />
           Voltar para Times
         </Link>
 
-        {/* Team Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center gap-6">
             <img src={team.logo} alt={team.name} className="w-32 h-32 object-contain" />
@@ -108,7 +104,6 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        {/* Team Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Informações do Time</h2>
@@ -128,7 +123,6 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        {/* Achievement Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Conquistas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -141,7 +135,6 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        {/* Players Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Jogadores</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -167,7 +160,6 @@ const TeamDetail = () => {
           </div>
         </div>
 
-        {/* Match History Section */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold mb-4">Histórico de Partidas</h2>
           <div className="space-y-4">
@@ -209,7 +201,6 @@ const TeamDetail = () => {
   );
 };
 
-// Mock data
 const teamsData = [
   {
     id: 1,
@@ -966,7 +957,7 @@ const teamsData = [
         date: '16/02/2025',
         opponent: 'Estrela',
         opponentLogo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
-        result: 'win',
+        result: 'win' as 'win' | 'loss' | 'draw',
         score: {
           team: 2,
           opponent: 0,

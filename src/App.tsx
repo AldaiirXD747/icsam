@@ -13,6 +13,7 @@ import Matches from "./pages/Matches";
 import Statistics from "./pages/Statistics";
 import Standings from "./pages/Standings";
 import Championship from "./pages/Championship";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/championships/:championshipId/matches" element={<Matches />} />
           <Route path="/championships/:championshipId/statistics" element={<Statistics />} />
           <Route path="/championships/:championshipId/standings" element={<Standings />} />
+          <Route path="/login" element={<Login />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
