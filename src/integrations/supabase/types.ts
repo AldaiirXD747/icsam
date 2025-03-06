@@ -9,7 +9,234 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      goals: {
+        Row: {
+          created_at: string
+          half: string | null
+          id: string
+          match_id: string | null
+          minute: number | null
+          player_id: string | null
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          half?: string | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          half?: string | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          half: string | null
+          id: string
+          match_id: string | null
+          minute: number | null
+          player_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          half?: string | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          half?: string | null
+          id?: string
+          match_id?: string | null
+          minute?: number | null
+          player_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_events_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          away_score: number | null
+          away_team: string | null
+          category: string
+          championship_id: string | null
+          created_at: string
+          date: string
+          home_score: number | null
+          home_team: string | null
+          id: string
+          location: string
+          round: string | null
+          status: string
+          time: string
+        }
+        Insert: {
+          away_score?: number | null
+          away_team?: string | null
+          category: string
+          championship_id?: string | null
+          created_at?: string
+          date: string
+          home_score?: number | null
+          home_team?: string | null
+          id?: string
+          location: string
+          round?: string | null
+          status?: string
+          time: string
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string | null
+          category?: string
+          championship_id?: string | null
+          created_at?: string
+          date?: string
+          home_score?: number | null
+          home_team?: string | null
+          id?: string
+          location?: string
+          round?: string | null
+          status?: string
+          time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_away_team_fkey"
+            columns: ["away_team"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_home_team_fkey"
+            columns: ["home_team"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          number: number | null
+          photo: string | null
+          position: string
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          number?: number | null
+          photo?: string | null
+          position: string
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          number?: number | null
+          photo?: string | null
+          position?: string
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          category: string
+          created_at: string
+          group_name: string
+          id: string
+          logo: string | null
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          group_name: string
+          id?: string
+          logo?: string | null
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          group_name?: string
+          id?: string
+          logo?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

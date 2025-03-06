@@ -1,107 +1,61 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Calendar, Clock, MapPin, Users, Flag } from 'lucide-react';
+import { Edit, Trash2, Plus, Calendar, Clock, MapPin, Users, Flag, Trophy } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
 
 type Team = {
   id: string;
   name: string;
-  logo: string;
+  logo: string | null;
+  category: string;
+  group_name: string;
+};
+
+type Player = {
+  id: string;
+  name: string;
+  position: string;
+  number: number | null;
+  team_id: string;
+};
+
+type Goal = {
+  id: string;
+  match_id: string;
+  player_id: string;
+  team_id: string;
+  minute: number | null;
+  half: string | null;
+  player_name?: string;
 };
 
 type MatchStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 
 type Match = {
-  id: number;
+  id: string;
   date: string;
   time: string;
   location: string;
   category: string;
-  homeTeam: Team;
-  awayTeam: Team;
-  homeScore: number | null;
-  awayScore: number | null;
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
   status: MatchStatus;
-  championshipId: number;
+  championship_id: string | null;
   round: string;
+  homeTeamDetails?: Team;
+  awayTeamDetails?: Team;
+  goals?: Goal[];
 };
-
-const mockTeams: Team[] = [
-  { id: "1", name: "Federal", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png" },
-  { id: "2", name: "Estrela", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png" },
-  { id: "3", name: "Alvinegro", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/1.png" },
-  { id: "4", name: "Furacão", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png" },
-  { id: "5", name: "Monte", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png" },
-  { id: "6", name: "Lyon", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png" },
-  { id: "7", name: "BSA", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png" },
-  { id: "8", name: "Atlético City", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png" },
-];
-
-const mockMatches: Match[] = [
-  {
-    id: 1,
-    date: "2025-02-23",
-    time: "09:00",
-    location: "Campo do Instituto",
-    category: "SUB-11",
-    homeTeam: mockTeams[0],
-    awayTeam: mockTeams[1],
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
-    championshipId: 1,
-    round: "1"
-  },
-  {
-    id: 2,
-    date: "2025-02-23",
-    time: "10:30",
-    location: "Campo do Instituto",
-    category: "SUB-11",
-    homeTeam: mockTeams[2],
-    awayTeam: mockTeams[3],
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
-    championshipId: 1,
-    round: "1"
-  },
-  {
-    id: 3,
-    date: "2025-02-09",
-    time: "09:00",
-    location: "Campo do Instituto",
-    category: "SUB-13",
-    homeTeam: mockTeams[4],
-    awayTeam: mockTeams[5],
-    homeScore: 2,
-    awayScore: 0,
-    status: "completed",
-    championshipId: 1,
-    round: "1"
-  },
-  {
-    id: 4,
-    date: "2025-02-15",
-    time: "11:00",
-    location: "Campo do Instituto",
-    category: "SUB-13",
-    homeTeam: mockTeams[6],
-    awayTeam: mockTeams[7],
-    homeScore: 1,
-    awayScore: 3,
-    status: "completed",
-    championshipId: 1,
-    round: "2"
-  }
-];
 
 const statusColorMap: Record<MatchStatus, string> = {
   "scheduled": "bg-blue-100 text-blue-800",
@@ -118,50 +72,141 @@ const statusTextMap: Record<MatchStatus, string> = {
 };
 
 const MatchManagement: React.FC = () => {
-  const [matches, setMatches] = useState<Match[]>(mockMatches);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [selectedTab, setSelectedTab] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [homeTeamPlayers, setHomeTeamPlayers] = useState<Player[]>([]);
+  const [awayTeamPlayers, setAwayTeamPlayers] = useState<Player[]>([]);
+  const [isManagingGoals, setIsManagingGoals] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     date: "",
     time: "",
-    location: "Campo Sintético - Quadra 120",
+    location: "Campo do Instituto",
     category: "",
-    homeTeamId: "",
-    awayTeamId: "",
-    homeScore: "",
-    awayScore: "",
+    home_team: "",
+    away_team: "",
+    home_score: "",
+    away_score: "",
     status: "scheduled" as MatchStatus,
-    championshipId: "1",
+    championship_id: "",
     round: ""
   });
+
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [tempGoals, setTempGoals] = useState<Goal[]>([]);
+  const [newGoalData, setNewGoalData] = useState({
+    player_id: "",
+    team_id: "",
+    minute: "",
+    half: "1"
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch teams
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('*')
+        .order('name');
+
+      if (teamsError) throw teamsError;
+      setTeams(teamsData || []);
+
+      // Fetch players
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('*')
+        .order('name');
+
+      if (playersError) throw playersError;
+      setPlayers(playersData || []);
+
+      // Fetch matches with team details
+      const { data: matchesData, error: matchesError } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          homeTeam:home_team(id, name, logo, category, group_name),
+          awayTeam:away_team(id, name, logo, category, group_name)
+        `)
+        .order('date', { ascending: false });
+
+      if (matchesError) throw matchesError;
+
+      // Fetch goals for all matches
+      const { data: goalsData, error: goalsError } = await supabase
+        .from('goals')
+        .select(`
+          *,
+          players:player_id(name)
+        `);
+
+      if (goalsError) throw goalsError;
+
+      // Transform matches and add team details and goals
+      const transformedMatches = matchesData?.map(match => {
+        const matchGoals = goalsData?.filter(goal => goal.match_id === match.id) || [];
+        const transformedGoals = matchGoals.map(goal => ({
+          ...goal,
+          player_name: goal.players?.name
+        }));
+        
+        return {
+          ...match,
+          homeTeamDetails: match.homeTeam,
+          awayTeamDetails: match.awayTeam,
+          goals: transformedGoals
+        };
+      }) || [];
+
+      setMatches(transformedMatches);
+      setGoals(goalsData || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados necessários."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // When the team changes, update the available players
+    if (name === 'home_team' || name === 'away_team') {
+      if (name === 'home_team') {
+        const homePlayers = players.filter(player => player.team_id === value);
+        setHomeTeamPlayers(homePlayers);
+      } else {
+        const awayPlayers = players.filter(player => player.team_id === value);
+        setAwayTeamPlayers(awayPlayers);
+      }
+    }
   };
 
-  const filteredMatches = matches.filter(match => {
-    const matchesSearch = 
-      match.homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      match.awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = filterCategory === "all" || match.category === filterCategory;
-    const matchesTab = selectedTab === "all" || match.status === selectedTab;
-    
-    return matchesSearch && matchesCategory && matchesTab;
-  });
-
-  const handleCreateMatch = () => {
+  const handleCreateMatch = async () => {
     if (!formData.date || !formData.time || !formData.location || 
-        !formData.category || !formData.homeTeamId || !formData.awayTeamId || !formData.round) {
+        !formData.category || !formData.home_team || !formData.away_team || !formData.round) {
       toast({
         variant: "destructive",
         title: "Erro ao criar partida",
@@ -170,8 +215,8 @@ const MatchManagement: React.FC = () => {
       return;
     }
 
-    const homeTeam = mockTeams.find(team => team.id === formData.homeTeamId);
-    const awayTeam = mockTeams.find(team => team.id === formData.awayTeamId);
+    const homeTeam = teams.find(team => team.id === formData.home_team);
+    const awayTeam = teams.find(team => team.id === formData.away_team);
 
     if (!homeTeam || !awayTeam) {
       toast({
@@ -191,32 +236,58 @@ const MatchManagement: React.FC = () => {
       return;
     }
 
-    const newMatch: Match = {
-      id: matches.length + 1,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      category: formData.category,
-      homeTeam,
-      awayTeam,
-      homeScore: null,
-      awayScore: null,
-      status: formData.status,
-      championshipId: parseInt(formData.championshipId),
-      round: formData.round
-    };
+    try {
+      const { data, error } = await supabase
+        .from('matches')
+        .insert([{
+          date: formData.date,
+          time: formData.time,
+          location: formData.location,
+          category: formData.category,
+          home_team: formData.home_team,
+          away_team: formData.away_team,
+          home_score: null,
+          away_score: null,
+          status: formData.status,
+          championship_id: formData.championship_id || null,
+          round: formData.round
+        }])
+        .select(`
+          *,
+          homeTeam:home_team(id, name, logo, category, group_name),
+          awayTeam:away_team(id, name, logo, category, group_name)
+        `);
 
-    setMatches([...matches, newMatch]);
-    setIsCreating(false);
-    resetForm();
-    
-    toast({
-      title: "Partida criada",
-      description: "A partida foi criada com sucesso.",
-    });
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const newMatch = {
+          ...data[0],
+          homeTeamDetails: data[0].homeTeam,
+          awayTeamDetails: data[0].awayTeam,
+          goals: []
+        };
+        
+        setMatches([newMatch, ...matches]);
+        setIsCreating(false);
+        resetForm();
+        
+        toast({
+          title: "Partida criada",
+          description: "A partida foi criada com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating match:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar partida",
+        description: "Ocorreu um erro ao criar a partida.",
+      });
+    }
   };
 
-  const handleUpdateMatch = () => {
+  const handleUpdateMatch = async () => {
     if (!currentMatch) return;
 
     if (!formData.date || !formData.time || !formData.location || 
@@ -229,13 +300,13 @@ const MatchManagement: React.FC = () => {
       return;
     }
 
-    const homeTeam = formData.homeTeamId ? 
-      mockTeams.find(team => team.id === formData.homeTeamId) : 
-      currentMatch.homeTeam;
+    const homeTeam = formData.home_team ? 
+      teams.find(team => team.id === formData.home_team) : 
+      teams.find(team => team.id === currentMatch.home_team);
       
-    const awayTeam = formData.awayTeamId ? 
-      mockTeams.find(team => team.id === formData.awayTeamId) : 
-      currentMatch.awayTeam;
+    const awayTeam = formData.away_team ? 
+      teams.find(team => team.id === formData.away_team) : 
+      teams.find(team => team.id === currentMatch.away_team);
 
     if (!homeTeam || !awayTeam) {
       toast({
@@ -255,47 +326,238 @@ const MatchManagement: React.FC = () => {
       return;
     }
 
-    const homeScore = formData.homeScore === "" ? null : parseInt(formData.homeScore);
-    const awayScore = formData.awayScore === "" ? null : parseInt(formData.awayScore);
+    try {
+      const { data, error } = await supabase
+        .from('matches')
+        .update({
+          date: formData.date,
+          time: formData.time,
+          location: formData.location,
+          category: formData.category,
+          home_team: formData.home_team || currentMatch.home_team,
+          away_team: formData.away_team || currentMatch.away_team,
+          status: formData.status,
+          championship_id: formData.championship_id || null,
+          round: formData.round
+        })
+        .eq('id', currentMatch.id)
+        .select(`
+          *,
+          homeTeam:home_team(id, name, logo, category, group_name),
+          awayTeam:away_team(id, name, logo, category, group_name)
+        `);
 
-    const updatedMatch: Match = {
-      ...currentMatch,
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      category: formData.category,
-      homeTeam,
-      awayTeam,
-      homeScore,
-      awayScore,
-      status: formData.status,
-      championshipId: parseInt(formData.championshipId),
-      round: formData.round
-    };
+      if (error) throw error;
 
-    const updatedMatches = matches.map(match => 
-      match.id === currentMatch.id ? updatedMatch : match
-    );
-
-    setMatches(updatedMatches);
-    setIsEditing(false);
-    setCurrentMatch(null);
-    resetForm();
-    
-    toast({
-      title: "Partida atualizada",
-      description: "A partida foi atualizada com sucesso.",
-    });
+      if (data && data.length > 0) {
+        const currentGoals = currentMatch.goals || [];
+        
+        const updatedMatch = {
+          ...data[0],
+          homeTeamDetails: data[0].homeTeam,
+          awayTeamDetails: data[0].awayTeam,
+          goals: currentGoals
+        };
+        
+        setMatches(matches.map(match => 
+          match.id === currentMatch.id ? updatedMatch : match
+        ));
+        
+        setIsEditing(false);
+        setCurrentMatch(null);
+        resetForm();
+        
+        toast({
+          title: "Partida atualizada",
+          description: "A partida foi atualizada com sucesso.",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating match:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar partida",
+        description: "Ocorreu um erro ao atualizar a partida.",
+      });
+    }
   };
 
-  const handleDeleteMatch = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir esta partida?")) {
-      const updatedMatches = matches.filter(match => match.id !== id);
-      setMatches(updatedMatches);
+  const handleDeleteMatch = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta partida?")) return;
+
+    try {
+      // Goals will be automatically deleted due to the CASCADE constraint
+      const { error } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setMatches(matches.filter(match => match.id !== id));
       
       toast({
         title: "Partida excluída",
         description: "A partida foi excluída com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir partida",
+        description: "Ocorreu um erro ao excluir a partida.",
+      });
+    }
+  };
+
+  const handleManageGoals = (match: Match) => {
+    setCurrentMatch(match);
+    setIsManagingGoals(true);
+    // Load existing goals for this match
+    const matchGoals = match.goals || [];
+    setTempGoals([...matchGoals]);
+    
+    // Set available players for both teams
+    const homePlayers = players.filter(player => player.team_id === match.home_team);
+    const awayPlayers = players.filter(player => player.team_id === match.away_team);
+    setHomeTeamPlayers(homePlayers);
+    setAwayTeamPlayers(awayPlayers);
+  };
+
+  const handleAddGoal = () => {
+    if (!newGoalData.player_id || !newGoalData.team_id) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: "Por favor, selecione o jogador e o time."
+      });
+      return;
+    }
+
+    if (!currentMatch) return;
+
+    const player = players.find(p => p.id === newGoalData.player_id);
+    
+    if (!player) {
+      toast({
+        variant: "destructive",
+        title: "Jogador inválido",
+        description: "O jogador selecionado não foi encontrado."
+      });
+      return;
+    }
+    
+    // Check if player belongs to selected team
+    if (player.team_id !== newGoalData.team_id) {
+      toast({
+        variant: "destructive",
+        title: "Time inválido",
+        description: "O jogador selecionado não pertence ao time selecionado."
+      });
+      return;
+    }
+
+    const newGoal: Goal = {
+      id: `temp-${Date.now()}`, // Temporary ID until we save to the database
+      match_id: currentMatch.id,
+      player_id: newGoalData.player_id,
+      team_id: newGoalData.team_id,
+      minute: newGoalData.minute ? parseInt(newGoalData.minute) : null,
+      half: newGoalData.half || null,
+      player_name: player.name
+    };
+
+    setTempGoals([...tempGoals, newGoal]);
+    
+    // Reset new goal form
+    setNewGoalData({
+      player_id: "",
+      team_id: "",
+      minute: "",
+      half: "1"
+    });
+  };
+
+  const handleRemoveGoal = (index: number) => {
+    const updatedGoals = [...tempGoals];
+    updatedGoals.splice(index, 1);
+    setTempGoals(updatedGoals);
+  };
+
+  const handleSaveGoals = async () => {
+    if (!currentMatch) return;
+
+    try {
+      // First, delete all existing goals for this match (easier than determining which to update/delete/insert)
+      const { error: deleteError } = await supabase
+        .from('goals')
+        .delete()
+        .eq('match_id', currentMatch.id);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert all the temporary goals
+      if (tempGoals.length > 0) {
+        const goalsToInsert = tempGoals.map(goal => ({
+          match_id: goal.match_id,
+          player_id: goal.player_id,
+          team_id: goal.team_id,
+          minute: goal.minute,
+          half: goal.half
+        }));
+
+        const { data: insertedGoals, error: insertError } = await supabase
+          .from('goals')
+          .insert(goalsToInsert)
+          .select(`
+            *,
+            players:player_id(name)
+          `);
+
+        if (insertError) throw insertError;
+
+        // Transform the inserted goals to include player_name
+        const transformedGoals = insertedGoals?.map(goal => ({
+          ...goal,
+          player_name: goal.players?.name
+        }));
+
+        // Update the match in state
+        const homeTeamGoalCount = tempGoals.filter(g => g.team_id === currentMatch.home_team).length;
+        const awayTeamGoalCount = tempGoals.filter(g => g.team_id === currentMatch.away_team).length;
+
+        const updatedMatches = matches.map(match => {
+          if (match.id === currentMatch.id) {
+            return {
+              ...match,
+              home_score: homeTeamGoalCount,
+              away_score: awayTeamGoalCount,
+              goals: transformedGoals
+            };
+          }
+          return match;
+        });
+
+        setMatches(updatedMatches);
+      }
+
+      setIsManagingGoals(false);
+      setCurrentMatch(null);
+      setTempGoals([]);
+
+      toast({
+        title: "Gols salvos",
+        description: "Os gols foram salvos com sucesso."
+      });
+
+      // Refresh data to get updated scores
+      fetchData();
+    } catch (error) {
+      console.error('Error saving goals:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar gols",
+        description: "Ocorreu um erro ao salvar os gols."
       });
     }
   };
@@ -304,14 +566,14 @@ const MatchManagement: React.FC = () => {
     setFormData({
       date: "",
       time: "",
-      location: "Campo Sintético - Quadra 120",
+      location: "Campo do Instituto",
       category: "",
-      homeTeamId: "",
-      awayTeamId: "",
-      homeScore: "",
-      awayScore: "",
+      home_team: "",
+      away_team: "",
+      home_score: "",
+      away_score: "",
       status: "scheduled",
-      championshipId: "1",
+      championship_id: "",
       round: ""
     });
   };
@@ -323,14 +585,21 @@ const MatchManagement: React.FC = () => {
       time: match.time,
       location: match.location,
       category: match.category,
-      homeTeamId: match.homeTeam.id,
-      awayTeamId: match.awayTeam.id,
-      homeScore: match.homeScore !== null ? match.homeScore.toString() : "",
-      awayScore: match.awayScore !== null ? match.awayScore.toString() : "",
+      home_team: match.home_team,
+      away_team: match.away_team,
+      home_score: match.home_score?.toString() || "",
+      away_score: match.away_score?.toString() || "",
       status: match.status,
-      championshipId: match.championshipId.toString(),
+      championship_id: match.championship_id || "",
       round: match.round
     });
+    
+    // Set available players for both teams
+    const homePlayers = players.filter(player => player.team_id === match.home_team);
+    const awayPlayers = players.filter(player => player.team_id === match.away_team);
+    setHomeTeamPlayers(homePlayers);
+    setAwayTeamPlayers(awayPlayers);
+    
     setIsEditing(true);
   };
 
@@ -339,13 +608,33 @@ const MatchManagement: React.FC = () => {
     return `${day}/${month}/${year}`;
   };
 
+  // Get all categories for the filter
+  const categories = [...new Set(matches.map(match => match.category))];
+
+  // Filter matches based on search term, category, and tab
+  const filteredMatches = matches.filter(match => {
+    const homeTeamName = match.homeTeamDetails?.name?.toLowerCase() || '';
+    const awayTeamName = match.awayTeamDetails?.name?.toLowerCase() || '';
+    const location = match.location.toLowerCase();
+    
+    const matchesSearch = 
+      homeTeamName.includes(searchTerm.toLowerCase()) || 
+      awayTeamName.includes(searchTerm.toLowerCase()) ||
+      location.includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = filterCategory === "all" || match.category === filterCategory;
+    const matchesTab = selectedTab === "all" || match.status === selectedTab;
+    
+    return matchesSearch && matchesCategory && matchesTab;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-blue-primary">Gerenciamento de Partidas</h2>
+        <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Partidas</h2>
         <Dialog open={isCreating} onOpenChange={setIsCreating}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-primary text-white hover:bg-blue-light">
+            <Button className="bg-[#1a237e] text-white hover:bg-blue-800">
               <Plus size={16} className="mr-2" /> Nova Partida
             </Button>
           </DialogTrigger>
@@ -420,41 +709,44 @@ const MatchManagement: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="homeTeamId">Time da Casa</Label>
+                <Label htmlFor="home_team">Time da Casa</Label>
                 <select
-                  id="homeTeamId"
-                  name="homeTeamId"
-                  value={formData.homeTeamId}
+                  id="home_team"
+                  name="home_team"
+                  value={formData.home_team}
                   onChange={handleInputChange}
                   className="w-full rounded-md border border-input px-3 py-2 text-sm"
                   required
                 >
                   <option value="">Selecione o time...</option>
-                  {mockTeams.map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name} ({team.category})</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="awayTeamId">Time Visitante</Label>
+                <Label htmlFor="away_team">Time Visitante</Label>
                 <select
-                  id="awayTeamId"
-                  name="awayTeamId"
-                  value={formData.awayTeamId}
+                  id="away_team"
+                  name="away_team"
+                  value={formData.away_team}
                   onChange={handleInputChange}
                   className="w-full rounded-md border border-input px-3 py-2 text-sm"
                   required
                 >
                   <option value="">Selecione o time...</option>
-                  {mockTeams.map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name} ({team.category})</option>
                   ))}
                 </select>
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsCreating(false)}>Cancelar</Button>
-              <Button onClick={handleCreateMatch} className="bg-blue-primary text-white hover:bg-blue-light">Criar Partida</Button>
+              <Button variant="outline" onClick={() => {
+                setIsCreating(false);
+                resetForm();
+              }}>Cancelar</Button>
+              <Button onClick={handleCreateMatch} className="bg-[#1a237e] text-white hover:bg-blue-800">Criar Partida</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -477,10 +769,9 @@ const MatchManagement: React.FC = () => {
               className="rounded-md border border-input px-3 py-2 text-sm"
             >
               <option value="all">Todas Categorias</option>
-              <option value="SUB-11">SUB-11</option>
-              <option value="SUB-13">SUB-13</option>
-              <option value="SUB-15">SUB-15</option>
-              <option value="SUB-17">SUB-17</option>
+              {categories.map((category, index) => (
+                <option key={index} value={category}>{category}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -495,7 +786,11 @@ const MatchManagement: React.FC = () => {
           </TabsList>
 
           <TabsContent value={selectedTab} className="space-y-4">
-            {filteredMatches.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Carregando partidas...</p>
+              </div>
+            ) : filteredMatches.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Nenhuma partida encontrada.</p>
               </div>
@@ -503,7 +798,7 @@ const MatchManagement: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredMatches.map(match => (
                   <Card key={match.id} className="overflow-hidden">
-                    <CardHeader className="bg-blue-primary text-white py-3 px-4">
+                    <CardHeader className="bg-[#1a237e] text-white py-3 px-4">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <Calendar size={16} />
@@ -533,35 +828,76 @@ const MatchManagement: React.FC = () => {
                       
                       <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg mb-4">
                         <div className="flex flex-col items-center">
-                          <img 
-                            src={match.homeTeam.logo} 
-                            alt={match.homeTeam.name} 
-                            className="w-12 h-12 object-contain mb-1"
-                          />
-                          <span className="text-sm font-medium text-center">{match.homeTeam.name}</span>
+                          <div className="w-12 h-12 flex items-center justify-center bg-white shadow-sm rounded-full overflow-hidden">
+                            {match.homeTeamDetails?.logo ? (
+                              <img 
+                                src={match.homeTeamDetails.logo} 
+                                alt={match.homeTeamDetails.name} 
+                                className="w-10 h-10 object-contain"
+                              />
+                            ) : (
+                              <Users size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-center mt-1">{match.homeTeamDetails?.name}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 bg-blue-primary text-white rounded flex items-center justify-center font-bold">
-                            {match.homeScore !== null ? match.homeScore : "-"}
+                          <div className="w-10 h-10 bg-[#1a237e] text-white rounded flex items-center justify-center font-bold">
+                            {match.home_score !== null ? match.home_score : "-"}
                           </div>
                           <span className="font-bold">x</span>
-                          <div className="w-10 h-10 bg-blue-primary text-white rounded flex items-center justify-center font-bold">
-                            {match.awayScore !== null ? match.awayScore : "-"}
+                          <div className="w-10 h-10 bg-[#1a237e] text-white rounded flex items-center justify-center font-bold">
+                            {match.away_score !== null ? match.away_score : "-"}
                           </div>
                         </div>
                         
                         <div className="flex flex-col items-center">
-                          <img 
-                            src={match.awayTeam.logo} 
-                            alt={match.awayTeam.name} 
-                            className="w-12 h-12 object-contain mb-1"
-                          />
-                          <span className="text-sm font-medium text-center">{match.awayTeam.name}</span>
+                          <div className="w-12 h-12 flex items-center justify-center bg-white shadow-sm rounded-full overflow-hidden">
+                            {match.awayTeamDetails?.logo ? (
+                              <img 
+                                src={match.awayTeamDetails.logo} 
+                                alt={match.awayTeamDetails.name} 
+                                className="w-10 h-10 object-contain"
+                              />
+                            ) : (
+                              <Users size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-center mt-1">{match.awayTeamDetails?.name}</span>
                         </div>
                       </div>
+
+                      {/* Show goal scorers */}
+                      {match.goals && match.goals.length > 0 && (
+                        <div className="mb-4 p-2 border border-gray-100 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Trophy size={16} className="text-yellow-500" />
+                            <span className="font-medium">Gols:</span>
+                          </div>
+                          <ul className="text-sm space-y-1">
+                            {match.goals.map((goal, index) => (
+                              <li key={goal.id || index} className="flex justify-between">
+                                <span>{goal.player_name}</span>
+                                <span className="text-gray-500">
+                                  {goal.minute ? `${goal.minute}' ${goal.half === '2' ? '2T' : '1T'}` : ''}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       
                       <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleManageGoals(match)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trophy size={14} /> Gols
+                        </Button>
+
                         <Dialog open={isEditing && currentMatch?.id === match.id} onOpenChange={(open) => {
                           if (!open) {
                             setIsEditing(false);
@@ -649,76 +985,20 @@ const MatchManagement: React.FC = () => {
                                 </div>
                               </div>
                               <div className="space-y-2">
-                                <Label htmlFor="edit-homeTeamId">Time da Casa</Label>
+                                <Label htmlFor="edit-status">Status</Label>
                                 <select
-                                  id="edit-homeTeamId"
-                                  name="homeTeamId"
-                                  value={formData.homeTeamId}
+                                  id="edit-status"
+                                  name="status"
+                                  value={formData.status}
                                   onChange={handleInputChange}
                                   className="w-full rounded-md border border-input px-3 py-2 text-sm"
                                   required
                                 >
-                                  {mockTeams.map(team => (
-                                    <option key={team.id} value={team.id}>{team.name}</option>
-                                  ))}
+                                  <option value="scheduled">Agendado</option>
+                                  <option value="in_progress">Em andamento</option>
+                                  <option value="completed">Finalizado</option>
+                                  <option value="cancelled">Cancelado</option>
                                 </select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="edit-awayTeamId">Time Visitante</Label>
-                                <select
-                                  id="edit-awayTeamId"
-                                  name="awayTeamId"
-                                  value={formData.awayTeamId}
-                                  onChange={handleInputChange}
-                                  className="w-full rounded-md border border-input px-3 py-2 text-sm"
-                                  required
-                                >
-                                  {mockTeams.map(team => (
-                                    <option key={team.id} value={team.id}>{team.name}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="edit-homeScore">Gols Casa</Label>
-                                  <Input
-                                    id="edit-homeScore"
-                                    name="homeScore"
-                                    type="number"
-                                    min="0"
-                                    value={formData.homeScore}
-                                    onChange={handleInputChange}
-                                    placeholder="Gols"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="edit-awayScore">Gols Visitante</Label>
-                                  <Input
-                                    id="edit-awayScore"
-                                    name="awayScore"
-                                    type="number"
-                                    min="0"
-                                    value={formData.awayScore}
-                                    onChange={handleInputChange}
-                                    placeholder="Gols"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="edit-status">Status</Label>
-                                  <select
-                                    id="edit-status"
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleInputChange}
-                                    className="w-full rounded-md border border-input px-3 py-2 text-sm"
-                                    required
-                                  >
-                                    <option value="scheduled">Agendado</option>
-                                    <option value="in_progress">Em andamento</option>
-                                    <option value="completed">Finalizado</option>
-                                    <option value="cancelled">Cancelado</option>
-                                  </select>
-                                </div>
                               </div>
                             </div>
                             <div className="flex justify-end gap-2">
@@ -727,7 +1007,7 @@ const MatchManagement: React.FC = () => {
                                 setCurrentMatch(null);
                                 resetForm();
                               }}>Cancelar</Button>
-                              <Button onClick={handleUpdateMatch} className="bg-blue-primary text-white hover:bg-blue-light">Salvar Alterações</Button>
+                              <Button onClick={handleUpdateMatch} className="bg-[#1a237e] text-white hover:bg-blue-800">Salvar Alterações</Button>
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -748,6 +1028,209 @@ const MatchManagement: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Goals Management Dialog */}
+      <Dialog open={isManagingGoals} onOpenChange={(open) => {
+        if (!open) {
+          setIsManagingGoals(false);
+          setCurrentMatch(null);
+          setTempGoals([]);
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Gols da Partida</DialogTitle>
+          </DialogHeader>
+          {currentMatch && (
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">{formatDate(currentMatch.date)} • {currentMatch.time}</span>
+                  <Badge variant="outline">{currentMatch.category}</Badge>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 flex items-center justify-center bg-white shadow-sm rounded-full overflow-hidden mb-1">
+                      {currentMatch.homeTeamDetails?.logo ? (
+                        <img 
+                          src={currentMatch.homeTeamDetails.logo} 
+                          alt={currentMatch.homeTeamDetails.name} 
+                          className="w-10 h-10 object-contain"
+                        />
+                      ) : (
+                        <Users size={20} className="text-gray-400" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">{currentMatch.homeTeamDetails?.name}</span>
+                  </div>
+                  
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold">{tempGoals.filter(g => g.team_id === currentMatch.home_team).length}</span>
+                    <span className="text-xl">x</span>
+                    <span className="text-2xl font-bold">{tempGoals.filter(g => g.team_id === currentMatch.away_team).length}</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 flex items-center justify-center bg-white shadow-sm rounded-full overflow-hidden mb-1">
+                      {currentMatch.awayTeamDetails?.logo ? (
+                        <img 
+                          src={currentMatch.awayTeamDetails.logo} 
+                          alt={currentMatch.awayTeamDetails.name} 
+                          className="w-10 h-10 object-contain"
+                        />
+                      ) : (
+                        <Users size={20} className="text-gray-400" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">{currentMatch.awayTeamDetails?.name}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form to add a new goal */}
+              <div className="space-y-3 p-3 border border-gray-200 rounded-lg">
+                <h3 className="font-medium flex items-center gap-2">
+                  <Trophy size={16} className="text-yellow-500" />
+                  Adicionar Gol
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="goal-team" className="text-sm">Time</Label>
+                    <select
+                      id="goal-team"
+                      name="team_id"
+                      value={newGoalData.team_id}
+                      onChange={(e) => setNewGoalData({...newGoalData, team_id: e.target.value})}
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                    >
+                      <option value="">Selecione o time</option>
+                      <option value={currentMatch.home_team}>{currentMatch.homeTeamDetails?.name}</option>
+                      <option value={currentMatch.away_team}>{currentMatch.awayTeamDetails?.name}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="goal-player" className="text-sm">Jogador</Label>
+                    <select
+                      id="goal-player"
+                      name="player_id"
+                      value={newGoalData.player_id}
+                      onChange={(e) => setNewGoalData({...newGoalData, player_id: e.target.value})}
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                    >
+                      <option value="">Selecione o jogador</option>
+                      {newGoalData.team_id === currentMatch.home_team ? (
+                        homeTeamPlayers.map(player => (
+                          <option key={player.id} value={player.id}>
+                            {player.name} {player.number ? `(${player.number})` : ''}
+                          </option>
+                        ))
+                      ) : newGoalData.team_id === currentMatch.away_team ? (
+                        awayTeamPlayers.map(player => (
+                          <option key={player.id} value={player.id}>
+                            {player.name} {player.number ? `(${player.number})` : ''}
+                          </option>
+                        ))
+                      ) : null}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="goal-minute" className="text-sm">Minuto (opcional)</Label>
+                    <Input
+                      id="goal-minute"
+                      name="minute"
+                      type="number"
+                      min="1"
+                      max="90"
+                      placeholder="Ex: 32"
+                      value={newGoalData.minute}
+                      onChange={(e) => setNewGoalData({...newGoalData, minute: e.target.value})}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="goal-half" className="text-sm">Tempo</Label>
+                    <select
+                      id="goal-half"
+                      name="half"
+                      value={newGoalData.half}
+                      onChange={(e) => setNewGoalData({...newGoalData, half: e.target.value})}
+                      className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                    >
+                      <option value="1">1º Tempo</option>
+                      <option value="2">2º Tempo</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <Button 
+                    onClick={handleAddGoal}
+                    className="w-full bg-[#1a237e] text-white hover:bg-blue-800"
+                  >
+                    Adicionar Gol
+                  </Button>
+                </div>
+              </div>
+
+              {/* List of goals */}
+              <div className="space-y-2">
+                <h3 className="font-medium">Gols da Partida ({tempGoals.length})</h3>
+                {tempGoals.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-2">Nenhum gol registrado</p>
+                ) : (
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {tempGoals.map((goal, index) => {
+                      const player = players.find(p => p.id === goal.player_id);
+                      const isHomeTeam = goal.team_id === currentMatch.home_team;
+                      const teamName = isHomeTeam 
+                        ? currentMatch.homeTeamDetails?.name 
+                        : currentMatch.awayTeamDetails?.name;
+                      
+                      return (
+                        <div key={goal.id || index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isHomeTeam ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                            <span>{goal.player_name || player?.name}</span>
+                            <span className="text-xs text-gray-500">({teamName})</span>
+                            {goal.minute && (
+                              <span className="text-xs text-gray-500">
+                                {goal.minute}' {goal.half === '2' ? '2T' : '1T'}
+                              </span>
+                            )}
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleRemoveGoal(index)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => {
+                  setIsManagingGoals(false);
+                  setCurrentMatch(null);
+                  setTempGoals([]);
+                }}>Cancelar</Button>
+                <Button 
+                  onClick={handleSaveGoals}
+                  className="bg-[#1a237e] text-white hover:bg-blue-800"
+                >
+                  Salvar Gols
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,673 +1,570 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  PlusCircle, Edit, Trash2, Search, Upload, User, 
-  Activity, FileText
-} from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { 
-  Dialog, DialogContent, DialogDescription, 
-  DialogHeader, DialogTitle, DialogTrigger, DialogFooter
-} from "@/components/ui/dialog";
-import { 
-  Select, SelectContent, SelectItem, 
-  SelectTrigger, SelectValue 
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
+import { PlusCircle, Pencil, Trash2, User, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
-// Tipos
-interface PlayerStats {
-  games: number;
-  goals: number;
-  assists: number;
-  yellowCards: number;
-  redCards: number;
-}
-
-interface Player {
-  id: number;
-  teamId: number;
+type Player = {
+  id: string;
   name: string;
-  number: number;
   position: string;
-  age: number;
-  photo?: string;
-  stats: PlayerStats;
-}
+  number: number | null;
+  photo: string | null;
+  team_id: string;
+  team_name?: string;
+  team_logo?: string;
+  team_category?: string;
+};
 
-interface PlayerManagementProps {
-  teamId: number;
-  teamName: string;
-}
+type Team = {
+  id: string;
+  name: string;
+  logo: string | null;
+  category: string;
+  group_name: string;
+};
 
-const positions = [
-  "Goleiro",
-  "Lateral Direito",
-  "Lateral Esquerdo",
-  "Zagueiro",
-  "Volante",
-  "Meio Campo",
-  "Meia Atacante",
-  "Ponta Direita",
-  "Ponta Esquerda",
-  "Centroavante",
-  "Atacante"
-];
-
-const PlayerManagement: React.FC<PlayerManagementProps> = ({ teamId, teamName }) => {
-  const { toast } = useToast();
-  const [players, setPlayers] = useState<Player[]>([
-    {
-      id: 101,
-      teamId: 1,
-      name: 'Miguel Santos',
-      number: 10,
-      position: 'Meia Atacante',
-      age: 13,
-      photo: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-      stats: {
-        games: 12,
-        goals: 8,
-        assists: 6,
-        yellowCards: 2,
-        redCards: 0,
-      },
-    },
-    {
-      id: 102,
-      teamId: 1,
-      name: 'João Pedro',
-      number: 9,
-      position: 'Atacante',
-      age: 13,
-      photo: 'https://images.unsplash.com/photo-1560761098-22010169a486?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-      stats: {
-        games: 12,
-        goals: 5,
-        assists: 3,
-        yellowCards: 1,
-        redCards: 0,
-      },
-    },
-  ].filter(player => player.teamId === teamId));
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isAddingPlayer, setIsAddingPlayer] = useState(false);
-  const [isEditingPlayer, setIsEditingPlayer] = useState(false);
+const PlayerManagement = () => {
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [showPlayerStats, setShowPlayerStats] = useState(false);
-  
-  const [newPlayer, setNewPlayer] = useState<Partial<Player & {teamId: number}>>({
-    teamId,
-    name: '',
-    number: 0,
-    position: '',
-    age: 0,
-    photo: '',
-    stats: {
-      games: 0,
-      goals: 0,
-      assists: 0,
-      yellowCards: 0,
-      redCards: 0,
-    }
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterTeam, setFilterTeam] = useState("all");
+  const { toast } = useToast();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    position: "",
+    number: "",
+    photo: "",
+    team_id: ""
   });
-  
-  // Gerenciar adição de jogador
-  const handleAddPlayer = () => {
-    // Validação básica
-    if (!newPlayer.name || !newPlayer.position || !newPlayer.number) {
+
+  // Fetch players and teams data from Supabase
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch teams
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('*')
+        .order('name');
+
+      if (teamsError) throw teamsError;
+      setTeams(teamsData || []);
+
+      // Fetch players with team information
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select(`
+          *,
+          teams:team_id (
+            name,
+            logo,
+            category
+          )
+        `)
+        .order('name');
+
+      if (playersError) throw playersError;
+      
+      // Transform data to include team information directly in player objects
+      const transformedPlayers = playersData?.map(player => ({
+        ...player,
+        team_name: player.teams?.name,
+        team_logo: player.teams?.logo,
+        team_category: player.teams?.category
+      })) || [];
+      
+      setPlayers(transformedPlayers);
+    } catch (error) {
+      console.error('Error fetching data:', error);
       toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios.",
         variant: "destructive",
-        duration: 3000,
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os jogadores e times."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      position: "",
+      number: "",
+      photo: "",
+      team_id: ""
+    });
+  };
+
+  const handleCreatePlayer = async () => {
+    if (!formData.name || !formData.position || !formData.team_id) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha nome, posição e time."
       });
       return;
     }
 
-    // Simulação de adição ao banco de dados
-    const playerToAdd = {
-      ...newPlayer,
-      id: Date.now(), // Simulando um ID único
-      teamId,
-      stats: newPlayer.stats || {
-        games: 0,
-        goals: 0,
-        assists: 0,
-        yellowCards: 0,
-        redCards: 0,
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .insert([{
+          name: formData.name,
+          position: formData.position,
+          number: formData.number ? parseInt(formData.number) : null,
+          photo: formData.photo || null,
+          team_id: formData.team_id
+        }])
+        .select(`
+          *,
+          teams:team_id (
+            name,
+            logo,
+            category
+          )
+        `);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const newPlayer = {
+          ...data[0],
+          team_name: data[0].teams?.name,
+          team_logo: data[0].teams?.logo,
+          team_category: data[0].teams?.category
+        };
+        
+        setPlayers([...players, newPlayer]);
+        
+        toast({
+          title: "Jogador adicionado",
+          description: "O jogador foi adicionado com sucesso."
+        });
+        
+        setIsCreating(false);
+        resetForm();
       }
-    } as Player;
-    
-    setPlayers([...players, playerToAdd]);
-    setNewPlayer({
-      teamId,
-      name: '',
-      number: 0,
-      position: '',
-      age: 0,
-      photo: '',
-      stats: {
-        games: 0,
-        goals: 0,
-        assists: 0,
-        yellowCards: 0,
-        redCards: 0,
-      }
-    });
-    setIsAddingPlayer(false);
-    
-    toast({
-      title: "Sucesso",
-      description: "Jogador adicionado com sucesso!",
-      duration: 3000,
-    });
+    } catch (error) {
+      console.error('Error creating player:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao adicionar jogador",
+        description: "Não foi possível adicionar o jogador."
+      });
+    }
   };
-  
-  // Gerenciar edição de jogador
-  const handleEditPlayer = () => {
+
+  const handleUpdatePlayer = async () => {
     if (!selectedPlayer) return;
     
-    const updatedPlayers = players.map(player => 
-      player.id === selectedPlayer.id ? { ...selectedPlayer } : player
-    );
-    
-    setPlayers(updatedPlayers);
-    setIsEditingPlayer(false);
-    
-    toast({
-      title: "Sucesso",
-      description: "Jogador atualizado com sucesso!",
-      duration: 3000,
-    });
-  };
-  
-  // Gerenciar remoção de jogador
-  const handleDeletePlayer = (id: number) => {
-    const updatedPlayers = players.filter(player => player.id !== id);
-    setPlayers(updatedPlayers);
-    
-    toast({
-      title: "Sucesso",
-      description: "Jogador removido com sucesso!",
-      duration: 3000,
-    });
-  };
-  
-  // Filtrar jogadores com base na pesquisa
-  const filteredPlayers = players.filter(player => 
-    player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    player.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  if (showPlayerStats && selectedPlayer) {
-    return (
-      <div>
-        <Button 
-          variant="outline" 
-          className="mb-4"
-          onClick={() => {
-            setShowPlayerStats(false);
-            setSelectedPlayer(null);
-          }}
-        >
-          Voltar para Jogadores
-        </Button>
+    if (!formData.name || !formData.position || !formData.team_id) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha nome, posição e time."
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .update({
+          name: formData.name,
+          position: formData.position,
+          number: formData.number ? parseInt(formData.number) : null,
+          photo: formData.photo || null,
+          team_id: formData.team_id
+        })
+        .eq('id', selectedPlayer.id)
+        .select(`
+          *,
+          teams:team_id (
+            name,
+            logo,
+            category
+          )
+        `);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const updatedPlayer = {
+          ...data[0],
+          team_name: data[0].teams?.name,
+          team_logo: data[0].teams?.logo,
+          team_category: data[0].teams?.category
+        };
         
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
-                {selectedPlayer.photo ? (
-                  <img 
-                    src={selectedPlayer.photo} 
-                    alt={selectedPlayer.name} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-full h-full p-4 text-gray-400" />
-                )}
-              </div>
-              <div>
-                <CardTitle>{selectedPlayer.name}</CardTitle>
-                <CardDescription>
-                  #{selectedPlayer.number} • {selectedPlayer.position} • {selectedPlayer.age} anos
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="stats">
-              <TabsList className="mb-4">
-                <TabsTrigger value="stats">Estatísticas</TabsTrigger>
-                <TabsTrigger value="history">Histórico</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="stats">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-sm text-gray-500">Jogos</p>
-                        <p className="text-2xl font-bold">{selectedPlayer.stats.games}</p>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-sm text-gray-500">Gols</p>
-                        <p className="text-2xl font-bold">{selectedPlayer.stats.goals}</p>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-sm text-gray-500">Assistências</p>
-                        <p className="text-2xl font-bold">{selectedPlayer.stats.assists}</p>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-sm text-gray-500">Cartões Amarelos</p>
-                        <p className="text-2xl font-bold text-yellow-500">{selectedPlayer.stats.yellowCards}</p>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-sm text-gray-500">Cartões Vermelhos</p>
-                        <p className="text-2xl font-bold text-red-500">{selectedPlayer.stats.redCards}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="font-medium mb-3">Atualizar Estatísticas</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div>
-                          <Label htmlFor="update-games">Jogos</Label>
-                          <Input 
-                            id="update-games" 
-                            type="number" 
-                            value={selectedPlayer.stats.games} 
-                            onChange={(e) => setSelectedPlayer({
-                              ...selectedPlayer,
-                              stats: {
-                                ...selectedPlayer.stats,
-                                games: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="update-goals">Gols</Label>
-                          <Input 
-                            id="update-goals" 
-                            type="number" 
-                            value={selectedPlayer.stats.goals}
-                            onChange={(e) => setSelectedPlayer({
-                              ...selectedPlayer,
-                              stats: {
-                                ...selectedPlayer.stats,
-                                goals: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="update-assists">Assistências</Label>
-                          <Input 
-                            id="update-assists" 
-                            type="number" 
-                            value={selectedPlayer.stats.assists}
-                            onChange={(e) => setSelectedPlayer({
-                              ...selectedPlayer,
-                              stats: {
-                                ...selectedPlayer.stats,
-                                assists: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="update-yellow">Cartões Amarelos</Label>
-                          <Input 
-                            id="update-yellow" 
-                            type="number" 
-                            value={selectedPlayer.stats.yellowCards}
-                            onChange={(e) => setSelectedPlayer({
-                              ...selectedPlayer,
-                              stats: {
-                                ...selectedPlayer.stats,
-                                yellowCards: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="update-red">Cartões Vermelhos</Label>
-                          <Input 
-                            id="update-red" 
-                            type="number" 
-                            value={selectedPlayer.stats.redCards}
-                            onChange={(e) => setSelectedPlayer({
-                              ...selectedPlayer,
-                              stats: {
-                                ...selectedPlayer.stats,
-                                redCards: parseInt(e.target.value) || 0
-                              }
-                            })}
-                          />
-                        </div>
-                      </div>
-                      <Button 
-                        className="mt-4"
-                        onClick={handleEditPlayer}
-                      >
-                        Salvar Alterações
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="history">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center py-8">
-                      <FileText className="mx-auto h-12 w-12 text-gray-300" />
-                      <h3 className="mt-4 text-lg font-medium">Histórico não disponível</h3>
-                      <p className="mt-2 text-gray-500">
-                        O histórico detalhado de partidas do jogador será implementado em breve.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
+        setPlayers(players.map(player => 
+          player.id === selectedPlayer.id ? updatedPlayer : player
+        ));
+        
+        toast({
+          title: "Jogador atualizado",
+          description: "O jogador foi atualizado com sucesso."
+        });
+        
+        setIsEditing(false);
+        setSelectedPlayer(null);
+        resetForm();
+      }
+    } catch (error) {
+      console.error('Error updating player:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar jogador",
+        description: "Não foi possível atualizar o jogador."
+      });
+    }
+  };
+
+  const handleDeletePlayer = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este jogador?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('players')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setPlayers(players.filter(player => player.id !== id));
+      
+      toast({
+        title: "Jogador removido",
+        description: "O jogador foi removido com sucesso."
+      });
+    } catch (error) {
+      console.error('Error deleting player:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover jogador",
+        description: "Não foi possível remover o jogador."
+      });
+    }
+  };
+
+  const openEditDialog = (player: Player) => {
+    setSelectedPlayer(player);
+    setFormData({
+      name: player.name,
+      position: player.position,
+      number: player.number?.toString() || "",
+      photo: player.photo || "",
+      team_id: player.team_id
+    });
+    setIsEditing(true);
+  };
+
+  // Filter players based on search term and team filter
+  const filteredPlayers = players.filter(player => {
+    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTeam = filterTeam === "all" || player.team_id === filterTeam;
+    return matchesSearch && matchesTeam;
+  });
+
   return (
-    <div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-[#1a237e]">
-            Jogadores do {teamName}
-          </CardTitle>
-          <CardDescription>
-            Gerencie os jogadores do time, adicione novos atletas ou atualize estatísticas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input 
-                placeholder="Buscar jogador..." 
-                className="pl-10" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Jogadores</h2>
+        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#1a237e] text-white hover:bg-blue-800">
+              <PlusCircle size={16} className="mr-2" /> Novo Jogador
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Adicionar Novo Jogador</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="name" className="text-sm font-medium">Nome</label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Nome do jogador"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="position" className="text-sm font-medium">Posição</label>
+                <Input
+                  id="position"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleInputChange}
+                  placeholder="Ex: Atacante, Goleiro, etc."
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="number" className="text-sm font-medium">Número</label>
+                <Input
+                  id="number"
+                  name="number"
+                  type="number"
+                  value={formData.number}
+                  onChange={handleInputChange}
+                  placeholder="Número da camisa"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="team_id" className="text-sm font-medium">Time</label>
+                <select
+                  id="team_id"
+                  name="team_id"
+                  value={formData.team_id}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="">Selecione um time</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>
+                      {team.name} ({team.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="photo" className="text-sm font-medium">URL da Foto</label>
+                <Input
+                  id="photo"
+                  name="photo"
+                  value={formData.photo}
+                  onChange={handleInputChange}
+                  placeholder="https://exemplo.com/foto.png"
+                />
+              </div>
             </div>
-            <Dialog open={isAddingPlayer} onOpenChange={setIsAddingPlayer}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#1a237e] hover:bg-[#0d1442]">
-                  <PlusCircle size={16} className="mr-2" />
-                  Adicionar Jogador
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Adicionar Novo Jogador</DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes do novo jogador para o time {teamName}.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Nome*
-                    </Label>
-                    <Input
-                      id="name"
-                      value={newPlayer.name}
-                      onChange={(e) => setNewPlayer({...newPlayer, name: e.target.value})}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="number" className="text-right">
-                      Número*
-                    </Label>
-                    <Input
-                      id="number"
-                      type="number"
-                      value={newPlayer.number || ''}
-                      onChange={(e) => setNewPlayer({...newPlayer, number: parseInt(e.target.value) || 0})}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="position" className="text-right">
-                      Posição*
-                    </Label>
-                    <Select 
-                      onValueChange={(value) => setNewPlayer({...newPlayer, position: value})}
-                      value={newPlayer.position}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Selecione uma posição" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {positions.map(pos => (
-                          <SelectItem key={pos} value={pos}>
-                            {pos}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="age" className="text-right">
-                      Idade
-                    </Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={newPlayer.age || ''}
-                      onChange={(e) => setNewPlayer({...newPlayer, age: parseInt(e.target.value) || 0})}
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="photo" className="text-right">
-                      Foto
-                    </Label>
-                    <div className="col-span-3 flex gap-2">
-                      <Input
-                        id="photo"
-                        value={newPlayer.photo || ''}
-                        onChange={(e) => setNewPlayer({...newPlayer, photo: e.target.value})}
-                        className="flex-grow"
-                        placeholder="URL da foto"
-                      />
-                      <Button type="button" variant="outline" className="shrink-0">
-                        <Upload size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsAddingPlayer(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="button" onClick={handleAddPlayer}>
-                    Adicionar Jogador
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsCreating(false);
+                resetForm();
+              }}>Cancelar</Button>
+              <Button onClick={handleCreatePlayer} className="bg-[#1a237e] text-white hover:bg-blue-800">
+                Adicionar Jogador
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex-1">
+            <Input
+              placeholder="Buscar jogadores..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
           </div>
-          
-          {filteredPlayers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPlayers.map(player => (
-                <Card key={player.id} className="overflow-hidden">
-                  <div className="p-4 flex items-center gap-4 border-b">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                      {player.photo ? (
-                        <img src={player.photo} alt={player.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <User size={24} className="text-gray-400" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{player.name}</h3>
-                      <p className="text-sm text-gray-500">#{player.number} • {player.position}</p>
+          <div className="flex gap-2">
+            <select
+              value={filterTeam}
+              onChange={(e) => setFilterTeam(e.target.value)}
+              className="rounded-md border border-input px-3 py-2 text-sm"
+            >
+              <option value="all">Todos os Times</option>
+              {teams.map(team => (
+                <option key={team.id} value={team.id}>
+                  {team.name} ({team.category})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Carregando jogadores...</p>
+          </div>
+        ) : filteredPlayers.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Nenhum jogador encontrado.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPlayers.map(player => (
+              <Card key={player.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="bg-[#1a237e] text-white p-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-bold">{player.name}</h3>
+                      <div className="space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-white hover:text-[#1a237e] hover:bg-white"
+                          onClick={() => openEditDialog(player)}
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-white hover:text-[#1a237e] hover:bg-white"
+                          onClick={() => handleDeletePlayer(player.id)}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="p-4">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="p-2 bg-gray-50 rounded">
-                        <p className="text-xs text-gray-500">Jogos</p>
-                        <p className="font-medium">{player.stats.games}</p>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0 relative w-16 h-16 overflow-hidden rounded-full bg-gray-100">
+                        {player.photo ? (
+                          <img 
+                            src={player.photo} 
+                            alt={player.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <User size={32} className="text-gray-500" />
+                          </div>
+                        )}
                       </div>
-                      <div className="p-2 bg-gray-50 rounded">
-                        <p className="text-xs text-gray-500">Gols</p>
-                        <p className="font-medium">{player.stats.goals}</p>
-                      </div>
-                      <div className="p-2 bg-gray-50 rounded">
-                        <p className="text-xs text-gray-500">Assistências</p>
-                        <p className="font-medium">{player.stats.assists}</p>
+                      <div>
+                        <p><span className="font-semibold">Posição:</span> {player.position}</p>
+                        {player.number && <p><span className="font-semibold">Número:</span> {player.number}</p>}
+                        <div className="flex items-center mt-1">
+                          <span className="font-semibold mr-2">Time:</span>
+                          <div className="flex items-center">
+                            {player.team_logo && (
+                              <img 
+                                src={player.team_logo} 
+                                alt={player.team_name} 
+                                className="w-5 h-5 object-contain mr-1"
+                              />
+                            )}
+                            <span>{player.team_name} ({player.team_category})</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
-                    <Dialog open={isEditingPlayer && selectedPlayer?.id === player.id} onOpenChange={(open) => {
-                      setIsEditingPlayer(open);
-                      if (!open) setSelectedPlayer(null);
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedPlayer(player);
-                            setIsEditingPlayer(true);
-                          }}
-                        >
-                          <Edit size={14} className="mr-1" />
-                          Editar
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[500px]">
-                        {selectedPlayer && (
-                          <>
-                            <DialogHeader>
-                              <DialogTitle>Editar Jogador</DialogTitle>
-                              <DialogDescription>
-                                Atualize as informações do jogador {selectedPlayer.name}.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-name" className="text-right">
-                                  Nome
-                                </Label>
-                                <Input
-                                  id="edit-name"
-                                  value={selectedPlayer.name}
-                                  onChange={(e) => setSelectedPlayer({...selectedPlayer, name: e.target.value})}
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-number" className="text-right">
-                                  Número
-                                </Label>
-                                <Input
-                                  id="edit-number"
-                                  type="number"
-                                  value={selectedPlayer.number}
-                                  onChange={(e) => setSelectedPlayer({
-                                    ...selectedPlayer, 
-                                    number: parseInt(e.target.value) || 0
-                                  })}
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-position" className="text-right">
-                                  Posição
-                                </Label>
-                                <Select 
-                                  value={selectedPlayer.position}
-                                  onValueChange={(value) => setSelectedPlayer({...selectedPlayer, position: value})}
-                                >
-                                  <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Selecione uma posição" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {positions.map(pos => (
-                                      <SelectItem key={pos} value={pos}>
-                                        {pos}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              {/* Resto do formulário similar ao adicionar */}
-                            </div>
-                            <DialogFooter>
-                              <Button type="button" variant="outline" onClick={() => setIsEditingPlayer(false)}>
-                                Cancelar
-                              </Button>
-                              <Button type="button" onClick={handleEditPlayer}>
-                                Salvar Alterações
-                              </Button>
-                            </DialogFooter>
-                          </>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                    <Button 
-                      size="sm" 
-                      variant="destructive"
-                      onClick={() => handleDeletePlayer(player.id)}
-                    >
-                      <Trash2 size={14} className="mr-1" />
-                      Excluir
-                    </Button>
-                    <Button 
-                      size="sm"
-                      variant="default"
-                      onClick={() => {
-                        setSelectedPlayer(player);
-                        setShowPlayerStats(true);
-                      }}
-                    >
-                      <Activity size={14} className="mr-1" />
-                      Estatísticas
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isEditing} onOpenChange={(open) => {
+        if (!open) {
+          setIsEditing(false);
+          setSelectedPlayer(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Jogador</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="edit-name" className="text-sm font-medium">Nome</label>
+              <Input
+                id="edit-name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Nome do jogador"
+                required
+              />
             </div>
-          ) : (
-            <div className="text-center p-8 border rounded-lg bg-gray-50">
-              <User size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum jogador encontrado</h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm ? 'Tente outro termo de pesquisa ou adicione um novo jogador.' : 'Comece adicionando um novo jogador.'}
-              </p>
-              <Button 
-                onClick={() => setIsAddingPlayer(true)}
-                className="bg-[#1a237e] hover:bg-[#0d1442]"
+            <div className="space-y-2">
+              <label htmlFor="edit-position" className="text-sm font-medium">Posição</label>
+              <Input
+                id="edit-position"
+                name="position"
+                value={formData.position}
+                onChange={handleInputChange}
+                placeholder="Ex: Atacante, Goleiro, etc."
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="edit-number" className="text-sm font-medium">Número</label>
+              <Input
+                id="edit-number"
+                name="number"
+                type="number"
+                value={formData.number}
+                onChange={handleInputChange}
+                placeholder="Número da camisa"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="edit-team_id" className="text-sm font-medium">Time</label>
+              <select
+                id="edit-team_id"
+                name="team_id"
+                value={formData.team_id}
+                onChange={handleInputChange}
+                className="w-full p-2 border border-gray-300 rounded-md"
+                required
               >
-                <PlusCircle size={16} className="mr-2" />
-                Adicionar Novo Jogador
-              </Button>
+                <option value="">Selecione um time</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} ({team.category})
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <label htmlFor="edit-photo" className="text-sm font-medium">URL da Foto</label>
+              <Input
+                id="edit-photo"
+                name="photo"
+                value={formData.photo}
+                onChange={handleInputChange}
+                placeholder="https://exemplo.com/foto.png"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => {
+              setIsEditing(false);
+              setSelectedPlayer(null);
+              resetForm();
+            }}>Cancelar</Button>
+            <Button onClick={handleUpdatePlayer} className="bg-[#1a237e] text-white hover:bg-blue-800">
+              Atualizar Jogador
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

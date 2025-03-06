@@ -5,13 +5,14 @@ import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, Clipboard, Trophy, Calendar, BarChart, 
-  Settings, LogOut
+  Settings, LogOut, UserPlus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import TeamManagement from '@/components/admin/TeamManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
+import PlayerManagement from '@/components/admin/PlayerManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -41,10 +42,14 @@ const AdminDashboard = () => {
         </div>
         
         <Tabs defaultValue="teams" className="w-full">
-          <TabsList className="grid grid-cols-5 mb-8">
+          <TabsList className="grid grid-cols-6 mb-8">
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <Users size={16} />
               <span className="hidden md:inline">Times</span>
+            </TabsTrigger>
+            <TabsTrigger value="players" className="flex items-center gap-2">
+              <UserPlus size={16} />
+              <span className="hidden md:inline">Jogadores</span>
             </TabsTrigger>
             <TabsTrigger value="matches" className="flex items-center gap-2">
               <Clipboard size={16} />
@@ -68,6 +73,10 @@ const AdminDashboard = () => {
             <TeamManagement />
           </TabsContent>
           
+          <TabsContent value="players">
+            <PlayerManagement />
+          </TabsContent>
+          
           <TabsContent value="matches">
             <MatchManagement />
           </TabsContent>
@@ -88,8 +97,8 @@ const AdminDashboard = () => {
           
           <TabsContent value="statistics">
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Estatísticas</h2>
-              <p className="text-gray-500">Em breve: Visualização e gerenciamento de estatísticas.</p>
+              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Estatísticas</h2>
+              <p className="text-gray-500">Em breve: Visualização e gerenciamento de estatísticas avançadas, incluindo artilheiros, assistências e outras métricas.</p>
             </div>
           </TabsContent>
         </Tabs>
