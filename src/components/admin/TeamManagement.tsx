@@ -87,7 +87,7 @@ import {
   updateUser,
 } from "@/lib/api";
 import { useUser } from "@/lib/clerk-mock";
-import { Team, User } from "@/types";
+import { Team, User as UserType } from "@/types";
 
 // Define schemas for forms
 const teamFormSchema = z.object({
@@ -144,7 +144,7 @@ const TeamManagement = () => {
   const [isTeamInactive, setIsTeamInactive] = useState<boolean>(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isUserUpdating, setIsUserUpdating] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [isTeamCreating, setIsTeamCreating] = useState(false);
   const [isTeamUpdating, setIsTeamUpdating] = useState(false);
   const [isTeamDeleting, setIsTeamDeleting] = useState(false);
@@ -271,7 +271,7 @@ const TeamManagement = () => {
       setIsUserUpdating(true);
       await queryClient.cancelQueries({ queryKey: ['users'] });
       const previousUsers = queryClient.getQueryData(['users']);
-      queryClient.setQueryData(['users'], (old: User[] = []) =>
+      queryClient.setQueryData(['users'], (old: UserType[] = []) =>
         old.map((user) => (user.id === updatedUser.id ? updatedUser : user))
       );
       return { previousUsers };
@@ -846,6 +846,26 @@ const TeamManagement = () => {
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="active"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Ativo</FormLabel>
+                      <FormDescription>
+                        Determina se o time está ativo no sistema
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />

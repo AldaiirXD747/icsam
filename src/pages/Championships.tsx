@@ -1,79 +1,80 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { supabase } from '../integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { ChampionshipType } from '@/types/database';
-import { Trophy, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { Trophy, Calendar, MapPin, ChevronRight, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { ChampionshipType } from '@/types/database';
+
+// Mock data for championships
+const mockChampionships: ChampionshipType[] = [
+  {
+    id: "1",
+    name: "Campeonato Base Forte 2023",
+    year: "2023",
+    description: "Campeonato anual com todas as categorias",
+    banner_image: "https://example.com/banner1.jpg",
+    start_date: "2023-03-15",
+    end_date: "2023-11-20",
+    location: "Campo do Instituto - Santa Maria, DF",
+    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
+    organizer: "Instituto Criança Santa Maria",
+    sponsors: [
+      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
+      { name: "Patrocinador 2", logo: "https://example.com/logo2.png" }
+    ],
+    status: "finished"
+  },
+  {
+    id: "2",
+    name: "Campeonato Base Forte 2024",
+    year: "2024",
+    description: "Edição 2024 do tradicional campeonato",
+    banner_image: "https://example.com/banner2.jpg",
+    start_date: "2024-03-10",
+    end_date: "2024-11-25",
+    location: "Campo do Instituto - Santa Maria, DF",
+    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
+    organizer: "Instituto Criança Santa Maria",
+    sponsors: [
+      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
+      { name: "Patrocinador 3", logo: "https://example.com/logo3.png" }
+    ],
+    status: "ongoing"
+  },
+  {
+    id: "3",
+    name: "Copa Revelação 2025",
+    year: "2025",
+    description: "Novo torneio para revelar talentos",
+    banner_image: "https://example.com/banner3.jpg",
+    start_date: "2025-01-15",
+    end_date: "2025-06-30",
+    location: "Estádio Municipal - Brasília, DF",
+    categories: ["SUB-13", "SUB-15"],
+    organizer: "Instituto Criança Santa Maria",
+    sponsors: [
+      { name: "Patrocinador 2", logo: "https://example.com/logo2.png" },
+      { name: "Patrocinador 4", logo: "https://example.com/logo4.png" }
+    ],
+    status: "upcoming"
+  }
+];
 
 const Championships = () => {
-  const [championships, setChampionships] = useState<ChampionshipType[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [championships, setChampionships] = useState<ChampionshipType[]>(mockChampionships);
+  const [loading, setLoading] = useState(false);
   const [filterYear, setFilterYear] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
-  
-  useEffect(() => {
-    fetchChampionships();
-  }, []);
-  
-  const fetchChampionships = async () => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('championships')
-        .select('*')
-        .order('year', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      if (data) {
-        // Process JSON fields
-        const processedData = data.map(championship => {
-          return {
-            id: championship.id,
-            name: championship.name,
-            year: championship.year,
-            description: championship.description || "",
-            banner_image: championship.banner_image || "",
-            start_date: championship.start_date,
-            end_date: championship.end_date,
-            location: championship.location,
-            categories: Array.isArray(championship.categories) 
-              ? championship.categories 
-              : typeof championship.categories === 'string' 
-                ? JSON.parse(championship.categories) 
-                : championship.categories || [],
-            organizer: championship.organizer || "",
-            sponsors: Array.isArray(championship.sponsors) 
-              ? championship.sponsors 
-              : typeof championship.sponsors === 'string' 
-                ? JSON.parse(championship.sponsors) 
-                : championship.sponsors || [],
-            status: championship.status as 'upcoming' | 'ongoing' | 'finished'
-          } as ChampionshipType;
-        });
-        
-        setChampionships(processedData);
-      }
-    } catch (error) {
-      console.error('Error fetching championships:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar campeonatos",
-        description: "Não foi possível carregar a lista de campeonatos."
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
   
   // Format dates for display
   const formatDate = (dateString: string) => {
@@ -92,7 +93,10 @@ const Championships = () => {
   const filteredChampionships = championships.filter(championship => {
     const matchesYear = filterYear === "all" || championship.year === filterYear;
     const matchesStatus = filterStatus === "all" || championship.status === filterStatus;
-    return matchesYear && matchesStatus;
+    const matchesSearch = searchTerm.trim() === "" || 
+      championship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      championship.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesYear && matchesStatus && matchesSearch;
   });
   
   // Map status to display text
@@ -111,40 +115,62 @@ const Championships = () => {
       <div className="pt-20 flex-grow">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-blue-primary mb-2">Todos os Campeonatos</h1>
+            <h1 className="text-3xl font-bold text-[#1a237e] mb-2">Todos os Campeonatos</h1>
             <p className="text-gray-600">Confira todos os campeonatos organizados pelo Instituto Santa Maria.</p>
           </div>
           
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-8">
-            <div>
-              <label htmlFor="year-filter" className="block text-sm font-medium text-gray-700 mb-1">Ano</label>
-              <select
-                id="year-filter"
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-                className="rounded-md border border-gray-300 py-2 px-3 text-sm"
-              >
-                <option value="all">Todos os anos</option>
-                {years.map((year, i) => (
-                  <option key={i} value={year}>{year}</option>
-                ))}
-              </select>
+          {/* Search and Filters */}
+          <div className="mb-6 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                placeholder="Buscar campeonatos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
             
-            <div>
-              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                id="status-filter"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-md border border-gray-300 py-2 px-3 text-sm"
+            <div className="flex flex-wrap gap-4">
+              <div className="w-full sm:w-auto">
+                <Select value={filterYear} onValueChange={setFilterYear}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filtrar por ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os anos</SelectItem>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="w-full sm:w-auto">
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os status</SelectItem>
+                    <SelectItem value="upcoming">Próximos</SelectItem>
+                    <SelectItem value="ongoing">Em andamento</SelectItem>
+                    <SelectItem value="finished">Finalizados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="ml-auto"
+                onClick={() => {
+                  setFilterYear("all");
+                  setFilterStatus("all");
+                  setSearchTerm("");
+                }}
               >
-                <option value="all">Todos</option>
-                <option value="upcoming">Próximos</option>
-                <option value="ongoing">Em andamento</option>
-                <option value="finished">Finalizados</option>
-              </select>
+                Limpar filtros
+              </Button>
             </div>
           </div>
           
@@ -153,7 +179,7 @@ const Championships = () => {
               <p className="text-gray-500">Carregando campeonatos...</p>
             </div>
           ) : filteredChampionships.length === 0 ? (
-            <div className="glass-card p-8 text-center">
+            <div className="bg-white rounded-lg p-8 text-center shadow-md">
               <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">Nenhum campeonato encontrado</h3>
               <p className="text-gray-500">Não há campeonatos cadastrados ou correspondentes aos filtros selecionados.</p>
@@ -164,7 +190,7 @@ const Championships = () => {
                 <Link
                   key={championship.id}
                   to={`/championships/${championship.id}`}
-                  className="glass-card overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+                  className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col"
                 >
                   <div className="relative h-48">
                     <img
@@ -173,8 +199,8 @@ const Championships = () => {
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                      <div className="inline-block bg-lime-primary px-2 py-1 rounded-full mb-2">
-                        <span className="text-blue-primary font-medium text-xs">{championship.year}</span>
+                      <div className="inline-block bg-[#c6ff00] px-2 py-1 rounded-full mb-2">
+                        <span className="text-[#1a237e] font-medium text-xs">{championship.year}</span>
                       </div>
                       <h3 className="text-xl font-bold text-white">{championship.name}</h3>
                       <div className="flex items-center mt-2">
@@ -192,7 +218,7 @@ const Championships = () => {
                   <div className="p-4 flex-grow flex flex-col justify-between">
                     <div className="space-y-3">
                       <div className="flex items-start gap-2">
-                        <Calendar className="h-5 w-5 text-blue-primary flex-shrink-0 mt-0.5" />
+                        <Calendar className="h-5 w-5 text-[#1a237e] flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm text-gray-500">Período</p>
                           <p className="font-medium">{formatDate(championship.start_date)} - {formatDate(championship.end_date)}</p>
@@ -200,15 +226,28 @@ const Championships = () => {
                       </div>
                       
                       <div className="flex items-start gap-2">
-                        <MapPin className="h-5 w-5 text-blue-primary flex-shrink-0 mt-0.5" />
+                        <MapPin className="h-5 w-5 text-[#1a237e] flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm text-gray-500">Local</p>
                           <p className="font-medium">{championship.location}</p>
                         </div>
                       </div>
+                      
+                      {championship.categories.length > 0 && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-1">Categorias</p>
+                          <div className="flex flex-wrap gap-1">
+                            {championship.categories.map((category, index) => (
+                              <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                {category}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="mt-4 flex justify-end items-center text-blue-primary font-medium">
+                    <div className="mt-4 flex justify-end items-center text-[#1a237e] font-medium">
                       <span>Ver detalhes</span>
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </div>
