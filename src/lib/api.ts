@@ -11,12 +11,13 @@ export const getTeams = async (filter?: any): Promise<Team[]> => {
     if (filter) {
       if (filter.search) {
         const searchLower = filter.search.toLowerCase();
-        query = query.or(`name.ilike.%${searchLower}%,description.ilike.%${searchLower}%`);
+        query = query.ilike('name', `%${searchLower}%`);
       }
       
       if (filter.active !== undefined) {
-        // Map active status to appropriate field if needed
-        query = query.eq('active', filter.active);
+        // Note: There's no 'active' field in the teams table, 
+        // so we'll need to add that column to the database or ignore this filter
+        // For now, we'll return all teams regardless of active status
       }
       
       if (filter.category) {
@@ -32,9 +33,9 @@ export const getTeams = async (filter?: any): Promise<Team[]> => {
     return (data || []).map(team => ({
       id: team.id,
       name: team.name,
-      description: team.description || undefined,
+      description: undefined, // This field doesn't exist in the DB
       logoUrl: team.logo || undefined,
-      active: true, // Set default as active
+      active: true, // Default as active since we don't have this field in DB
     }));
   } catch (error) {
     console.error('Error fetching teams:', error);
@@ -58,7 +59,7 @@ export const getTeam = async (id: string): Promise<Team | undefined> => {
     return {
       id: data.id,
       name: data.name,
-      description: data.description || undefined,
+      description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
       active: true, // Default as active
     };
@@ -75,7 +76,7 @@ export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
       .from('teams')
       .insert({
         name: team.name,
-        description: team.description || null,
+        // No description field in the DB, so we don't include it
         logo: team.logoUrl || null,
         category: 'SUB-15', // Default category
         group_name: 'Grupo A' // Default group
@@ -88,7 +89,7 @@ export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
     return {
       id: data.id,
       name: data.name,
-      description: data.description || undefined,
+      description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
       active: true,
     };
@@ -105,7 +106,7 @@ export const updateTeam = async (team: Team): Promise<Team> => {
       .from('teams')
       .update({
         name: team.name,
-        description: team.description || null,
+        // No description field in the DB, so we don't include it
         logo: team.logoUrl || null
       })
       .eq('id', team.id)
@@ -117,7 +118,7 @@ export const updateTeam = async (team: Team): Promise<Team> => {
     return {
       id: data.id,
       name: data.name,
-      description: data.description || undefined,
+      description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
       active: true,
     };
