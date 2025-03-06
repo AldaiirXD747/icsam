@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,18 +14,39 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import StatisticsChart from './StatisticsChart';
+import { TopScorer } from '@/types';
 
-interface TopScorer {
+interface TopScorerDisplayItem {
   id: string;
   name: string;
   gols: number;
   time: string;
 }
 
-const TopScorersManagement = () => {
+interface TopScorersManagementProps {
+  isLoading?: boolean;
+  topScorers?: TopScorer[];
+  setTopScorers?: React.Dispatch<React.SetStateAction<TopScorer[]>>;
+  filteredTopScorers?: TopScorer[];
+  selectedCategory?: string;
+  teams?: { id: string, name: string }[];
+  players?: { id: string, name: string, team_id: string }[];
+  championships?: { id: string, name: string }[];
+}
+
+const TopScorersManagement: React.FC<TopScorersManagementProps> = ({
+  isLoading,
+  topScorers,
+  setTopScorers,
+  filteredTopScorers,
+  selectedCategory,
+  teams,
+  players,
+  championships
+}) => {
   const [category, setCategory] = useState<string>('Sub-15');
   const [search, setSearch] = useState<string>('');
-  const [topScorers, setTopScorers] = useState<TopScorer[]>([
+  const [displayScorers, setDisplayScorers] = useState<TopScorerDisplayItem[]>([
     { id: '1', name: 'João Silva', gols: 20, time: 'Flamengo' },
     { id: '2', name: 'Pedro Santos', gols: 18, time: 'Vasco' },
     { id: '3', name: 'Lucas Oliveira', gols: 15, time: 'Botafogo' },
@@ -46,11 +68,11 @@ const TopScorersManagement = () => {
       scorer.name.toLowerCase().includes(search.toLowerCase()) &&
       scorer.time.toLowerCase().includes(category.toLowerCase())
     );
-    setTopScorers(filteredTopScorers);
+    setDisplayScorers(filteredTopScorers);
   }, [category, search]);
 
   // Fix the chart data format to properly match the StatisticsChart component requirements
-  const chartData = topScorers.map(scorer => ({
+  const chartData = displayScorers.map(scorer => ({
     name: scorer.name,
     value: scorer.gols, // Changed from 'gols' to 'value' as required by StatisticsChart
     time: scorer.time
@@ -108,7 +130,7 @@ const TopScorersManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {topScorers.map((scorer) => (
+            {displayScorers.map((scorer) => (
               <TableRow key={scorer.id}>
                 <TableCell className="font-medium">{scorer.id}</TableCell>
                 <TableCell>{scorer.name}</TableCell>
