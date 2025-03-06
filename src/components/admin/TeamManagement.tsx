@@ -1,9 +1,8 @@
-<lov-code>
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -23,7 +22,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -49,10 +47,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Plus, Pencil, Trash2, User, Mail, Lock, ImagePlus, ShieldCheck } from 'lucide-react';
-import { Separator } from "@/components/ui/separator"
+import { Plus, Pencil, Trash2, User } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast"
-import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import {
   Tooltip,
@@ -60,31 +56,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR } from 'date-fns/locale';
-import { DatePicker } from "@/components/date-picker"
 import { useSearchParams } from 'react-router-dom';
-import { Skeleton } from "@/components/ui/skeleton"
-import { Label as ShadLabel } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input as ShadInput } from "@/components/ui/input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,51 +75,43 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardDescription,
-  HoverCardHeader,
-  HoverCardTitle,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card"
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-  ResizableSeparator,
-} from "@/components/ui/resizable"
-import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { Slider } from "@/components/ui/slider"
-import { Switch as ShadSwitch } from "@/components/ui/switch"
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
-import { Separator as ShadSeparator } from "@/components/ui/separator"
-import { ContextMenu, ContextMenuCheckboxItem, ContextMenuContent, ContextMenuGroup, ContextMenuItem, ContextMenuLabel, ContextMenuRadioGroup, ContextMenuRadioItem, ContextMenuSeparator, ContextMenuShortcut, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger, ContextMenuTrigger } from "@/components/ui/context-menu"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Progress as ShadProgress } from "@/components/ui/progress"
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Calendar as ShadCalendar } from "@/components/ui/calendar"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { generateRandomString } from "@/lib/utils";
-import { Check, Copy, MoreHorizontal, Share2 } from "lucide-react"
-import * as Collapsible from "@radix-ui/react-collapsible"
-import {
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTeam as createTeamAPI,
   updateTeam as updateTeamAPI,
   deleteTeam as deleteTeamAPI,
   getTeams as getTeamsAPI,
-  getTeam as getTeamAPI,
   getUsers as getUsersAPI,
   updateUser as updateUserAPI,
 } from "@/lib/api";
 import { useUser } from "@clerk/clerk-react";
+
+// Define types for Team and User if they're not already defined elsewhere
+interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  foundationDate?: string | Date;
+  active: boolean;
+}
+
+interface User {
+  id: string;
+  name?: string;
+  email?: string;
+  teamId?: string;
+}
 
 const teamFormSchema = z.object({
   name: z.string().min(2, {
@@ -175,7 +146,7 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>
 
-const TeamManagement = () => {
+export const TeamManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast()
@@ -619,7 +590,7 @@ const TeamManagement = () => {
                 </TableCell>
                 <TableCell>{team.name}</TableCell>
                 <TableCell>
-                  <ShadSwitch
+                  <Switch
                     checked={team.active}
                     onCheckedChange={(checked) => handleTeamActiveChange(team, checked)}
                   />
@@ -876,7 +847,7 @@ const TeamManagement = () => {
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                      <PopoverContent className="w-auto p-0" align="start" side="bottom">
                         <Calendar
                           mode="single"
                           locale={ptBR}
@@ -913,7 +884,7 @@ const TeamManagement = () => {
         <DrawerTrigger asChild>
           <Button variant="outline">Abrir Drawer</Button>
         </DrawerTrigger>
-        <DrawerContent className="sm:max-w-[425px]">
+        <DrawerContent className="sm:max-w-[425px] p-4">
           <DrawerHeader>
             <DrawerTitle>Editar Time</DrawerTitle>
             <DrawerDescription>
@@ -950,3 +921,170 @@ const TeamManagement = () => {
               />
               <FormField
                 control={form.control}
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="file"
+                          id="logo-upload-edit"
+                          className="hidden"
+                          onChange={handleLogoUpload}
+                        />
+                        <Label htmlFor="logo-upload-edit" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                          {logoFile ? logoFile.name : selectedTeam?.logoUrl ? "Alterar Logo" : "Selecionar Logo"}
+                        </Label>
+                        {(logoFile || selectedTeam?.logoUrl) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedTeam?.logoUrl && !logoFile) {
+                                handleRemoveLogo();
+                              } else {
+                                setLogoFile(null);
+                                form.setValue("logoUrl", selectedTeam?.logoUrl || "");
+                              }
+                            }}
+                          >
+                            Remover
+                          </Button>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="websiteUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="URL do website" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Email do time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Telefone do time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="active"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Ativo</FormLabel>
+                      <FormDescription>
+                        Determina se o time está ativo no sistema
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">
+                {isTeamUpdating ? (
+                  <>
+                    Atualizando...
+                    <svg className="animate-spin h-5 w-5 ml-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                  </>
+                ) : "Atualizar Time"}
+              </Button>
+            </form>
+          </Form>
+        </DrawerContent>
+      </Drawer>
+
+      <Dialog open={isUserAssignmentDialogOpen} onOpenChange={setIsUserAssignmentDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Atribuir Usuário ao Time</DialogTitle>
+            <DialogDescription>
+              Selecione um usuário para vincular a este time.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...userAssignmentForm}>
+            <form onSubmit={userAssignmentForm.handleSubmit(onUserAssignmentSubmit)} className="space-y-4">
+              <FormField
+                control={userAssignmentForm.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuário</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um usuário" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {users?.filter(user => !user.teamId).map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name || user.email || 'Usuário sem nome'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isUserLoading}>
+                {isUserLoading ? (
+                  <>
+                    Atribuindo...
+                    <svg className="animate-spin h-5 w-5 ml-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                  </>
+                ) : "Atribuir Usuário"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default TeamManagement;

@@ -10,7 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { TeamManagement } from '@/components/admin/TeamManagement';
+import TeamManagement from '@/components/admin/TeamManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
 import PlayerManagement from '@/components/admin/PlayerManagement';
 import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
