@@ -5,16 +5,13 @@ import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, Clipboard, Trophy, Calendar, BarChart, 
-  Settings, LogOut, PlusCircle, Edit, List
+  Settings, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import TeamManagement from '@/components/admin/TeamManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
-import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
-import ScheduleManagement from '@/components/admin/ScheduleManagement';
-import StatisticsManagement from '@/components/admin/StatisticsManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -76,15 +73,24 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="championships">
-            <ChampionshipManagement />
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Campeonatos</h2>
+              <p className="text-gray-500">Em breve: Gerenciamento completo de campeonatos.</p>
+            </div>
           </TabsContent>
           
           <TabsContent value="schedule">
-            <ScheduleManagement />
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Agenda</h2>
+              <p className="text-gray-500">Em breve: Visualização e gerenciamento de agenda de jogos.</p>
+            </div>
           </TabsContent>
           
           <TabsContent value="statistics">
-            <StatisticsManagement />
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Estatísticas</h2>
+              <p className="text-gray-500">Em breve: Visualização e gerenciamento de estatísticas.</p>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
