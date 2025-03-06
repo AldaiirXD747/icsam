@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { MapPin, Mail, Phone } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -14,12 +15,12 @@ const Footer = () => {
                 className="h-12 mr-3 bg-white p-1 rounded"
               />
               <div>
-                <h2 className="text-xl font-bold">Base Forte</h2>
-                <p className="text-sm text-gray-300">2025</p>
+                <h2 className="text-xl font-bold">Instituto Criança</h2>
+                <p className="text-sm text-gray-300">Santa Maria</p>
               </div>
             </Link>
             <p className="text-gray-300 mb-4 max-w-md">
-              O Campeonato Base Forte é um projeto do Instituto Criança Santa Maria (CNPJ 43.999.350/0001-16) que visa promover o esporte e revelar novos talentos nas categorias de base.
+              O Instituto Criança Santa Maria (CNPJ 43.999.350/0001-16) tem como missão transformar vidas através do esporte e educação, promovendo inclusão social e desenvolvimento humano.
             </p>
             <div className="flex space-x-4">
               <a href="#" aria-label="Facebook" className="text-white hover:text-lime-primary transition-colors">
@@ -47,17 +48,20 @@ const Footer = () => {
                 <Link to="/" className="text-gray-300 hover:text-lime-primary transition-colors">Home</Link>
               </li>
               <li>
-                <Link to="/teams" className="text-gray-300 hover:text-lime-primary transition-colors">Times</Link>
+                <Link to="/sobre" className="text-gray-300 hover:text-lime-primary transition-colors">Sobre</Link>
               </li>
               <li>
-                <Link to="/matches" className="text-gray-300 hover:text-lime-primary transition-colors">Jogos</Link>
+                <Link to="/championships" className="text-gray-300 hover:text-lime-primary transition-colors">Campeonatos</Link>
+              </li>
+              <li>
+                <Link to="/teams" className="text-gray-300 hover:text-lime-primary transition-colors">Times</Link>
               </li>
               <li>
                 <Link to="/statistics" className="text-gray-300 hover:text-lime-primary transition-colors">Estatísticas</Link>
               </li>
               <li>
                 <a href="https://institutocriancasantamaria.com.br/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-lime-primary transition-colors">
-                  Início
+                  Site Oficial
                 </a>
               </li>
             </ul>
@@ -67,30 +71,17 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-4">Contato</h3>
             <ul className="space-y-2">
               <li className="flex items-start">
-                <span className="text-lime-primary mr-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </span>
+                <Mail className="text-lime-primary mr-2 h-5 w-5 shrink-0 mt-0.5" />
                 <a href="mailto:contato@institutocriancasantamaria.com.br" className="text-gray-300 hover:text-lime-primary transition-colors">
                   contato@institutocriancasantamaria.com.br
                 </a>
               </li>
               <li className="flex items-start">
-                <span className="text-lime-primary mr-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </span>
+                <Phone className="text-lime-primary mr-2 h-5 w-5 shrink-0 mt-0.5" />
                 <span className="text-gray-300">(61) 99312-8187</span>
               </li>
               <li className="flex items-start">
-                <span className="text-lime-primary mr-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </span>
+                <MapPin className="text-lime-primary mr-2 h-5 w-5 shrink-0 mt-0.5" />
                 <span className="text-gray-300">
                   Campo Sintético - Quadra 120, Santa Maria, DF
                   <a 
@@ -110,7 +101,7 @@ const Footer = () => {
         <div className="border-t border-blue-light mt-12 pt-8 text-center text-sm text-gray-300">
           <p>&copy; {new Date().getFullYear()} Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16). Todos os direitos reservados.</p>
           <p className="mt-2">
-            Desenvolvido com ❤️ para o Campeonato Base Forte – 2025
+            Desenvolvido para promover o esporte e a inclusão social
           </p>
         </div>
       </div>

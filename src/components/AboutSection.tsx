@@ -16,7 +16,7 @@ const AboutSection = () => {
               Instituto Criança Santa Maria
             </h2>
             <p className="text-gray-700 mb-4">
-              Fundado em 2004, o Instituto Criança Santa Maria nasceu com a missão de transformar a vida de crianças e adolescentes através do esporte, cultura e educação, proporcionando oportunidades de desenvolvimento integral.
+              Fundado em 14 de outubro de 2021, o Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16) nasceu com a missão de transformar a vida de crianças e adolescentes através do esporte, cultura e educação, proporcionando oportunidades de desenvolvimento integral.
             </p>
             <p className="text-gray-700 mb-6">
               Nossa visão é ser referência em projetos sociais que utilizam o esporte como ferramenta de inclusão e desenvolvimento humano, formando não apenas atletas, mas cidadãos conscientes e preparados para enfrentar os desafios da vida.
@@ -24,7 +24,7 @@ const AboutSection = () => {
             <div className="flex flex-wrap items-center gap-6 mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-blue-primary flex items-center justify-center text-white font-bold text-xl">
-                  19
+                  3+
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Anos de</p>

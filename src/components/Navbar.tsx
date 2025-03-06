@@ -54,15 +54,15 @@ const Navbar = () => {
           <Link to="/transparencia" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
             Transparência
           </Link>
-          <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
-            Contato
-          </Link>
           <div className="relative group">
             <button className="text-blue-primary hover:text-blue-light font-medium transition-colors flex items-center">
-              Base Forte <ChevronDown size={16} className="ml-1" />
+              Campeonatos <ChevronDown size={16} className="ml-1" />
             </button>
             <div className="absolute z-10 right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100">
               <div className="py-1" role="menu" aria-orientation="vertical">
+                <Link to="/championships" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
+                  Todos os Campeonatos
+                </Link>
                 <Link to="/teams" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
                   Times
                 </Link>
@@ -75,15 +75,20 @@ const Navbar = () => {
                 <Link to="/standings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
                   Classificação
                 </Link>
-                <Link to="/championships/base-forte-2025" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Campeonato 2025
-                </Link>
               </div>
             </div>
           </div>
-          <Link to="/login" className="btn-primary">
-            Login
+          <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
+            Contato
           </Link>
+          <a 
+            href="https://institutocriancasantamaria.com.br/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="btn-primary"
+          >
+            Site Oficial
+          </a>
         </div>
         
         {/* Mobile menu button */}
@@ -109,22 +114,22 @@ const Navbar = () => {
             <Link to="/transparencia" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
               Transparência
             </Link>
-            <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
-              Contato
-            </Link>
             <div className="py-2 border-b">
               <button 
                 onClick={() => {
-                  const submenu = document.getElementById('baseforte-submenu');
+                  const submenu = document.getElementById('campeonatos-submenu');
                   if (submenu) {
                     submenu.classList.toggle('hidden');
                   }
                 }}
                 className="text-blue-primary hover:text-blue-light font-medium transition-colors flex items-center"
               >
-                Base Forte <ChevronDown size={16} className="ml-1" />
+                Campeonatos <ChevronDown size={16} className="ml-1" />
               </button>
-              <div id="baseforte-submenu" className="hidden pl-4 mt-2">
+              <div id="campeonatos-submenu" className="hidden pl-4 mt-2">
+                <Link to="/championships" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
+                  Todos os Campeonatos
+                </Link>
                 <Link to="/teams" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
                   Times
                 </Link>
@@ -137,14 +142,19 @@ const Navbar = () => {
                 <Link to="/standings" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
                   Classificação
                 </Link>
-                <Link to="/championships/base-forte-2025" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Campeonato 2025
-                </Link>
               </div>
             </div>
-            <Link to="/login" className="btn-primary text-center">
-              Login
+            <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
+              Contato
             </Link>
+            <a 
+              href="https://institutocriancasantamaria.com.br/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="btn-primary text-center"
+            >
+              Site Oficial
+            </a>
           </div>
         </div>
       )}
