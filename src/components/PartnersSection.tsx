@@ -62,14 +62,13 @@ const PartnersSection = () => {
         <h3 className="text-2xl font-bold text-blue-primary text-center mb-8">Parceiros Oficiais</h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {/* GDF Logo */}
+          {/* GDF Logo - Removed the label that appeared underneath */}
           <div className="glass-card p-6 flex flex-col items-center justify-center h-40 group hover:-translate-y-1 transition-all duration-300">
             <img 
-              src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
-              alt="Secretaria de Esporte - GDF" 
+              src="/lovable-uploads/260c751e-c792-499e-bac7-1a219ba087bd.png" 
+              alt="Instituto Criança Santa Maria" 
               className="max-h-16 object-contain mb-3 group-hover:scale-105 transition-transform duration-300"
             />
-            <p className="text-sm text-gray-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Secretaria de Esporte - GDF</p>
           </div>
           
           {/* Secretaria de Educação Logo */}
