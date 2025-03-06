@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Calendar, Clock, MapPin, Users, Flag } from 'lucide-react';
 
-// Define the types
 type Team = {
   id: string;
   name: string;
@@ -35,7 +33,6 @@ type Match = {
   round: string;
 };
 
-// Mock data
 const mockTeams: Team[] = [
   { id: "1", name: "Federal", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png" },
   { id: "2", name: "Estrela", logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png" },
@@ -106,7 +103,6 @@ const mockMatches: Match[] = [
   }
 ];
 
-// Status badge color mapping
 const statusColorMap: Record<MatchStatus, string> = {
   "scheduled": "bg-blue-100 text-blue-800",
   "in_progress": "bg-green-100 text-green-800",
@@ -114,7 +110,6 @@ const statusColorMap: Record<MatchStatus, string> = {
   "cancelled": "bg-red-100 text-red-800"
 };
 
-// Status display text mapping
 const statusTextMap: Record<MatchStatus, string> = {
   "scheduled": "Agendado",
   "in_progress": "Em andamento",
@@ -133,11 +128,10 @@ const MatchManagement: React.FC = () => {
   
   const { toast } = useToast();
 
-  // Form state
   const [formData, setFormData] = useState({
     date: "",
     time: "",
-    location: "",
+    location: "Campo Sintético - Quadra 120",
     category: "",
     homeTeamId: "",
     awayTeamId: "",
@@ -148,13 +142,11 @@ const MatchManagement: React.FC = () => {
     round: ""
   });
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Filter matches based on search term and filters
   const filteredMatches = matches.filter(match => {
     const matchesSearch = 
       match.homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -167,7 +159,6 @@ const MatchManagement: React.FC = () => {
     return matchesSearch && matchesCategory && matchesTab;
   });
 
-  // Create a new match
   const handleCreateMatch = () => {
     if (!formData.date || !formData.time || !formData.location || 
         !formData.category || !formData.homeTeamId || !formData.awayTeamId || !formData.round) {
@@ -225,7 +216,6 @@ const MatchManagement: React.FC = () => {
     });
   };
 
-  // Update an existing match
   const handleUpdateMatch = () => {
     if (!currentMatch) return;
 
@@ -298,7 +288,6 @@ const MatchManagement: React.FC = () => {
     });
   };
 
-  // Delete a match
   const handleDeleteMatch = (id: number) => {
     if (confirm("Tem certeza que deseja excluir esta partida?")) {
       const updatedMatches = matches.filter(match => match.id !== id);
@@ -311,12 +300,11 @@ const MatchManagement: React.FC = () => {
     }
   };
 
-  // Reset form data
   const resetForm = () => {
     setFormData({
       date: "",
       time: "",
-      location: "",
+      location: "Campo Sintético - Quadra 120",
       category: "",
       homeTeamId: "",
       awayTeamId: "",
@@ -328,7 +316,6 @@ const MatchManagement: React.FC = () => {
     });
   };
 
-  // Open edit dialog
   const openEditDialog = (match: Match) => {
     setCurrentMatch(match);
     setFormData({
@@ -347,7 +334,6 @@ const MatchManagement: React.FC = () => {
     setIsEditing(true);
   };
 
-  // Format the date for display
   const formatDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;

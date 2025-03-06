@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -28,7 +27,7 @@ const matchesData = [
     time: '09:00',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 2,
@@ -47,7 +46,7 @@ const matchesData = [
     time: '10:30',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 3,
@@ -66,7 +65,7 @@ const matchesData = [
     time: '09:00',
     group: 'B',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 4,
@@ -85,7 +84,7 @@ const matchesData = [
     time: '10:30',
     group: 'B',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 5,
@@ -104,7 +103,7 @@ const matchesData = [
     time: '09:00',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 6,
@@ -123,7 +122,7 @@ const matchesData = [
     time: '10:30',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 7,
@@ -142,7 +141,7 @@ const matchesData = [
     time: '09:00',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 8,
@@ -161,7 +160,7 @@ const matchesData = [
     time: '10:30',
     group: 'A',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 9,
@@ -180,7 +179,7 @@ const matchesData = [
     time: '09:00',
     group: 'B',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 10,
@@ -199,7 +198,7 @@ const matchesData = [
     time: '10:30',
     group: 'B',
     status: 'finished' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 11,
@@ -218,7 +217,7 @@ const matchesData = [
     time: '09:00',
     group: 'A',
     status: 'scheduled' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 12,
@@ -237,7 +236,7 @@ const matchesData = [
     time: '10:30',
     group: 'A',
     status: 'scheduled' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   },
   {
     id: 13,
@@ -256,7 +255,7 @@ const matchesData = [
     time: '09:00',
     group: 'B',
     status: 'scheduled' as MatchStatus,
-    venue: 'Campo do Instituto'
+    venue: 'Campo Sintético - Quadra 120'
   }
 ];
 
