@@ -950,7 +950,30 @@ const teamsData = [
         number: 7,
         position: 'Atacante',
         age: 12,
-        photo: 'https://images.unsplash.com/photo-1533107862482-0e
+        photo: 'https://images.unsplash.com/photo-1533107862482-0e6974b06ec4?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+        stats: {
+          games: 12,
+          goals: 7,
+          assists: 3,
+          yellowCards: 2,
+          redCards: 0,
+        },
+      },
+    ],
+    matchHistory: [
+      {
+        id: 8001,
+        date: '16/02/2025',
+        opponent: 'Estrela',
+        opponentLogo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
+        result: 'win',
+        score: {
+          team: 2,
+          opponent: 0,
+        },
+        category: 'SUB-13',
+      },
+    ],
   },
 ];
 
