@@ -1,8 +1,7 @@
-importtypescript
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import logo from '../assets/logo.svg';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,7 +14,11 @@ const Navbar = () => {
     <nav className="bg-blue-primary fixed top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img src={logo} alt="Base Forte" className="h-8 mr-2" />
+          <img 
+            src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
+            alt="Base Forte" 
+            className="h-8 mr-2 bg-white p-1 rounded" 
+          />
           <span className="text-white font-bold text-lg">Base Forte</span>
         </Link>
 
@@ -57,7 +60,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu Content */}
-      <div className={`md:hidden ${isMenuOpen ? 'block' : 'none'} bg-blue-primary py-4`}>
+      <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'} bg-blue-primary py-4`}>
         <div className="flex flex-col items-center space-y-4">
           <Link to="/" className="text-white hover:text-lime-primary transition block">
             Início
