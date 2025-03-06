@@ -28,8 +28,8 @@ const About = () => {
             <div className="flex flex-col lg:flex-row items-center gap-12">
               <div className="lg:w-1/2">
                 <img 
-                  src="/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png" 
-                  alt="Cesar da Conceição" 
+                  src="/lovable-uploads/b57c03b4-f522-4117-86e8-8ecb86f62697.png" 
+                  alt="Cesar da Conceição - Fundador e Presidente" 
                   className="rounded-xl shadow-lg w-full h-auto"
                 />
               </div>
