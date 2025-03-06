@@ -2,22 +2,26 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, Clipboard, Trophy, Calendar, BarChart, 
-  Settings, LogOut 
+  Settings, LogOut, PlusCircle, Edit, List
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import TeamManagement from '@/components/admin/TeamManagement';
+import MatchManagement from '@/components/admin/MatchManagement';
+import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
+import ScheduleManagement from '@/components/admin/ScheduleManagement';
+import StatisticsManagement from '@/components/admin/StatisticsManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const handleLogout = () => {
-    // In a real app, this would call supabase.auth.signOut()
+    // Implementar autenticação real no futuro com Supabase
     toast({
       title: "Desconectado",
       description: "Você foi desconectado com sucesso.",
@@ -27,12 +31,12 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 mt-16">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Painel Administrativo</h1>
+          <h1 className="text-3xl font-bold text-[#1a237e]">Painel Administrativo</h1>
           <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
             <LogOut size={16} />
             Sair
@@ -63,51 +67,24 @@ const AdminDashboard = () => {
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="teams" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Gerenciar Times</h2>
-              <p className="text-gray-600 mb-6">Adicione, edite ou remova times do sistema.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* This would be populated with team management components */}
-                <div className="border rounded-lg p-4 text-center">
-                  <p className="font-semibold">Adicionar Novo Time</p>
-                </div>
-                <div className="border rounded-lg p-4 text-center">
-                  <p className="font-semibold">Editar Times Existentes</p>
-                </div>
-                <div className="border rounded-lg p-4 text-center">
-                  <p className="font-semibold">Gerenciar Jogadores</p>
-                </div>
-              </div>
-            </Card>
+          <TabsContent value="teams">
+            <TeamManagement />
           </TabsContent>
           
-          <TabsContent value="matches" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Gerenciar Partidas</h2>
-              <p className="text-gray-600">Adicione resultados de jogos e agende novas partidas.</p>
-            </Card>
+          <TabsContent value="matches">
+            <MatchManagement />
           </TabsContent>
           
-          <TabsContent value="championships" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Gerenciar Campeonatos</h2>
-              <p className="text-gray-600">Crie e gerencie campeonatos e torneios.</p>
-            </Card>
+          <TabsContent value="championships">
+            <ChampionshipManagement />
           </TabsContent>
           
-          <TabsContent value="schedule" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Agenda de Jogos</h2>
-              <p className="text-gray-600">Visualize e organize o calendário de jogos.</p>
-            </Card>
+          <TabsContent value="schedule">
+            <ScheduleManagement />
           </TabsContent>
           
-          <TabsContent value="statistics" className="space-y-6">
-            <Card className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Estatísticas</h2>
-              <p className="text-gray-600">Visualize dados e estatísticas do sistema.</p>
-            </Card>
+          <TabsContent value="statistics">
+            <StatisticsManagement />
           </TabsContent>
         </Tabs>
       </main>
