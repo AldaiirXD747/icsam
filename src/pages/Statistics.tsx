@@ -5,12 +5,15 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trophy, Star, Award, Shield } from "lucide-react";
 
 // Mock data for player statistics
 const playerStats = [
   {
     id: 1,
     name: "Lucas Silva",
+    photo: "https://images.unsplash.com/photo-1516846461093-f26e6dbff354?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c29jY2VyJTIwYm95fGVufDB8fDB8fHww",
     teamName: "Federal",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png",
     goals: 7,
@@ -22,6 +25,7 @@ const playerStats = [
   {
     id: 2,
     name: "Pedro Alves",
+    photo: "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "Furacão",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png",
     goals: 5,
@@ -33,6 +37,7 @@ const playerStats = [
   {
     id: 3,
     name: "João Costa",
+    photo: "https://images.unsplash.com/photo-1459874536175-d3ca7ee48feb?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "Atlético City",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png",
     goals: 4,
@@ -44,6 +49,7 @@ const playerStats = [
   {
     id: 4,
     name: "Matheus Oliveira",
+    photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "Grêmio",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png",
     goals: 8,
@@ -55,6 +61,7 @@ const playerStats = [
   {
     id: 5,
     name: "Gabriel Santos",
+    photo: "https://images.unsplash.com/photo-1534308143481-c55f00be8bd7?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "BSA",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png",
     goals: 6,
@@ -66,6 +73,7 @@ const playerStats = [
   {
     id: 6,
     name: "Rafael Lima",
+    photo: "https://images.unsplash.com/photo-1508341591423-4347099e1f19?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "Lyon",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png",
     goals: 5,
@@ -77,6 +85,7 @@ const playerStats = [
   {
     id: 7,
     name: "Felipe Souza",
+    photo: "https://images.unsplash.com/photo-1580406855899-1e389bb4ab57?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
     teamName: "Monte",
     teamLogo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png",
     goals: 4,
@@ -195,7 +204,7 @@ const Statistics = () => {
   const teamGoalsData = prepareTeamGoalChartData(teamStats, selectedCategory);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <div className="pt-24 flex-grow">
         <div className="container mx-auto px-4 py-8">
@@ -214,18 +223,21 @@ const Statistics = () => {
             <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
               Filtrar por Categoria
             </label>
-            <select
-              id="category-filter"
-              className="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-primary"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+            <Select 
+              value={selectedCategory} 
+              onValueChange={(value) => setSelectedCategory(value)}
             >
-              <option value="all">Todas as Categorias</option>
-              <option value="SUB-11">SUB-11</option>
-              <option value="SUB-13">SUB-13</option>
-              <option value="SUB-15">SUB-15</option>
-              <option value="SUB-17">SUB-17</option>
-            </select>
+              <SelectTrigger className="w-full md:w-64">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Categorias</SelectItem>
+                <SelectItem value="SUB-11">SUB-11</SelectItem>
+                <SelectItem value="SUB-13">SUB-13</SelectItem>
+                <SelectItem value="SUB-15">SUB-15</SelectItem>
+                <SelectItem value="SUB-17">SUB-17</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           {/* Tabs for different statistics */}
@@ -239,8 +251,13 @@ const Statistics = () => {
             <TabsContent value="players">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                 {/* Top Scorers */}
-                <div className="glass-card p-6">
-                  <h2 className="text-xl font-bold text-blue-primary mb-4">Artilheiros</h2>
+                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-blue-100 p-2 rounded-full mr-3">
+                      <Trophy className="h-6 w-6 text-blue-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold text-blue-primary">Artilheiros</h2>
+                  </div>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -281,7 +298,7 @@ const Statistics = () => {
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-3">Top 5 Artilheiros</h3>
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
+                      <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -301,9 +318,18 @@ const Statistics = () => {
                             .sort((a, b) => b.goals - a.goals)
                             .slice(0, 5)
                             .map(player => (
-                              <tr key={player.id}>
+                              <tr key={player.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="font-medium text-gray-900">{player.name}</div>
+                                  <div className="flex items-center">
+                                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                                      <img 
+                                        src={player.photo} 
+                                        alt={player.name} 
+                                        className="h-full w-full object-cover" 
+                                      />
+                                    </div>
+                                    <div className="font-medium text-gray-900">{player.name}</div>
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
@@ -323,8 +349,13 @@ const Statistics = () => {
                 </div>
                 
                 {/* Top Assisters */}
-                <div className="glass-card p-6">
-                  <h2 className="text-xl font-bold text-blue-primary mb-4">Assistências</h2>
+                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-lime-100 p-2 rounded-full mr-3">
+                      <Star className="h-6 w-6 text-lime-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-blue-primary">Assistências</h2>
+                  </div>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -365,7 +396,7 @@ const Statistics = () => {
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-3">Top 5 Assistências</h3>
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
+                      <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -385,9 +416,18 @@ const Statistics = () => {
                             .sort((a, b) => b.assists - a.assists)
                             .slice(0, 5)
                             .map(player => (
-                              <tr key={player.id}>
+                              <tr key={player.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="font-medium text-gray-900">{player.name}</div>
+                                  <div className="flex items-center">
+                                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                                      <img 
+                                        src={player.photo} 
+                                        alt={player.name} 
+                                        className="h-full w-full object-cover" 
+                                      />
+                                    </div>
+                                    <div className="font-medium text-gray-900">{player.name}</div>
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
@@ -395,7 +435,7 @@ const Statistics = () => {
                                     <span>{player.teamName}</span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-lime-primary font-bold">
+                                <td className="px-6 py-4 whitespace-nowrap text-lime-600 font-bold">
                                   {player.assists}
                                 </td>
                               </tr>
@@ -407,10 +447,15 @@ const Statistics = () => {
                 </div>
                 
                 {/* Discipline Stats */}
-                <div className="glass-card p-6">
-                  <h2 className="text-xl font-bold text-blue-primary mb-4">Cartões</h2>
+                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow lg:col-span-2">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-red-100 p-2 rounded-full mr-3">
+                      <Award className="h-6 w-6 text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-blue-primary">Cartões</h2>
+                  </div>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                       <thead className="bg-gray-50">
                         <tr>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -433,9 +478,18 @@ const Statistics = () => {
                           .sort((a, b) => (b.yellowCards + b.redCards*2) - (a.yellowCards + a.redCards*2))
                           .slice(0, 10)
                           .map(player => (
-                            <tr key={player.id}>
+                            <tr key={player.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="font-medium text-gray-900">{player.name}</div>
+                                <div className="flex items-center">
+                                  <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                                    <img 
+                                      src={player.photo} 
+                                      alt={player.name} 
+                                      className="h-full w-full object-cover" 
+                                    />
+                                  </div>
+                                  <div className="font-medium text-gray-900">{player.name}</div>
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
@@ -466,8 +520,13 @@ const Statistics = () => {
             <TabsContent value="teams">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                 {/* Team Goals */}
-                <div className="glass-card p-6">
-                  <h2 className="text-xl font-bold text-blue-primary mb-4">Gols por Time</h2>
+                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-blue-100 p-2 rounded-full mr-3">
+                      <Shield className="h-6 w-6 text-blue-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold text-blue-primary">Gols por Time</h2>
+                  </div>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -492,10 +551,15 @@ const Statistics = () => {
                 </div>
                 
                 {/* Team Performance */}
-                <div className="glass-card p-6">
-                  <h2 className="text-xl font-bold text-blue-primary mb-4">Desempenho dos Times</h2>
+                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-blue-100 p-2 rounded-full mr-3">
+                      <Trophy className="h-6 w-6 text-blue-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold text-blue-primary">Desempenho dos Times</h2>
+                  </div>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
                       <thead className="bg-gray-50">
                         <tr>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -533,10 +597,12 @@ const Statistics = () => {
                             return b.goalsScored - a.goalsScored;
                           })
                           .map(team => (
-                            <tr key={team.id}>
+                            <tr key={team.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <img src={team.logo} alt={team.name} className="h-8 w-8 mr-2" />
+                                  <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden mr-3">
+                                    <img src={team.logo} alt={team.name} className="max-h-10 max-w-10" />
+                                  </div>
                                   <span className="font-medium">{team.name}</span>
                                 </div>
                               </td>
