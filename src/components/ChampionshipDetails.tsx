@@ -2,22 +2,27 @@
 import React from 'react';
 import { Calendar, MapPin, Trophy, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface Sponsor {
+  name: string;
+  logo: string;
+}
 
 interface ChampionshipDetailsProps {
   id: string;
   name: string;
   year: string;
   description: string;
-  bannerImage: string;
-  startDate: string;
-  endDate: string;
+  banner_image: string;
+  start_date: string;
+  end_date: string;
   location: string;
   categories: string[];
   organizer: string;
-  sponsors: Array<{
-    name: string;
-    logo: string;
-  }>;
+  sponsors: Sponsor[];
+  status: 'upcoming' | 'ongoing' | 'finished';
 }
 
 const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
@@ -25,14 +30,42 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
   name,
   year,
   description,
-  bannerImage,
-  startDate,
-  endDate,
+  banner_image,
+  start_date,
+  end_date,
   location,
   categories,
   organizer,
   sponsors,
+  status
 }) => {
+  // Format dates for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd MMM yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
+  };
+
+  const formattedStartDate = formatDate(start_date);
+  const formattedEndDate = formatDate(end_date);
+  
+  // Handle categories display
+  const displayCategories = Array.isArray(categories) 
+    ? categories.join(', ') 
+    : typeof categories === 'string' 
+      ? categories 
+      : 'Categorias não definidas';
+
+  // Handle sponsors
+  const displaySponsors = Array.isArray(sponsors) 
+    ? sponsors 
+    : typeof sponsors === 'string' 
+      ? JSON.parse(sponsors) 
+      : [];
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="flex flex-col space-y-8">
@@ -40,7 +73,7 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
         <div className="glass-card overflow-hidden">
           <div className="relative h-64 md:h-96">
             <img
-              src={bannerImage}
+              src={banner_image}
               alt={`${name} ${year}`}
               className="w-full h-full object-cover"
             />
@@ -58,7 +91,7 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
               <Calendar className="h-8 w-8 text-blue-primary" />
               <div>
                 <p className="text-sm text-gray-500">Período</p>
-                <p className="font-medium">{startDate} - {endDate}</p>
+                <p className="font-medium">{formattedStartDate} - {formattedEndDate}</p>
               </div>
             </div>
             
@@ -74,7 +107,7 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
               <Users className="h-8 w-8 text-blue-primary" />
               <div>
                 <p className="text-sm text-gray-500">Categorias</p>
-                <p className="font-medium">{categories.join(', ')}</p>
+                <p className="font-medium">{displayCategories}</p>
               </div>
             </div>
             
@@ -120,7 +153,7 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
             </div>
           </Link>
           
-          <Link to={`/championships/${id}/stats`} className="glass-card p-6 hover:scale-105 transition-all duration-300">
+          <Link to={`/championships/${id}/statistics`} className="glass-card p-6 hover:scale-105 transition-all duration-300">
             <h3 className="text-xl font-semibold text-blue-primary mb-2">Estatísticas</h3>
             <p className="text-gray-600 mb-4">Estatísticas detalhadas do campeonato</p>
             <div className="flex justify-end">
@@ -135,16 +168,20 @@ const ChampionshipDetails: React.FC<ChampionshipDetailsProps> = ({
         <div className="glass-card p-6">
           <h3 className="text-xl font-semibold text-blue-primary mb-6">Patrocinadores</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sponsors.map((sponsor, index) => (
-              <div key={index} className="p-4 border border-gray-100 rounded-lg flex flex-col items-center">
-                <img
-                  src={sponsor.logo}
-                  alt={sponsor.name}
-                  className="h-16 md:h-20 object-contain mb-4"
-                />
-                <p className="text-center font-medium text-gray-700">{sponsor.name}</p>
-              </div>
-            ))}
+            {displaySponsors.length > 0 ? (
+              displaySponsors.map((sponsor: Sponsor, index: number) => (
+                <div key={index} className="p-4 border border-gray-100 rounded-lg flex flex-col items-center">
+                  <img
+                    src={sponsor.logo}
+                    alt={sponsor.name}
+                    className="h-16 md:h-20 object-contain mb-4"
+                  />
+                  <p className="text-center font-medium text-gray-700">{sponsor.name}</p>
+                </div>
+              ))
+            ) : (
+              <p className="col-span-3 text-center text-gray-500">Nenhum patrocinador cadastrado.</p>
+            )}
           </div>
         </div>
       </div>

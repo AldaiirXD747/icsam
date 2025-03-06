@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import TeamManagement from '@/components/admin/TeamManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
 import PlayerManagement from '@/components/admin/PlayerManagement';
+import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -82,10 +83,7 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="championships">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Campeonatos</h2>
-              <p className="text-gray-500">Em breve: Gerenciamento completo de campeonatos.</p>
-            </div>
+            <ChampionshipManagement />
           </TabsContent>
           
           <TabsContent value="schedule">

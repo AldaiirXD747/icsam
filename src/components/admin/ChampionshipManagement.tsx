@@ -1,199 +1,662 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Trophy, Edit, Trash2, PlusCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { PlusCircle, Pencil, Trash2, Trophy, Calendar } from 'lucide-react';
+import { format, parse } from 'date-fns';
+import { supabase } from "@/integrations/supabase/client";
+
+type ChampionshipStatus = 'upcoming' | 'ongoing' | 'finished';
 
 type Championship = {
-  id: number;
+  id: string;
   name: string;
   year: string;
+  description: string;
+  banner_image: string;
+  start_date: string;
+  end_date: string;
+  location: string;
   categories: string[];
-  logo?: string;
+  organizer: string;
+  sponsors: { name: string; logo: string }[];
+  status: ChampionshipStatus;
 };
 
 const ChampionshipManagement = () => {
+  const [championships, setChampionships] = useState<Championship[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('list');
+  const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterYear, setFilterYear] = useState("all");
   const { toast } = useToast();
-  const [championships, setChampionships] = useState<Championship[]>([
-    { id: 1, name: 'Base Forte', year: '2025', categories: ['SUB-11', 'SUB-13'] },
-    { id: 2, name: 'Copa Primavera', year: '2024', categories: ['SUB-15'] },
-  ]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newChampionship, setNewChampionship] = useState<Omit<Championship, 'id'>>({
+
+  // Form states
+  const [formData, setFormData] = useState({
     name: '',
     year: '',
-    categories: [],
+    description: '',
+    banner_image: '',
+    start_date: '',
+    end_date: '',
+    location: '',
+    categories: '',
+    organizer: '',
+    status: 'upcoming' as ChampionshipStatus,
+    sponsors: [{name: '', logo: ''}]
   });
 
-  const handleAddChampionship = () => {
-    if (!newChampionship.name || !newChampionship.year || newChampionship.categories.length === 0) {
+  // Fetch championships data from Supabase
+  useEffect(() => {
+    fetchChampionships();
+  }, []);
+
+  const fetchChampionships = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('championships')
+        .select('*')
+        .order('year', { ascending: false });
+
+      if (error) throw error;
+      
+      // Parse categories and sponsors if they are stored as strings
+      const processedData = data?.map(championship => ({
+        ...championship,
+        categories: Array.isArray(championship.categories) 
+          ? championship.categories 
+          : typeof championship.categories === 'string' 
+            ? JSON.parse(championship.categories) 
+            : [],
+        sponsors: Array.isArray(championship.sponsors) 
+          ? championship.sponsors 
+          : typeof championship.sponsors === 'string' 
+            ? JSON.parse(championship.sponsors) 
+            : []
+      })) || [];
+      
+      setChampionships(processedData);
+    } catch (error) {
+      console.error('Error fetching championships:', error);
       toast({
-        title: 'Erro',
-        description: 'Por favor, preencha todos os campos obrigatórios.',
-        variant: 'destructive',
+        variant: "destructive",
+        title: "Erro ao carregar campeonatos",
+        description: "Não foi possível carregar os campeonatos."
       });
-      return;
-    }
-
-    const newId = championships.length > 0 ? Math.max(...championships.map(c => c.id)) + 1 : 1;
-    
-    setChampionships([...championships, { id: newId, ...newChampionship }]);
-    setNewChampionship({ name: '', year: '', categories: [] });
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: 'Campeonato Adicionado',
-      description: `O campeonato ${newChampionship.name} foi adicionado com sucesso.`,
-    });
-  };
-
-  const handleDeleteChampionship = (id: number) => {
-    setChampionships(championships.filter(c => c.id !== id));
-    
-    toast({
-      title: 'Campeonato Removido',
-      description: 'O campeonato foi removido com sucesso.',
-    });
-  };
-
-  const handleAddCategory = (category: string) => {
-    if (!newChampionship.categories.includes(category)) {
-      setNewChampionship({
-        ...newChampionship,
-        categories: [...newChampionship.categories, category],
-      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRemoveCategory = (category: string) => {
-    setNewChampionship({
-      ...newChampionship,
-      categories: newChampionship.categories.filter(c => c !== category),
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategoriesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      categories: value.split(',').map(category => category.trim()) 
+    }));
+  };
+
+  const handleSponsorChange = (index: number, field: 'name' | 'logo', value: string) => {
+    const updatedSponsors = [...formData.sponsors];
+    updatedSponsors[index] = { ...updatedSponsors[index], [field]: value };
+    setFormData(prev => ({ ...prev, sponsors: updatedSponsors }));
+  };
+
+  const addSponsor = () => {
+    setFormData(prev => ({
+      ...prev,
+      sponsors: [...prev.sponsors, { name: '', logo: '' }]
+    }));
+  };
+
+  const removeSponsor = (index: number) => {
+    const updatedSponsors = formData.sponsors.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, sponsors: updatedSponsors }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      year: '',
+      description: '',
+      banner_image: '',
+      start_date: '',
+      end_date: '',
+      location: '',
+      categories: '',
+      organizer: '',
+      status: 'upcoming',
+      sponsors: [{name: '', logo: ''}]
     });
+  };
+
+  const handleAddChampionship = async () => {
+    if (!validateForm()) return;
+
+    try {
+      // Format categories as array if it's a string
+      const categoriesArray = typeof formData.categories === 'string' 
+        ? formData.categories.split(',').map(category => category.trim()) 
+        : formData.categories;
+      
+      const { data, error } = await supabase
+        .from('championships')
+        .insert([{
+          name: formData.name,
+          year: formData.year,
+          description: formData.description,
+          banner_image: formData.banner_image,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          location: formData.location,
+          categories: categoriesArray,
+          organizer: formData.organizer,
+          status: formData.status,
+          sponsors: formData.sponsors.filter(sponsor => sponsor.name.trim() !== '' || sponsor.logo.trim() !== '')
+        }])
+        .select();
+
+      if (error) throw error;
+
+      if (data) {
+        // Add the new championship to the list
+        const newChampionship = data[0] as Championship;
+        setChampionships([newChampionship, ...championships]);
+        
+        toast({
+          title: "Campeonato adicionado",
+          description: "O campeonato foi adicionado com sucesso."
+        });
+        
+        resetForm();
+        setActiveTab('list');
+      }
+    } catch (error) {
+      console.error('Error adding championship:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao adicionar campeonato",
+        description: "Não foi possível adicionar o campeonato."
+      });
+    }
+  };
+
+  const handleUpdateChampionship = async () => {
+    if (!selectedChampionship || !validateForm()) return;
+    
+    try {
+      // Format categories as array if it's a string
+      const categoriesArray = typeof formData.categories === 'string' 
+        ? formData.categories.split(',').map(category => category.trim()) 
+        : formData.categories;
+      
+      const { data, error } = await supabase
+        .from('championships')
+        .update({
+          name: formData.name,
+          year: formData.year,
+          description: formData.description,
+          banner_image: formData.banner_image,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          location: formData.location,
+          categories: categoriesArray,
+          organizer: formData.organizer,
+          status: formData.status,
+          sponsors: formData.sponsors.filter(sponsor => sponsor.name.trim() !== '' || sponsor.logo.trim() !== '')
+        })
+        .eq('id', selectedChampionship.id)
+        .select();
+
+      if (error) throw error;
+
+      if (data) {
+        // Update the championship in the list
+        const updatedChampionship = data[0] as Championship;
+        setChampionships(championships.map(championship => 
+          championship.id === selectedChampionship.id ? updatedChampionship : championship
+        ));
+        
+        toast({
+          title: "Campeonato atualizado",
+          description: "O campeonato foi atualizado com sucesso."
+        });
+        
+        resetForm();
+        setSelectedChampionship(null);
+        setActiveTab('list');
+      }
+    } catch (error) {
+      console.error('Error updating championship:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar campeonato",
+        description: "Não foi possível atualizar o campeonato."
+      });
+    }
+  };
+
+  const handleDeleteChampionship = async (championshipId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este campeonato?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('championships')
+        .delete()
+        .eq('id', championshipId);
+
+      if (error) throw error;
+
+      // Remove the championship from the list
+      setChampionships(championships.filter(championship => championship.id !== championshipId));
+      
+      toast({
+        title: "Campeonato removido",
+        description: "O campeonato foi removido com sucesso."
+      });
+    } catch (error) {
+      console.error('Error deleting championship:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover campeonato",
+        description: "Não foi possível remover o campeonato."
+      });
+    }
+  };
+
+  const handleEditChampionship = (championship: Championship) => {
+    setSelectedChampionship(championship);
+    
+    // Prepare categories string from array if needed
+    const categoriesString = Array.isArray(championship.categories) 
+      ? championship.categories.join(', ') 
+      : championship.categories;
+    
+    setFormData({
+      name: championship.name,
+      year: championship.year,
+      description: championship.description,
+      banner_image: championship.banner_image,
+      start_date: championship.start_date,
+      end_date: championship.end_date,
+      location: championship.location,
+      categories: categoriesString,
+      organizer: championship.organizer,
+      status: championship.status,
+      sponsors: championship.sponsors && championship.sponsors.length > 0 
+        ? championship.sponsors 
+        : [{name: '', logo: ''}]
+    });
+    
+    setActiveTab('edit');
+  };
+
+  const validateForm = () => {
+    const requiredFields = ['name', 'year', 'start_date', 'end_date', 'location', 'status'];
+    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+    
+    if (missingFields.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios",
+        description: `Por favor, preencha os campos: ${missingFields.join(', ')}.`
+      });
+      return false;
+    }
+    
+    // Validate dates
+    if (new Date(formData.end_date) < new Date(formData.start_date)) {
+      toast({
+        variant: "destructive",
+        title: "Datas inválidas",
+        description: "A data de término deve ser posterior à data de início."
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Filter championships based on search and year
+  const filteredChampionships = championships.filter(championship => {
+    const matchesSearch = championship.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesYear = filterYear === "all" || championship.year === filterYear;
+    return matchesSearch && matchesYear;
+  });
+
+  // Get unique years for filter dropdown
+  const years = [...new Set(championships.map(championship => championship.year))];
+
+  const formatStatus = (status: ChampionshipStatus) => {
+    switch (status) {
+      case 'upcoming':
+        return 'Próximo';
+      case 'ongoing':
+        return 'Em andamento';
+      case 'finished':
+        return 'Finalizado';
+      default:
+        return status;
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Campeonatos</h2>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#1a237e] hover:bg-[#0d1642]">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Novo Campeonato
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Novo Campeonato</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nome
-                </Label>
-                <Input
-                  id="name"
-                  value={newChampionship.name}
-                  onChange={(e) => setNewChampionship({ ...newChampionship, name: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="year" className="text-right">
-                  Ano
-                </Label>
-                <Input
-                  id="year"
-                  value={newChampionship.year}
-                  onChange={(e) => setNewChampionship({ ...newChampionship, year: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Categoria
-                </Label>
-                <Select onValueChange={handleAddCategory}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SUB-11">SUB-11</SelectItem>
-                    <SelectItem value="SUB-13">SUB-13</SelectItem>
-                    <SelectItem value="SUB-15">SUB-15</SelectItem>
-                    <SelectItem value="SUB-17">SUB-17</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {newChampionship.categories.length > 0 && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <div className="text-right">Categorias:</div>
-                  <div className="col-span-3 flex flex-wrap gap-2">
-                    {newChampionship.categories.map((category) => (
-                      <div key={category} className="bg-slate-100 px-2 py-1 rounded-md flex items-center">
-                        {category}
-                        <button 
-                          onClick={() => handleRemoveCategory(category)}
-                          className="ml-2 text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {activeTab === 'list' && (
+          <Button 
+            onClick={() => setActiveTab('add')}
+            className="flex items-center gap-2 bg-[#1a237e] text-white hover:bg-blue-800"
+          >
+            <PlusCircle size={16} />
+            Adicionar Novo Campeonato
+          </Button>
+        )}
+      </div>
+      
+      {activeTab === 'list' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar campeonatos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+              />
             </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleAddChampionship}>Adicionar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            <div className="flex gap-2">
+              <select
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="rounded-md border border-input px-3 py-2 text-sm"
+              >
+                <option value="all">Todos os Anos</option>
+                {years.map((year, index) => (
+                  <option key={index} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {championships.map((championship) => (
-          <Card key={championship.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-bold">{championship.name}</CardTitle>
-              <Trophy className="text-[#1a237e] h-5 w-5" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-gray-500 mb-4">Ano: {championship.year}</div>
-              <div className="mb-4">
-                <span className="text-sm font-medium">Categorias:</span>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {championship.categories.map((category) => (
-                    <span key={category} className="bg-slate-100 px-2 py-1 rounded-md text-xs">
-                      {category}
-                    </span>
-                  ))}
-                </div>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Carregando campeonatos...</p>
+            </div>
+          ) : filteredChampionships.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Nenhum campeonato encontrado.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredChampionships.map(championship => (
+                <Card key={championship.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="relative h-40">
+                      <img 
+                        src={championship.banner_image || '/placeholder.svg'} 
+                        alt={championship.name} 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
+                        <h3 className="text-xl font-bold text-white">{championship.name}</h3>
+                        <p className="text-white/80">{championship.year}</p>
+                      </div>
+                      <div className="absolute top-2 right-2 flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
+                          onClick={() => handleEditChampionship(championship)}
+                        >
+                          <Pencil size={16} className="text-blue-800" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
+                          onClick={() => handleDeleteChampionship(championship.id)}
+                        >
+                          <Trash2 size={16} className="text-red-600" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="font-semibold">Status:</p>
+                          <p>{formatStatus(championship.status)}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Local:</p>
+                          <p>{championship.location}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Início:</p>
+                          <p>{new Date(championship.start_date).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Término:</p>
+                          <p>{new Date(championship.end_date).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <p className="font-semibold">Categorias:</p>
+                        <p>{Array.isArray(championship.categories) ? championship.categories.join(', ') : championship.categories}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {(activeTab === 'add' || activeTab === 'edit') && (
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-xl font-bold mb-4 text-[#1a237e]">
+              {activeTab === 'add' ? 'Adicionar Novo Campeonato' : 'Editar Campeonato'}
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome do Campeonato *</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleInputChange} 
+                  placeholder="Ex: Campeonato Base Forte"
+                />
               </div>
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={() => handleDeleteChampionship(championship.id)}
+              
+              <div className="space-y-2">
+                <Label htmlFor="year">Ano *</Label>
+                <Input 
+                  id="year" 
+                  name="year" 
+                  value={formData.year} 
+                  onChange={handleInputChange} 
+                  placeholder="Ex: 2025"
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  value={formData.description} 
+                  onChange={handleInputChange} 
+                  placeholder="Descrição do campeonato"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="banner_image">URL da Imagem de Banner</Label>
+                <Input 
+                  id="banner_image" 
+                  name="banner_image" 
+                  value={formData.banner_image} 
+                  onChange={handleInputChange} 
+                  placeholder="https://exemplo.com/imagem.jpg"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Data de Início *</Label>
+                <Input 
+                  id="start_date" 
+                  name="start_date" 
+                  type="date"
+                  value={formData.start_date} 
+                  onChange={handleInputChange} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="end_date">Data de Término *</Label>
+                <Input 
+                  id="end_date" 
+                  name="end_date" 
+                  type="date"
+                  value={formData.end_date} 
+                  onChange={handleInputChange} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location">Local *</Label>
+                <Input 
+                  id="location" 
+                  name="location" 
+                  value={formData.location} 
+                  onChange={handleInputChange} 
+                  placeholder="Ex: Campo do Instituto - Santa Maria, DF"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border border-input px-3 py-2"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
-                </Button>
+                  <option value="upcoming">Próximo</option>
+                  <option value="ongoing">Em andamento</option>
+                  <option value="finished">Finalizado</option>
+                </select>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="categories">Categorias (separadas por vírgula)</Label>
+                <Input 
+                  id="categories" 
+                  name="categories" 
+                  value={Array.isArray(formData.categories) ? formData.categories.join(', ') : formData.categories} 
+                  onChange={handleCategoriesChange} 
+                  placeholder="Ex: SUB-11, SUB-13, SUB-15, SUB-17"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="organizer">Organizador</Label>
+                <Input 
+                  id="organizer" 
+                  name="organizer" 
+                  value={formData.organizer} 
+                  onChange={handleInputChange} 
+                  placeholder="Ex: Instituto Criança Santa Maria"
+                />
+              </div>
+              
+              <div className="space-y-4 md:col-span-2 mt-4">
+                <div className="flex justify-between items-center">
+                  <Label>Patrocinadores</Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={addSponsor}
+                    className="text-blue-600"
+                  >
+                    Adicionar Patrocinador
+                  </Button>
+                </div>
+                
+                {formData.sponsors.map((sponsor, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md relative">
+                    <div className="space-y-2">
+                      <Label>Nome do Patrocinador</Label>
+                      <Input 
+                        value={sponsor.name} 
+                        onChange={(e) => handleSponsorChange(index, 'name', e.target.value)} 
+                        placeholder="Nome do Patrocinador"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL do Logo</Label>
+                      <Input 
+                        value={sponsor.logo} 
+                        onChange={(e) => handleSponsorChange(index, 'logo', e.target.value)} 
+                        placeholder="https://exemplo.com/logo.png"
+                      />
+                    </div>
+                    {formData.sponsors.length > 1 && (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeSponsor(index)}
+                        className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  resetForm();
+                  setSelectedChampionship(null);
+                  setActiveTab('list');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                className="bg-[#1a237e] text-white hover:bg-blue-800"
+                onClick={activeTab === 'add' ? handleAddChampionship : handleUpdateChampionship}
+              >
+                {activeTab === 'add' ? 'Adicionar Campeonato' : 'Atualizar Campeonato'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

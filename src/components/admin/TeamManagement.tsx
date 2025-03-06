@@ -4,9 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { PlusCircle, Pencil, Trash2, Users } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Users, Mail, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Label } from '@/components/ui/label';
 
 type Team = {
   id: string;
@@ -15,6 +16,7 @@ type Team = {
   category: string;
   group_name: string;
   playerCount?: number;
+  email?: string | null;
 };
 
 const TeamManagement = () => {
@@ -25,13 +27,17 @@ const TeamManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const { toast } = useToast();
+  const [isCredentialsDialogOpen, setIsCredentialsDialogOpen] = useState(false);
 
   // Team form states
   const [formData, setFormData] = useState({
     name: '',
     category: '',
     group_name: '',
-    logo: ''
+    logo: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
   });
 
   // Fetch teams data from Supabase
@@ -65,13 +71,29 @@ const TeamManagement = () => {
         }
       });
       
-      // Map player counts to teams
-      const teamsWithPlayerCounts = teamsData?.map(team => ({
+      // Get team user accounts
+      const { data: teamAccounts, error: teamAccountsError } = await supabase
+        .from('team_accounts')
+        .select('team_id, email');
+        
+      if (teamAccountsError) throw teamAccountsError;
+      
+      // Create a map of team ID to email
+      const teamEmailMap: Record<string, string> = {};
+      teamAccounts?.forEach(account => {
+        if (account.team_id) {
+          teamEmailMap[account.team_id] = account.email;
+        }
+      });
+      
+      // Map player counts and emails to teams
+      const teamsWithCounts = teamsData?.map(team => ({
         ...team,
-        playerCount: playerCountByTeam[team.id] || 0
+        playerCount: playerCountByTeam[team.id] || 0,
+        email: teamEmailMap[team.id] || null
       })) || [];
       
-      setTeams(teamsWithPlayerCounts);
+      setTeams(teamsWithCounts);
     } catch (error) {
       console.error('Error fetching teams:', error);
       toast({
@@ -94,7 +116,10 @@ const TeamManagement = () => {
       name: '',
       category: '',
       group_name: '',
-      logo: ''
+      logo: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
     });
   };
 
@@ -108,8 +133,39 @@ const TeamManagement = () => {
       return;
     }
 
+    // If email and password are provided, validate them
+    if (formData.email && formData.password) {
+      if (!validateEmail(formData.email)) {
+        toast({
+          variant: "destructive",
+          title: "E-mail inválido",
+          description: "Por favor, forneça um e-mail válido."
+        });
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        toast({
+          variant: "destructive",
+          title: "Senha muito curta",
+          description: "A senha deve ter pelo menos 6 caracteres."
+        });
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          variant: "destructive",
+          title: "Senhas não coincidem",
+          description: "A senha e a confirmação de senha devem ser iguais."
+        });
+        return;
+      }
+    }
+
     try {
-      const { data, error } = await supabase
+      // First, create the team
+      const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .insert([{
           name: formData.name,
@@ -119,13 +175,47 @@ const TeamManagement = () => {
         }])
         .select();
 
-      if (error) throw error;
+      if (teamError) throw teamError;
 
-      if (data) {
+      if (teamData) {
         const newTeam = {
-          ...data[0],
-          playerCount: 0
+          ...teamData[0],
+          playerCount: 0,
+          email: formData.email || null
         };
+        
+        // If email and password are provided, create a user account
+        if (formData.email && formData.password) {
+          // First, register the user with Supabase Auth
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+              data: {
+                team_id: newTeam.id,
+                role: 'team'
+              }
+            }
+          });
+          
+          if (authError) throw authError;
+
+          // Then, create a record in team_accounts table
+          if (authData.user) {
+            const { error: accountError } = await supabase
+              .from('team_accounts')
+              .insert([{
+                team_id: newTeam.id,
+                user_id: authData.user.id,
+                email: formData.email
+              }]);
+              
+            if (accountError) throw accountError;
+            
+            // Update newTeam with email
+            newTeam.email = formData.email;
+          }
+        }
         
         setTeams([...teams, newTeam]);
         
@@ -159,8 +249,40 @@ const TeamManagement = () => {
       return;
     }
 
+    // If email is provided, validate it
+    if (formData.email && !validateEmail(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "E-mail inválido",
+        description: "Por favor, forneça um e-mail válido."
+      });
+      return;
+    }
+
+    // If password is provided, validate it
+    if (formData.password) {
+      if (formData.password.length < 6) {
+        toast({
+          variant: "destructive",
+          title: "Senha muito curta",
+          description: "A senha deve ter pelo menos 6 caracteres."
+        });
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          variant: "destructive",
+          title: "Senhas não coincidem",
+          description: "A senha e a confirmação de senha devem ser iguais."
+        });
+        return;
+      }
+    }
+
     try {
-      const { data, error } = await supabase
+      // First, update the team
+      const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .update({
           name: formData.name,
@@ -171,12 +293,105 @@ const TeamManagement = () => {
         .eq('id', selectedTeam.id)
         .select();
 
-      if (error) throw error;
+      if (teamError) throw teamError;
 
-      if (data) {
+      // Check if team account exists
+      const { data: existingAccount, error: accountQueryError } = await supabase
+        .from('team_accounts')
+        .select('*')
+        .eq('team_id', selectedTeam.id)
+        .single();
+        
+      if (accountQueryError && accountQueryError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is expected if no account exists
+        throw accountQueryError;
+      }
+
+      // Handle email/password updates
+      if (formData.email) {
+        if (existingAccount) {
+          // Update existing account with new email
+          if (existingAccount.email !== formData.email) {
+            // Get the user from auth
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(
+              existingAccount.user_id
+            );
+            
+            if (userError) throw userError;
+            
+            if (userData && userData.user) {
+              // Update auth email
+              const { error: updateAuthError } = await supabase.auth.admin.updateUserById(
+                userData.user.id,
+                { email: formData.email }
+              );
+              
+              if (updateAuthError) throw updateAuthError;
+              
+              // Update team_accounts table
+              const { error: updateAccountError } = await supabase
+                .from('team_accounts')
+                .update({ email: formData.email })
+                .eq('team_id', selectedTeam.id);
+                
+              if (updateAccountError) throw updateAccountError;
+            }
+          }
+          
+          // Update password if provided
+          if (formData.password) {
+            const { error: passwordError } = await supabase.auth.admin.updateUserById(
+              existingAccount.user_id,
+              { password: formData.password }
+            );
+            
+            if (passwordError) throw passwordError;
+          }
+        } else {
+          // Create new account with provided email/password
+          if (formData.password) {
+            // Create auth user
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+              email: formData.email,
+              password: formData.password,
+              options: {
+                data: {
+                  team_id: selectedTeam.id,
+                  role: 'team'
+                }
+              }
+            });
+            
+            if (authError) throw authError;
+            
+            // Create record in team_accounts
+            if (authData.user) {
+              const { error: newAccountError } = await supabase
+                .from('team_accounts')
+                .insert([{
+                  team_id: selectedTeam.id,
+                  user_id: authData.user.id,
+                  email: formData.email
+                }]);
+                
+              if (newAccountError) throw newAccountError;
+            }
+          } else {
+            toast({
+              variant: "warning",
+              title: "Senha necessária",
+              description: "É necessário definir uma senha ao criar uma nova conta."
+            });
+            return;
+          }
+        }
+      }
+
+      if (teamData) {
         const updatedTeam = {
-          ...data[0],
-          playerCount: selectedTeam.playerCount
+          ...teamData[0],
+          playerCount: selectedTeam.playerCount,
+          email: formData.email || selectedTeam.email
         };
         
         setTeams(teams.map(team => 
@@ -218,6 +433,32 @@ const TeamManagement = () => {
     if (!confirm("Tem certeza que deseja excluir este time?")) return;
 
     try {
+      // First delete team account if exists
+      const { data: accountData, error: accountError } = await supabase
+        .from('team_accounts')
+        .select('user_id')
+        .eq('team_id', teamId);
+        
+      if (accountError) throw accountError;
+      
+      if (accountData && accountData.length > 0) {
+        // Delete the user from auth
+        const { error: authError } = await supabase.auth.admin.deleteUser(
+          accountData[0].user_id
+        );
+        
+        if (authError) throw authError;
+        
+        // Delete from team_accounts
+        const { error: deleteAccountError } = await supabase
+          .from('team_accounts')
+          .delete()
+          .eq('team_id', teamId);
+          
+        if (deleteAccountError) throw deleteAccountError;
+      }
+
+      // Then delete the team
       const { error } = await supabase
         .from('teams')
         .delete()
@@ -247,9 +488,156 @@ const TeamManagement = () => {
       name: team.name,
       category: team.category,
       group_name: team.group_name,
-      logo: team.logo || ''
+      logo: team.logo || '',
+      email: team.email || '',
+      password: '',
+      confirmPassword: ''
     });
     setActiveTab('edit');
+  };
+
+  const handleManageCredentials = (team: Team) => {
+    setSelectedTeam(team);
+    setFormData(prev => ({
+      ...prev,
+      email: team.email || '',
+      password: '',
+      confirmPassword: ''
+    }));
+    setIsCredentialsDialogOpen(true);
+  };
+
+  const handleCredentialsSubmit = async () => {
+    if (!selectedTeam) return;
+    
+    if (!formData.email || !validateEmail(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "E-mail inválido",
+        description: "Por favor, forneça um e-mail válido."
+      });
+      return;
+    }
+
+    if (!formData.password) {
+      toast({
+        variant: "destructive",
+        title: "Senha necessária",
+        description: "Por favor, forneça uma senha."
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres."
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Senhas não coincidem",
+        description: "A senha e a confirmação de senha devem ser iguais."
+      });
+      return;
+    }
+
+    try {
+      // Check if team account exists
+      const { data: existingAccount, error: accountQueryError } = await supabase
+        .from('team_accounts')
+        .select('*')
+        .eq('team_id', selectedTeam.id)
+        .single();
+        
+      if (accountQueryError && accountQueryError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is expected if no account exists
+        throw accountQueryError;
+      }
+
+      if (existingAccount) {
+        // Update existing account
+        // Update auth email and password
+        const { error: updateAuthError } = await supabase.auth.admin.updateUserById(
+          existingAccount.user_id,
+          { 
+            email: formData.email,
+            password: formData.password
+          }
+        );
+        
+        if (updateAuthError) throw updateAuthError;
+        
+        // Update team_accounts table if email changed
+        if (existingAccount.email !== formData.email) {
+          const { error: updateAccountError } = await supabase
+            .from('team_accounts')
+            .update({ email: formData.email })
+            .eq('team_id', selectedTeam.id);
+            
+          if (updateAccountError) throw updateAccountError;
+        }
+      } else {
+        // Create new account
+        // Create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              team_id: selectedTeam.id,
+              role: 'team'
+            }
+          }
+        });
+        
+        if (authError) throw authError;
+        
+        // Create record in team_accounts
+        if (authData.user) {
+          const { error: newAccountError } = await supabase
+            .from('team_accounts')
+            .insert([{
+              team_id: selectedTeam.id,
+              user_id: authData.user.id,
+              email: formData.email
+            }]);
+            
+          if (newAccountError) throw newAccountError;
+        }
+      }
+
+      // Update the local teams state
+      setTeams(teams.map(team => 
+        team.id === selectedTeam.id 
+          ? { ...team, email: formData.email } 
+          : team
+      ));
+      
+      toast({
+        title: "Credenciais atualizadas",
+        description: "As credenciais do time foram atualizadas com sucesso."
+      });
+      
+      setIsCredentialsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error updating credentials:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar credenciais",
+        description: "Não foi possível atualizar as credenciais do time."
+      });
+    }
+  };
+
+  // Helper function to validate email
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   // Filter teams based on search and category
@@ -351,7 +739,28 @@ const TeamManagement = () => {
                           <p><span className="font-semibold">Categoria:</span> {team.category}</p>
                           <p><span className="font-semibold">Grupo:</span> {team.group_name}</p>
                           <p><span className="font-semibold">Jogadores:</span> {team.playerCount}</p>
+                          <div className="mt-1 flex items-center">
+                            <span className="font-semibold mr-1">Acesso:</span>
+                            {team.email ? (
+                              <span className="text-green-600 flex items-center gap-1">
+                                <Mail size={14} /> {team.email}
+                              </span>
+                            ) : (
+                              <span className="text-red-500">Não configurado</span>
+                            )}
+                          </div>
                         </div>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-1 text-[#1a237e]"
+                          onClick={() => handleManageCredentials(team)}
+                        >
+                          <Lock size={14} />
+                          {team.email ? 'Atualizar credenciais' : 'Configurar acesso'}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -409,6 +818,49 @@ const TeamManagement = () => {
                   onChange={handleInputChange} 
                   placeholder="https://exemplo.com/logo.png"
                 />
+              </div>
+              
+              <div className="pt-4 border-t mt-4">
+                <h4 className="font-semibold text-[#1a237e] mb-3">Credenciais de Acesso</h4>
+                <p className="text-gray-500 text-sm mb-3">
+                  Opcionalmente, você pode criar um acesso para este time gerenciar seus próprios dados.
+                </p>
+                
+                <div>
+                  <label htmlFor="teamEmail" className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                  <Input 
+                    id="teamEmail" 
+                    name="email" 
+                    type="email"
+                    value={formData.email} 
+                    onChange={handleInputChange} 
+                    placeholder="exemplo@time.com"
+                  />
+                </div>
+                
+                <div className="mt-3">
+                  <label htmlFor="teamPassword" className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                  <Input 
+                    id="teamPassword" 
+                    name="password" 
+                    type="password"
+                    value={formData.password} 
+                    onChange={handleInputChange} 
+                    placeholder="Digite uma senha"
+                  />
+                </div>
+                
+                <div className="mt-3">
+                  <label htmlFor="teamConfirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha</label>
+                  <Input 
+                    id="teamConfirmPassword" 
+                    name="confirmPassword" 
+                    type="password"
+                    value={formData.confirmPassword} 
+                    onChange={handleInputChange} 
+                    placeholder="Confirme a senha"
+                  />
+                </div>
               </div>
               
               <div className="pt-2 flex gap-2 justify-end">
@@ -472,6 +924,48 @@ const TeamManagement = () => {
                 />
               </div>
               
+              <div className="pt-4 border-t mt-4">
+                <h4 className="font-semibold text-[#1a237e] mb-3">Credenciais de Acesso</h4>
+                
+                <div>
+                  <label htmlFor="teamEmail" className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                  <Input 
+                    id="teamEmail" 
+                    name="email" 
+                    type="email"
+                    value={formData.email} 
+                    onChange={handleInputChange} 
+                    placeholder="exemplo@time.com"
+                  />
+                </div>
+                
+                <div className="mt-3">
+                  <label htmlFor="teamPassword" className="block text-sm font-medium text-gray-700 mb-1">Nova Senha (deixe em branco para manter a atual)</label>
+                  <Input 
+                    id="teamPassword" 
+                    name="password" 
+                    type="password"
+                    value={formData.password} 
+                    onChange={handleInputChange} 
+                    placeholder="Digite para alterar a senha"
+                  />
+                </div>
+                
+                {formData.password && (
+                  <div className="mt-3">
+                    <label htmlFor="teamConfirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+                    <Input 
+                      id="teamConfirmPassword" 
+                      name="confirmPassword" 
+                      type="password"
+                      value={formData.confirmPassword} 
+                      onChange={handleInputChange} 
+                      placeholder="Confirme a nova senha"
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div className="pt-2 flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => {
                   resetForm();
@@ -488,6 +982,68 @@ const TeamManagement = () => {
           </CardContent>
         </Card>
       )}
+      
+      {/* Credentials Dialog */}
+      <Dialog open={isCredentialsDialogOpen} onOpenChange={setIsCredentialsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-[#1a237e]">
+              {selectedTeam?.email ? 'Atualizar Credenciais' : 'Configurar Acesso'} - {selectedTeam?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="credentialsEmail">E-mail *</Label>
+              <Input 
+                id="credentialsEmail" 
+                name="email" 
+                type="email"
+                value={formData.email} 
+                onChange={handleInputChange} 
+                placeholder="exemplo@time.com"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="credentialsPassword">
+                {selectedTeam?.email ? 'Nova Senha *' : 'Senha *'}
+              </Label>
+              <Input 
+                id="credentialsPassword" 
+                name="password" 
+                type="password"
+                value={formData.password} 
+                onChange={handleInputChange} 
+                placeholder="Digite uma senha"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="credentialsConfirmPassword">Confirmar Senha *</Label>
+              <Input 
+                id="credentialsConfirmPassword" 
+                name="confirmPassword" 
+                type="password"
+                value={formData.confirmPassword} 
+                onChange={handleInputChange} 
+                placeholder="Confirme a senha"
+              />
+            </div>
+            
+            <div className="pt-2 flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => {
+                setIsCredentialsDialogOpen(false);
+              }}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCredentialsSubmit} className="bg-[#1a237e] text-white hover:bg-blue-800">
+                Salvar Credenciais
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
