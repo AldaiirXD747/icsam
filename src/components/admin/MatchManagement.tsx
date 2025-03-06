@@ -1,28 +1,29 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Pencil, Trash2, Calendar } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
-import { Match, MatchStatus } from '@/types/database';
+import { Match } from '@/types';
 
 type MatchFormData = {
   date: string;
   time: string;
   location: string;
-  home_team: string;
-  away_team: string;
-  home_score: number | null;
-  away_score: number | null;
-  status: MatchStatus;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
   category: string;
   round: string | null;
-  championship_id: string | null;
+  championshipId: string | null;
 };
 
 const MatchManagement = () => {
@@ -43,14 +44,14 @@ const MatchManagement = () => {
     date: '',
     time: '',
     location: '',
-    home_team: '',
-    away_team: '',
-    home_score: null,
-    away_score: null,
+    homeTeam: '',
+    awayTeam: '',
+    homeScore: null,
+    awayScore: null,
     status: 'scheduled',
     category: '',
     round: null,
-    championship_id: null,
+    championshipId: null,
   });
 
   // Fetch matches data from Supabase
@@ -74,12 +75,25 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      setMatches(data.map(match => ({
-        ...match,
-        status: match.status as MatchStatus,
-        home_team_name: match.home_team_name ? match.home_team_name['name'] : '',
-        away_team_name: match.away_team_name ? match.away_team_name['name'] : ''
-      })));
+      // Transform the data to match our interface
+      const transformedData = data.map(match => ({
+        id: match.id,
+        date: match.date,
+        time: match.time,
+        location: match.location,
+        homeTeam: match.home_team,
+        awayTeam: match.away_team,
+        homeScore: match.home_score,
+        awayScore: match.away_score,
+        status: match.status as Match['status'],
+        category: match.category,
+        round: match.round,
+        championshipId: match.championship_id,
+        homeTeamName: match.home_team_name ? match.home_team_name.name : '',
+        awayTeamName: match.away_team_name ? match.away_team_name.name : '',
+      }));
+
+      setMatches(transformedData);
     } catch (error) {
       console.error('Error fetching matches:', error);
       toast({
@@ -147,14 +161,14 @@ const MatchManagement = () => {
           date: formData.date,
           time: formData.time,
           location: formData.location,
-          home_team: formData.home_team,
-          away_team: formData.away_team,
-          home_score: formData.home_score,
-          away_score: formData.away_score,
+          home_team: formData.homeTeam,
+          away_team: formData.awayTeam,
+          home_score: formData.homeScore,
+          away_score: formData.awayScore,
           status: formData.status,
           category: formData.category,
           round: formData.round,
-          championship_id: formData.championship_id,
+          championship_id: formData.championshipId,
         })
         .select(`
           *,
@@ -164,15 +178,23 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const homeTeamName = teams.find(team => team.id === formData.home_team)?.name || '';
-      const awayTeamName = teams.find(team => team.id === formData.away_team)?.name || '';
-
+      // Transform to match our interface
       const newMatch = {
-        ...data[0],
-        status: data[0].status as MatchStatus,
-        home_team_name: homeTeamName || '',
-        away_team_name: awayTeamName || ''
-      } as Match;
+        id: data[0].id,
+        date: data[0].date,
+        time: data[0].time,
+        location: data[0].location,
+        homeTeam: data[0].home_team,
+        awayTeam: data[0].away_team,
+        homeScore: data[0].home_score,
+        awayScore: data[0].away_score,
+        status: data[0].status as Match['status'],
+        category: data[0].category,
+        round: data[0].round,
+        championshipId: data[0].championship_id,
+        homeTeamName: data[0].home_team_name ? data[0].home_team_name.name : '',
+        awayTeamName: data[0].away_team_name ? data[0].away_team_name.name : '',
+      };
 
       setMatches([newMatch, ...matches]);
 
@@ -203,14 +225,14 @@ const MatchManagement = () => {
           date: formData.date,
           time: formData.time,
           location: formData.location,
-          home_team: formData.home_team,
-          away_team: formData.away_team,
-          home_score: formData.home_score,
-          away_score: formData.away_score,
+          home_team: formData.homeTeam,
+          away_team: formData.awayTeam,
+          home_score: formData.homeScore,
+          away_score: formData.awayScore,
           status: formData.status,
           category: formData.category,
           round: formData.round,
-          championship_id: formData.championship_id,
+          championship_id: formData.championshipId,
         })
         .eq('id', selectedMatch.id)
         .select(`
@@ -221,17 +243,26 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const homeTeamName = teams.find(team => team.id === formData.home_team)?.name || '';
-      const awayTeamName = teams.find(team => team.id === formData.away_team)?.name || '';
-
+      // Transform to match our interface
       const updatedMatch = {
-        ...data[0],
-        home_team_name: homeTeamName,
-        away_team_name: awayTeamName,
+        id: data[0].id,
+        date: data[0].date,
+        time: data[0].time,
+        location: data[0].location,
+        homeTeam: data[0].home_team,
+        awayTeam: data[0].away_team,
+        homeScore: data[0].home_score,
+        awayScore: data[0].away_score,
+        status: data[0].status as Match['status'],
+        category: data[0].category,
+        round: data[0].round,
+        championshipId: data[0].championship_id,
+        homeTeamName: data[0].home_team_name ? data[0].home_team_name.name : '',
+        awayTeamName: data[0].away_team_name ? data[0].away_team_name.name : '',
       };
 
       setMatches(matches.map(m => 
-        m.id === selectedMatch.id ? {...updatedMatch, status: updatedMatch.status as MatchStatus} as Match : m
+        m.id === selectedMatch.id ? updatedMatch : m
       ));
 
       toast({
@@ -287,14 +318,14 @@ const MatchManagement = () => {
       date: match.date,
       time: match.time,
       location: match.location,
-      home_team: match.home_team,
-      away_team: match.away_team,
-      home_score: match.home_score,
-      away_score: match.away_score,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
       status: match.status,
       category: match.category,
-      round: match.round,
-      championship_id: match.championship_id,
+      round: match.round || null,
+      championshipId: match.championshipId || null,
     });
 
     setActiveTab('edit');
@@ -305,19 +336,19 @@ const MatchManagement = () => {
       date: '',
       time: '',
       location: '',
-      home_team: '',
-      away_team: '',
-      home_score: null,
-      away_score: null,
+      homeTeam: '',
+      awayTeam: '',
+      homeScore: null,
+      awayScore: null,
       status: 'scheduled',
       category: '',
       round: null,
-      championship_id: null,
+      championshipId: null,
     });
   };
 
   const validateForm = () => {
-    const requiredFields = ['date', 'time', 'location', 'home_team', 'away_team', 'category', 'status'] as const;
+    const requiredFields = ['date', 'time', 'location', 'homeTeam', 'awayTeam', 'category', 'status'] as const;
     const missingFields = requiredFields.filter(field => !formData[field]);
 
     if (missingFields.length > 0) {
@@ -329,8 +360,8 @@ const MatchManagement = () => {
       return false;
     }
 
-    // Validate if home_team and away_team are different
-    if (formData.home_team === formData.away_team) {
+    // Validate if homeTeam and awayTeam are different
+    if (formData.homeTeam === formData.awayTeam) {
       toast({
         variant: "destructive",
         title: "Times inválidos",
@@ -346,17 +377,17 @@ const MatchManagement = () => {
   const filteredMatches = matches.filter(match => {
     const matchesSearch =
       match.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (match.home_team_name && match.home_team_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (match.away_team_name && match.away_team_name.toLowerCase().includes(searchTerm.toLowerCase()));
+      (match.homeTeamName && match.homeTeamName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (match.awayTeamName && match.awayTeamName.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesCategory = filterCategory === "all" || match.category === filterCategory;
     const matchesStatus = filterStatus === "all" || match.status === filterStatus;
-    const matchesChampionship = filterChampionship === "all" || match.championship_id === filterChampionship;
+    const matchesChampionship = filterChampionship === "all" || match.championshipId === filterChampionship;
 
     return matchesSearch && matchesCategory && matchesStatus && matchesChampionship;
   });
 
-  const formatStatus = (status: MatchStatus) => {
+  const formatStatus = (status: Match['status']) => {
     switch (status) {
       case 'scheduled':
         return 'Agendado';
@@ -474,16 +505,16 @@ const MatchManagement = () => {
                         </div>
                         <div>
                           <p className="font-semibold">Campeonato:</p>
-                          <p>{championships.find(c => c.id === match.championship_id)?.name || 'Nenhum'}</p>
+                          <p>{championships.find(c => c.id === match.championshipId)?.name || 'Nenhum'}</p>
                         </div>
                       </div>
                       <div className="mt-2">
                         <p className="font-semibold">Times:</p>
-                        <p>{match.home_team_name} x {match.away_team_name}</p>
+                        <p>{match.homeTeamName} x {match.awayTeamName}</p>
                       </div>
                       <div className="mt-2">
                         <p className="font-semibold">Placar:</p>
-                        <p>{match.home_score !== null ? match.home_score : '-'} x {match.away_score !== null ? match.away_score : '-'}</p>
+                        <p>{match.homeScore !== null ? match.homeScore : '-'} x {match.awayScore !== null ? match.awayScore : '-'}</p>
                       </div>
                     </div>
                     <div className="flex justify-end p-4">
@@ -565,10 +596,10 @@ const MatchManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="home_team">Time da Casa *</Label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, home_team: value }))}>
+                <Label htmlFor="homeTeam">Time da Casa *</Label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, homeTeam: value }))}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o time da casa" defaultValue={formData.home_team} />
+                    <SelectValue placeholder="Selecione o time da casa" defaultValue={formData.homeTeam} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map(team => (
@@ -579,10 +610,10 @@ const MatchManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="away_team">Time Visitante *</Label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, away_team: value }))}>
+                <Label htmlFor="awayTeam">Time Visitante *</Label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, awayTeam: value }))}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o time visitante" defaultValue={formData.away_team} />
+                    <SelectValue placeholder="Selecione o time visitante" defaultValue={formData.awayTeam} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map(team => (
@@ -593,25 +624,25 @@ const MatchManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="home_score">Placar Time da Casa</Label>
+                <Label htmlFor="homeScore">Placar Time da Casa</Label>
                 <Input
-                  id="home_score"
-                  name="home_score"
+                  id="homeScore"
+                  name="homeScore"
                   type="number"
-                  value={formData.home_score || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, home_score: e.target.value === '' ? null : parseInt(e.target.value) }))}
+                  value={formData.homeScore || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, homeScore: e.target.value === '' ? null : parseInt(e.target.value) }))}
                   placeholder="Ex: 2"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="away_score">Placar Time Visitante</Label>
+                <Label htmlFor="awayScore">Placar Time Visitante</Label>
                 <Input
-                  id="away_score"
-                  name="away_score"
+                  id="awayScore"
+                  name="awayScore"
                   type="number"
-                  value={formData.away_score || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, away_score: e.target.value === '' ? null : parseInt(e.target.value) }))}
+                  value={formData.awayScore || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, awayScore: e.target.value === '' ? null : parseInt(e.target.value) }))}
                   placeholder="Ex: 1"
                 />
               </div>
@@ -645,11 +676,11 @@ const MatchManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="championship_id">Campeonato</Label>
+                <Label htmlFor="championshipId">Campeonato</Label>
                 <select
-                  id="championship_id"
-                  name="championship_id"
-                  value={formData.championship_id || ''}
+                  id="championshipId"
+                  name="championshipId"
+                  value={formData.championshipId || ''}
                   onChange={handleInputChange}
                   className="w-full rounded-md border border-input px-3 py-2"
                 >

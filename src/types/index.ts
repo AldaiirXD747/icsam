@@ -31,3 +31,20 @@ export interface GalleryImage {
   createdAt: string | Date;
   featured?: boolean;
 }
+
+export interface Match {
+  id: string;
+  date: string;
+  time: string;
+  location: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
+  category: string;
+  round?: string | null;
+  championshipId?: string | null;
+  homeTeamName?: string;
+  awayTeamName?: string;
+}
