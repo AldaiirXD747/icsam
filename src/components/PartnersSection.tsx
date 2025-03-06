@@ -18,8 +18,8 @@ const PartnersSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up">
             <img 
-              src="https://institutocriancasantamaria.com.br/wp-content/uploads/2025/01/ASSINATURAS_ESPORTE__PRINCIPAL-scaled.jpg" 
-              alt="Ministério do Esporte" 
+              src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
+              alt="Secretaria de Esporte - GDF" 
               className="max-h-16 object-contain"
             />
           </div>

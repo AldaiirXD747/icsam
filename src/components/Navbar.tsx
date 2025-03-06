@@ -33,7 +33,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
-            src="/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png" 
+            src="/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png" 
             alt="Instituto Criança Santa Maria" 
             className="h-14 mr-2"
           />
