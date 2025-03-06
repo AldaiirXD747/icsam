@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getAllYellowCards } from '@/services/yellowCardService';
 import StatisticsChart from './StatisticsChart';
+import { YellowCardLeader } from '@/types';
 
 interface YellowCard {
   id: string;
@@ -12,7 +14,27 @@ interface YellowCard {
   time: string;
 }
 
-const YellowCardManagement: React.FC = () => {
+interface YellowCardManagementProps {
+  isLoading?: boolean;
+  yellowCardLeaders?: YellowCardLeader[];
+  setYellowCardLeaders?: React.Dispatch<React.SetStateAction<YellowCardLeader[]>>;
+  filteredYellowCardLeaders?: YellowCardLeader[];
+  selectedCategory?: string;
+  teams?: { id: string, name: string }[];
+  players?: { id: string, name: string, team_id: string }[];
+  championships?: { id: string, name: string }[];
+}
+
+const YellowCardManagement: React.FC<YellowCardManagementProps> = ({
+  isLoading,
+  yellowCardLeaders,
+  setYellowCardLeaders,
+  filteredYellowCardLeaders,
+  selectedCategory,
+  teams,
+  players,
+  championships
+}) => {
   const [yellowCards, setYellowCards] = useState<YellowCard[]>([]);
   const [selectedTime, setSelectedTime] = useState<string>("all");
   const [filteredYellowCards, setFilteredYellowCards] = useState<YellowCard[]>([]);
