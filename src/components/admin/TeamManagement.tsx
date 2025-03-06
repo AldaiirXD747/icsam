@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { PlusCircle, Pencil, Trash2, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -51,22 +50,26 @@ const TeamManagement = () => {
 
       if (teamsError) throw teamsError;
       
-      // Get player counts for each team
-      const { data: playerCounts, error: countError } = await supabase
+      // Get player counts for each team using a separate query instead of group_by
+      const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('team_id, count(*)')
-        .group_by('team_id');
-
-      if (countError) throw countError;
+        .select('team_id');
+        
+      if (playersError) throw playersError;
+      
+      // Count players per team manually
+      const playerCountByTeam: Record<string, number> = {};
+      playersData?.forEach(player => {
+        if (player.team_id) {
+          playerCountByTeam[player.team_id] = (playerCountByTeam[player.team_id] || 0) + 1;
+        }
+      });
       
       // Map player counts to teams
-      const teamsWithPlayerCounts = teamsData?.map(team => {
-        const countRecord = playerCounts?.find(count => count.team_id === team.id);
-        return {
-          ...team,
-          playerCount: countRecord ? parseInt(countRecord.count) : 0
-        };
-      }) || [];
+      const teamsWithPlayerCounts = teamsData?.map(team => ({
+        ...team,
+        playerCount: playerCountByTeam[team.id] || 0
+      })) || [];
       
       setTeams(teamsWithPlayerCounts);
     } catch (error) {
