@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ListFilter } from 'lucide-react';
+import { ListFilter, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,6 +11,8 @@ interface StatisticsFiltersProps {
   selectedChampionship: string;
   setSelectedChampionship: (value: string) => void;
   championships: {id: string, name: string}[];
+  onRefresh?: () => void;
+  isLoading?: boolean;
 }
 
 const StatisticsFilters: React.FC<StatisticsFiltersProps> = ({
@@ -18,7 +20,9 @@ const StatisticsFilters: React.FC<StatisticsFiltersProps> = ({
   setSelectedCategory,
   selectedChampionship,
   setSelectedChampionship,
-  championships
+  championships,
+  onRefresh,
+  isLoading = false
 }) => {
   const { toast } = useToast();
 
@@ -50,6 +54,18 @@ const StatisticsFilters: React.FC<StatisticsFiltersProps> = ({
           ))}
         </SelectContent>
       </Select>
+      
+      {onRefresh && (
+        <Button
+          variant="outline"
+          onClick={onRefresh}
+          disabled={isLoading}
+          className="mr-2"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      )}
       
       <Button variant="outline" onClick={() => toast({
         title: "Recurso em desenvolvimento",

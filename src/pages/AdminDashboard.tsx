@@ -10,8 +10,9 @@ import MatchManagement from '@/components/admin/MatchManagement';
 import StatisticsManagement from '@/components/admin/StatisticsManagement';
 import PlayerManagement from '@/components/admin/PlayerManagement';
 import GalleryManagement from '@/components/admin/GalleryManagement';
+import DataSyncManager from '@/components/admin/DataSyncManager';
 import { useUser } from '@/lib/clerk-mock';
-import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon } from 'lucide-react';
+import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon, Database } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("championships");
@@ -26,6 +27,12 @@ const AdminDashboard = () => {
       <main className="flex-grow pt-20">
         <div className="container mx-auto p-4">
           <h1 className="text-3xl font-bold mb-6 text-blue-primary">Painel Administrativo</h1>
+          
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <DataSyncManager />
+            </CardContent>
+          </Card>
           
           <Card>
             <CardHeader className="pb-3">

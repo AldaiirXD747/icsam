@@ -1,101 +1,199 @@
 
-// Mock API functions that return dummy data
+import { supabase } from '../integrations/supabase/client';
 import { Team, User } from '../types';
 
-// Mock data
-const mockTeams: Team[] = [
-  {
-    id: "1",
-    name: "Time 1",
-    description: "Descrição do Time 1",
-    logoUrl: "https://example.com/logo1.jpg",
-    active: true,
-  },
-  {
-    id: "2",
-    name: "Time 2",
-    description: "Descrição do Time 2",
-    logoUrl: "https://example.com/logo2.jpg",
-    active: false,
-  },
-];
-
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Usuário 1",
-    email: "usuario1@example.com",
-  },
-  {
-    id: "2",
-    name: "Usuário 2",
-    email: "usuario2@example.com",
-    teamId: "1"
-  },
-];
-
-// API functions
+// Get teams with optional filtering
 export const getTeams = async (filter?: any): Promise<Team[]> => {
-  // Apply filter if provided
-  if (filter) {
-    let filteredTeams = [...mockTeams];
+  try {
+    let query = supabase.from('teams').select('*');
     
-    if (filter.search) {
-      const searchLower = filter.search.toLowerCase();
-      filteredTeams = filteredTeams.filter(team => 
-        team.name.toLowerCase().includes(searchLower) || 
-        (team.description && team.description.toLowerCase().includes(searchLower))
-      );
+    // Apply filters if provided
+    if (filter) {
+      if (filter.search) {
+        const searchLower = filter.search.toLowerCase();
+        query = query.or(`name.ilike.%${searchLower}%,description.ilike.%${searchLower}%`);
+      }
+      
+      if (filter.active !== undefined) {
+        // Map active status to appropriate field if needed
+        query = query.eq('active', filter.active);
+      }
+      
+      if (filter.category) {
+        query = query.eq('category', filter.category);
+      }
     }
     
-    if (filter.active !== undefined) {
-      filteredTeams = filteredTeams.filter(team => team.active === filter.active);
-    }
+    const { data, error } = await query.order('name');
     
-    return Promise.resolve(filteredTeams);
+    if (error) throw error;
+    
+    // Transform Supabase data to match Team interface
+    return (data || []).map(team => ({
+      id: team.id,
+      name: team.name,
+      description: team.description || undefined,
+      logoUrl: team.logo || undefined,
+      active: true, // Set default as active
+    }));
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    return [];
   }
-  
-  return Promise.resolve(mockTeams);
 };
 
+// Get a single team by ID
 export const getTeam = async (id: string): Promise<Team | undefined> => {
-  return Promise.resolve(mockTeams.find(team => team.id === id));
+  try {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    if (!data) return undefined;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || undefined,
+      logoUrl: data.logo || undefined,
+      active: true, // Default as active
+    };
+  } catch (error) {
+    console.error('Error fetching team:', error);
+    return undefined;
+  }
 };
 
+// Create a new team
 export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
-  const newTeam: Team = {
-    ...team,
-    id: Math.random().toString(36).substring(2, 9),
-  };
-  
-  mockTeams.push(newTeam);
-  return Promise.resolve(newTeam);
+  try {
+    const { data, error } = await supabase
+      .from('teams')
+      .insert({
+        name: team.name,
+        description: team.description || null,
+        logo: team.logoUrl || null,
+        category: 'SUB-15', // Default category
+        group_name: 'Grupo A' // Default group
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || undefined,
+      logoUrl: data.logo || undefined,
+      active: true,
+    };
+  } catch (error) {
+    console.error('Error creating team:', error);
+    throw error;
+  }
 };
 
+// Update an existing team
 export const updateTeam = async (team: Team): Promise<Team> => {
-  const index = mockTeams.findIndex(t => t.id === team.id);
-  if (index !== -1) {
-    mockTeams[index] = team;
+  try {
+    const { data, error } = await supabase
+      .from('teams')
+      .update({
+        name: team.name,
+        description: team.description || null,
+        logo: team.logoUrl || null
+      })
+      .eq('id', team.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description || undefined,
+      logoUrl: data.logo || undefined,
+      active: true,
+    };
+  } catch (error) {
+    console.error('Error updating team:', error);
+    throw error;
   }
-  return Promise.resolve(team);
 };
 
+// Delete a team
 export const deleteTeam = async (id: string): Promise<void> => {
-  const index = mockTeams.findIndex(team => team.id === id);
-  if (index !== -1) {
-    mockTeams.splice(index, 1);
+  try {
+    const { error } = await supabase
+      .from('teams')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    return Promise.resolve();
+  } catch (error) {
+    console.error('Error deleting team:', error);
+    throw error;
   }
-  return Promise.resolve();
 };
 
+// Mock user functions - these could be replaced with actual user management
 export const getUsers = async (): Promise<User[]> => {
-  return Promise.resolve(mockUsers);
+  try {
+    // In a real application, you might fetch team members or admins from Supabase
+    const { data, error } = await supabase
+      .from('team_accounts')
+      .select(`
+        id,
+        email,
+        team_id,
+        teams:team_id (
+          id,
+          name
+        )
+      `);
+    
+    if (error) throw error;
+    
+    return (data || []).map(user => ({
+      id: user.id,
+      email: user.email,
+      teamId: user.team_id
+    }));
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
 };
 
 export const updateUser = async (user: User): Promise<User> => {
-  const index = mockUsers.findIndex(u => u.id === user.id);
-  if (index !== -1) {
-    mockUsers[index] = user;
+  try {
+    const { data, error } = await supabase
+      .from('team_accounts')
+      .update({
+        email: user.email,
+        team_id: user.teamId
+      })
+      .eq('id', user.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      email: data.email,
+      teamId: data.team_id
+    };
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
   }
-  return Promise.resolve(user);
 };
