@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
 import Transparencia from "./pages/Transparencia";
 import Contact from "./pages/Contact";
+import Gallery from "./pages/Gallery";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/sobre" element={<About />} />
           <Route path="/transparencia" element={<Transparencia />} />
           <Route path="/contato" element={<Contact />} />
+          <Route path="/galeria" element={<Gallery />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

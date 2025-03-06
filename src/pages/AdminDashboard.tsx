@@ -1,107 +1,96 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Users, Clipboard, Trophy, Calendar, BarChart, 
-  Settings, LogOut, UserPlus
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import TeamManagement from '@/components/admin/TeamManagement';
-import MatchManagement from '@/components/admin/MatchManagement';
-import PlayerManagement from '@/components/admin/PlayerManagement';
 import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
+import MatchManagement from '@/components/admin/MatchManagement';
+import StatisticsManagement from '@/components/admin/StatisticsManagement';
+import PlayerManagement from '@/components/admin/PlayerManagement';
+import GalleryManagement from '@/components/admin/GalleryManagement';
+import { useUser } from '@/lib/clerk-mock';
+import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const handleLogout = () => {
-    // Implementar autenticação real no futuro com Supabase
-    toast({
-      title: "Desconectado",
-      description: "Você foi desconectado com sucesso.",
-      duration: 3000,
-    });
-    navigate('/login');
-  };
+  const [activeTab, setActiveTab] = useState("championships");
+  const { user, isLoaded } = useUser();
+
+  // In a real application, we would check if the user is authenticated
+  // and has the appropriate permissions to access the admin dashboard
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      
-      <main className="flex-1 container mx-auto px-4 py-8 mt-16">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1a237e]">Painel Administrativo</h1>
-          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-            <LogOut size={16} />
-            Sair
-          </Button>
+      <main className="flex-grow pt-20">
+        <div className="container mx-auto p-4">
+          <h1 className="text-3xl font-bold mb-6 text-blue-primary">Painel Administrativo</h1>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Gerenciamento do Sistema</CardTitle>
+              <CardDescription>
+                Gerencie campeonatos, times, jogadores, partidas, estatísticas e mais.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                  <TabsTrigger value="championships" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Campeonatos
+                  </TabsTrigger>
+                  <TabsTrigger value="teams" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <Users className="h-4 w-4 mr-2" />
+                    Times
+                  </TabsTrigger>
+                  <TabsTrigger value="players" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <Users className="h-4 w-4 mr-2" />
+                    Jogadores
+                  </TabsTrigger>
+                  <TabsTrigger value="matches" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Partidas
+                  </TabsTrigger>
+                  <TabsTrigger value="statistics" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <BarChart4 className="h-4 w-4 mr-2" />
+                    Estatísticas
+                  </TabsTrigger>
+                  <TabsTrigger value="gallery" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Galeria
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="championships" className="p-4 border rounded-md min-h-[500px]">
+                  <ChampionshipManagement />
+                </TabsContent>
+                
+                <TabsContent value="teams" className="p-4 border rounded-md min-h-[500px]">
+                  <TeamManagement />
+                </TabsContent>
+                
+                <TabsContent value="players" className="p-4 border rounded-md min-h-[500px]">
+                  <PlayerManagement />
+                </TabsContent>
+                
+                <TabsContent value="matches" className="p-4 border rounded-md min-h-[500px]">
+                  <MatchManagement />
+                </TabsContent>
+                
+                <TabsContent value="statistics" className="p-4 border rounded-md min-h-[500px]">
+                  <StatisticsManagement />
+                </TabsContent>
+                
+                <TabsContent value="gallery" className="p-4 border rounded-md min-h-[500px]">
+                  <GalleryManagement />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
-        
-        <Tabs defaultValue="teams" className="w-full">
-          <TabsList className="grid grid-cols-6 mb-8">
-            <TabsTrigger value="teams" className="flex items-center gap-2">
-              <Users size={16} />
-              <span className="hidden md:inline">Times</span>
-            </TabsTrigger>
-            <TabsTrigger value="players" className="flex items-center gap-2">
-              <UserPlus size={16} />
-              <span className="hidden md:inline">Jogadores</span>
-            </TabsTrigger>
-            <TabsTrigger value="matches" className="flex items-center gap-2">
-              <Clipboard size={16} />
-              <span className="hidden md:inline">Partidas</span>
-            </TabsTrigger>
-            <TabsTrigger value="championships" className="flex items-center gap-2">
-              <Trophy size={16} />
-              <span className="hidden md:inline">Campeonatos</span>
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center gap-2">
-              <Calendar size={16} />
-              <span className="hidden md:inline">Agenda</span>
-            </TabsTrigger>
-            <TabsTrigger value="statistics" className="flex items-center gap-2">
-              <BarChart size={16} />
-              <span className="hidden md:inline">Estatísticas</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="teams">
-            <TeamManagement />
-          </TabsContent>
-          
-          <TabsContent value="players">
-            <PlayerManagement />
-          </TabsContent>
-          
-          <TabsContent value="matches">
-            <MatchManagement />
-          </TabsContent>
-          
-          <TabsContent value="championships">
-            <ChampionshipManagement />
-          </TabsContent>
-          
-          <TabsContent value="schedule">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciamento de Agenda</h2>
-              <p className="text-gray-500">Em breve: Visualização e gerenciamento de agenda de jogos.</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="statistics">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Estatísticas</h2>
-              <p className="text-gray-500">Em breve: Visualização e gerenciamento de estatísticas avançadas, incluindo artilheiros, assistências e outras métricas.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
       </main>
-      
       <Footer />
     </div>
   );

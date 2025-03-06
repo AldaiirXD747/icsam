@@ -1,7 +1,15 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, ChevronDown } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,29 +40,48 @@ const Navbar = () => {
           <Link to="/" className="text-white hover:text-lime-primary transition">
             Início
           </Link>
-          <Link to="/teams" className="text-white hover:text-lime-primary transition">
-            Times
-          </Link>
-          <Link to="/matches" className="text-white hover:text-lime-primary transition">
-            Partidas
-          </Link>
-          <Link to="/statistics" className="text-white hover:text-lime-primary transition">
-            Estatísticas
-          </Link>
-          <Link to="/standings" className="text-white hover:text-lime-primary transition">
-            Classificação
-          </Link>
-          <Link to="/championships" className="text-white hover:text-lime-primary transition">
-            Campeonatos
-          </Link>
           <Link to="/sobre" className="text-white hover:text-lime-primary transition">
             Sobre
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-white hover:text-lime-primary transition px-0 font-normal">
+                Campeonato <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuItem>
+                <Link to="/teams" className="w-full">Times</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/matches" className="w-full">Partidas</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/statistics" className="w-full">Estatísticas</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/standings" className="w-full">Classificação</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link to="/championships" className="w-full">Todos os Campeonatos</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Link to="/galeria" className="text-white hover:text-lime-primary transition">
+            Galeria
           </Link>
           <Link to="/transparencia" className="text-white hover:text-lime-primary transition">
             Transparência
           </Link>
           <Link to="/contato" className="text-white hover:text-lime-primary transition">
             Contato
+          </Link>
+          <Link to="/login">
+            <Button variant="outline" size="sm" className="bg-lime-primary text-blue-primary font-medium hover:bg-lime-dark border-none">
+              <User className="mr-2 h-4 w-4" />
+              Login
+            </Button>
           </Link>
         </div>
       </div>
@@ -65,29 +92,45 @@ const Navbar = () => {
           <Link to="/" className="text-white hover:text-lime-primary transition block">
             Início
           </Link>
-          <Link to="/teams" className="text-white hover:text-lime-primary transition block">
-            Times
-          </Link>
-          <Link to="/matches" className="text-white hover:text-lime-primary transition block">
-            Partidas
-          </Link>
-          <Link to="/statistics" className="text-white hover:text-lime-primary transition block">
-            Estatísticas
-          </Link>
-          <Link to="/standings" className="text-white hover:text-lime-primary transition block">
-            Classificação
-          </Link>
-          <Link to="/championships" className="text-white hover:text-lime-primary transition block">
-            Campeonatos
-          </Link>
           <Link to="/sobre" className="text-white hover:text-lime-primary transition block">
             Sobre
+          </Link>
+          <div className="w-full px-4">
+            <div className="bg-blue-light rounded p-2">
+              <h3 className="text-lime-primary font-medium text-sm mb-2 text-center">Campeonato</h3>
+              <div className="space-y-2">
+                <Link to="/teams" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                  Times
+                </Link>
+                <Link to="/matches" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                  Partidas
+                </Link>
+                <Link to="/statistics" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                  Estatísticas
+                </Link>
+                <Link to="/standings" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                  Classificação
+                </Link>
+                <Link to="/championships" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                  Todos os Campeonatos
+                </Link>
+              </div>
+            </div>
+          </div>
+          <Link to="/galeria" className="text-white hover:text-lime-primary transition block">
+            Galeria
           </Link>
           <Link to="/transparencia" className="text-white hover:text-lime-primary transition block">
             Transparência
           </Link>
           <Link to="/contato" className="text-white hover:text-lime-primary transition block">
             Contato
+          </Link>
+          <Link to="/login" className="w-full px-4">
+            <Button variant="outline" className="w-full bg-lime-primary text-blue-primary font-medium hover:bg-lime-dark border-none">
+              <User className="mr-2 h-4 w-4" />
+              Login
+            </Button>
           </Link>
         </div>
       </div>

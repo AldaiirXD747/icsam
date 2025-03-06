@@ -21,3 +21,13 @@ export interface User {
   email?: string;
   teamId?: string;
 }
+
+export interface GalleryImage {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl: string;
+  championshipId: string;
+  createdAt: string | Date;
+  featured?: boolean;
+}
