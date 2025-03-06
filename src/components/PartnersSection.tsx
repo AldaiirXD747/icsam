@@ -1,9 +1,12 @@
 
 import React from 'react';
+import { Award, Users, Building, ExternalLink, ArrowRight } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const PartnersSection = () => {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <div className="inline-block bg-lime-primary bg-opacity-20 px-4 py-1.5 rounded-full mb-2">
@@ -15,63 +18,101 @@ const PartnersSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* GDF Logo Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {/* Government Partners */}
+          <Card className="bg-white/70 backdrop-blur-sm border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="bg-blue-50 p-3 rounded-full">
+                  <Building className="h-6 w-6 text-blue-primary" />
+                </div>
+                <h3 className="text-xl font-semibold text-blue-primary">Órgãos Governamentais</h3>
+                <p className="text-gray-600 text-sm">Apoio institucional de secretarias e órgãos públicos que fortalecem nossas iniciativas.</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Educational Partners */}
+          <Card className="bg-white/70 backdrop-blur-sm border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="bg-lime-50 p-3 rounded-full">
+                  <Award className="h-6 w-6 text-blue-primary" />
+                </div>
+                <h3 className="text-xl font-semibold text-blue-primary">Instituições Educacionais</h3>
+                <p className="text-gray-600 text-sm">Parceiros educacionais que contribuem para o desenvolvimento integral dos nossos jovens.</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Partners */}
+          <Card className="bg-white/70 backdrop-blur-sm border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="bg-blue-50 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-blue-primary" />
+                </div>
+                <h3 className="text-xl font-semibold text-blue-primary">Empresas Apoiadoras</h3>
+                <p className="text-gray-600 text-sm">Empresas de diversos segmentos que acreditam no poder transformador do esporte.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <h3 className="text-2xl font-bold text-blue-primary text-center mb-8">Parceiros Oficiais</h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* GDF Logo */}
+          <div className="glass-card p-6 flex flex-col items-center justify-center h-40 group hover:-translate-y-1 transition-all duration-300">
             <img 
               src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
               alt="Secretaria de Esporte - GDF" 
-              className="max-h-16 object-contain"
+              className="max-h-16 object-contain mb-3 group-hover:scale-105 transition-transform duration-300"
             />
+            <p className="text-sm text-gray-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Secretaria de Esporte - GDF</p>
           </div>
           
-          {/* Secretaria de Educação Logo Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          {/* Secretaria de Educação Logo */}
+          <div className="glass-card p-6 flex flex-col items-center justify-center h-40 group hover:-translate-y-1 transition-all duration-300">
             <img 
               src="/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png" 
               alt="Secretaria de Educação - GDF" 
-              className="max-h-16 object-contain"
+              className="max-h-16 object-contain mb-3 group-hover:scale-105 transition-transform duration-300"
             />
+            <p className="text-sm text-gray-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Secretaria de Educação - GDF</p>
           </div>
           
-          {/* Secretaria de Esporte e Lazer Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          {/* Ministério do Esporte Logo */}
+          <div className="glass-card p-6 flex flex-col items-center justify-center h-40 group hover:-translate-y-1 transition-all duration-300">
             <img 
-              src="/lovable-uploads/71480ca7-a47e-49be-bcbf-3fdc06bdfcde.png" 
+              src="/lovable-uploads/0b71f7dd-5e7e-46d7-a9c6-7c4d93e26e31.png" 
               alt="Ministério do Esporte - Governo Federal" 
-              className="max-h-16 object-contain"
+              className="max-h-16 object-contain mb-3 group-hover:scale-105 transition-transform duration-300"
             />
+            <p className="text-sm text-gray-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Ministério do Esporte</p>
           </div>
           
-          {/* Administração Regional Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <div className="text-center">
-              <h3 className="font-semibold text-blue-primary">Administração Regional</h3>
-              <p className="text-sm text-gray-500 mt-1">Santa Maria - DF</p>
+          {/* Administração Regional */}
+          <div className="glass-card p-6 flex flex-col items-center justify-center h-40 group hover:-translate-y-1 transition-all duration-300">
+            <div className="p-3 rounded-full bg-blue-50 mb-3">
+              <Building className="h-8 w-8 text-blue-primary group-hover:scale-110 transition-transform duration-300" />
             </div>
-          </div>
-          
-          {/* Ministério do Esporte Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <div className="text-center">
-              <h3 className="font-semibold text-blue-primary">Ministério do Esporte</h3>
-              <p className="text-sm text-gray-500 mt-1">Governo Federal</p>
-            </div>
-          </div>
-          
-          {/* Empresas Apoiadoras Box */}
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-            <div className="text-center">
-              <h3 className="font-semibold text-blue-primary">Empresas Apoiadoras</h3>
-              <p className="text-sm text-gray-500 mt-1">Diversos Segmentos</p>
-            </div>
+            <h3 className="font-semibold text-blue-primary text-center">Administração Regional</h3>
+            <p className="text-sm text-gray-500 mt-1 text-center">Santa Maria - DF</p>
           </div>
         </div>
         
-        <div className="text-center mt-10">
-          <a href="/contato" className="btn-secondary inline-flex items-center">
+        <div className="mt-12 text-center">
+          <Button 
+            variant="default" 
+            className="bg-lime-primary text-blue-primary hover:bg-lime-dark font-semibold px-6 py-6 h-auto rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+          >
             Torne-se um Apoiador
-          </a>
+            <ArrowRight size={18} className="ml-2" />
+          </Button>
+          <p className="text-gray-500 text-sm mt-4">
+            Junte-se a nós e faça parte desta transformação social através do esporte.
+          </p>
         </div>
       </div>
     </section>
