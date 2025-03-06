@@ -6,6 +6,9 @@ import TopScorers from '@/components/TopScorers';
 import MatchCard from '@/components/MatchCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AboutSection from '@/components/AboutSection';
+import TransparencySection from '@/components/TransparencySection';
+import ContactSection from '@/components/ContactSection';
 
 // Mock data for upcoming matches
 const upcomingMatches = [
@@ -174,6 +177,9 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection />
         
+        {/* About Section */}
+        <AboutSection />
+        
         {/* Matches Section */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
@@ -325,6 +331,12 @@ const Index = () => {
         
         {/* Top Scorers Section */}
         <TopScorers />
+        
+        {/* Transparency Section */}
+        <TransparencySection />
+        
+        {/* Contact Section */}
+        <ContactSection />
         
         {/* Team Registration Section */}
         <TeamRegistration />

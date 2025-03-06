@@ -12,12 +12,12 @@ const HeroSection = () => {
               <span className="text-blue-primary font-medium text-sm">Campeonato Base Forte – 2025</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              <span className="heading-gradient">Campeonato de Futebol</span> <br />
-              <span className="text-blue-primary">de Base</span>
+              <span className="heading-gradient">Instituto Criança</span> <br />
+              <span className="text-blue-primary">Santa Maria</span>
             </h1>
             <p className="text-gray-700 text-lg mb-8 max-w-xl">
-              Bem-vindo ao campeonato Base Forte 2025, organizado pelo Instituto Criança Santa Maria. 
-              Competição de futebol para categorias SUB-11, SUB-13 e outras, revelando talentos e promovendo o esporte.
+              Transformando vidas através do esporte e educação. Conheça o campeonato Base Forte 2025, 
+              nossa principal iniciativa esportiva para revelar talentos e promover a inclusão social.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/teams" className="btn-primary flex items-center">
