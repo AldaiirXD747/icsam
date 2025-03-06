@@ -6,21 +6,7 @@ import ChampionshipDetails from '../components/ChampionshipDetails';
 import Footer from '../components/Footer';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-
-type ChampionshipType = {
-  id: string;
-  name: string;
-  year: string;
-  description: string;
-  banner_image: string;
-  start_date: string;
-  end_date: string;
-  location: string;
-  categories: string[];
-  organizer: string;
-  sponsors: { name: string; logo: string }[];
-  status: 'upcoming' | 'ongoing' | 'finished';
-};
+import { ChampionshipType } from '@/types/database';
 
 const Championship = () => {
   const { championshipId } = useParams<{ championshipId: string }>();
@@ -34,12 +20,17 @@ const Championship = () => {
       try {
         setLoading(true);
         
-        // Use a raw SQL query instead of the ORM
-        const { data, error } = await supabase
-          .rpc('get_championship_by_id', { championship_id: championshipId });
+        if (!championshipId) {
+          throw new Error("Championship ID is required");
+        }
+        
+        // Execute raw SQL query instead of using the ORM
+        const { data, error } = await supabase.rpc('get_championship_by_id', { 
+          championship_id: championshipId 
+        }).returns<ChampionshipType>();
         
         if (error) {
-          // If the RPC doesn't exist, fall back to direct SQL query
+          // If the RPC function doesn't exist, fall back to direct query
           const { data: directData, error: directError } = await supabase
             .from('championships')
             .select('*')
@@ -51,22 +42,31 @@ const Championship = () => {
           }
           
           if (directData) {
-            // Parse JSONB fields if needed
-            const processedData = {
-              ...directData,
+            // Process JSON fields
+            const processedChampionship: ChampionshipType = {
+              id: directData.id,
+              name: directData.name,
+              year: directData.year,
+              description: directData.description || "",
+              banner_image: directData.banner_image || "",
+              start_date: directData.start_date,
+              end_date: directData.end_date,
+              location: directData.location,
               categories: Array.isArray(directData.categories) 
                 ? directData.categories 
                 : typeof directData.categories === 'string' 
                   ? JSON.parse(directData.categories) 
                   : directData.categories || [],
+              organizer: directData.organizer || "",
               sponsors: Array.isArray(directData.sponsors) 
                 ? directData.sponsors 
                 : typeof directData.sponsors === 'string' 
                   ? JSON.parse(directData.sponsors) 
-                  : directData.sponsors || []
+                  : directData.sponsors || [],
+              status: directData.status as 'upcoming' | 'ongoing' | 'finished'
             };
             
-            setChampionship(processedData);
+            setChampionship(processedChampionship);
           } else {
             toast({
               variant: "destructive",
@@ -76,7 +76,22 @@ const Championship = () => {
             navigate('/');
           }
         } else if (data) {
-          setChampionship(data);
+          // Process RPC data
+          const processedChampionship: ChampionshipType = {
+            ...data as any,
+            categories: Array.isArray(data.categories) 
+              ? data.categories 
+              : typeof data.categories === 'string' 
+                ? JSON.parse(data.categories) 
+                : data.categories || [],
+            sponsors: Array.isArray(data.sponsors) 
+              ? data.sponsors 
+              : typeof data.sponsors === 'string' 
+                ? JSON.parse(data.sponsors) 
+                : data.sponsors || []
+          };
+          
+          setChampionship(processedChampionship);
         } else {
           toast({
             variant: "destructive",

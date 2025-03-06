@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,25 +8,8 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, Pencil, Trash2, Trophy, Calendar } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
+import { ChampionshipType } from '@/types/database';
 
-type ChampionshipStatus = 'upcoming' | 'ongoing' | 'finished';
-
-type Championship = {
-  id: string;
-  name: string;
-  year: string;
-  description: string;
-  banner_image: string;
-  start_date: string;
-  end_date: string;
-  location: string;
-  categories: string[];
-  organizer: string;
-  sponsors: { name: string; logo: string }[];
-  status: ChampionshipStatus;
-};
-
-// Form data type
 type ChampionshipFormData = {
   name: string;
   year: string;
@@ -38,15 +20,15 @@ type ChampionshipFormData = {
   location: string;
   categories: string;
   organizer: string;
-  status: ChampionshipStatus;
+  status: 'upcoming' | 'ongoing' | 'finished';
   sponsors: { name: string; logo: string }[];
 };
 
 const ChampionshipManagement = () => {
-  const [championships, setChampionships] = useState<Championship[]>([]);
+  const [championships, setChampionships] = useState<ChampionshipType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('list');
-  const [selectedChampionship, setSelectedChampionship] = useState<Championship | null>(null);
+  const [selectedChampionship, setSelectedChampionship] = useState<ChampionshipType | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterYear, setFilterYear] = useState("all");
   const { toast } = useToast();
@@ -74,7 +56,7 @@ const ChampionshipManagement = () => {
   const fetchChampionships = async () => {
     setIsLoading(true);
     try {
-      // Use a direct SQL query since the ORM might not be correctly typed
+      // Use a direct SQL query against the championships table
       const { data, error } = await supabase
         .from('championships')
         .select('*')
@@ -82,22 +64,31 @@ const ChampionshipManagement = () => {
 
       if (error) throw error;
       
-      // Parse categories and sponsors from JSONB if needed
-      const processedData = data?.map(championship => {
+      // Map the raw data to ChampionshipType
+      const processedData = data.map(championship => {
         return {
-          ...championship,
+          id: championship.id,
+          name: championship.name,
+          year: championship.year,
+          description: championship.description || "",
+          banner_image: championship.banner_image || "",
+          start_date: championship.start_date,
+          end_date: championship.end_date,
+          location: championship.location,
           categories: Array.isArray(championship.categories) 
             ? championship.categories 
             : typeof championship.categories === 'string' 
               ? JSON.parse(championship.categories) 
               : championship.categories || [],
+          organizer: championship.organizer || "",
           sponsors: Array.isArray(championship.sponsors) 
             ? championship.sponsors 
             : typeof championship.sponsors === 'string' 
               ? JSON.parse(championship.sponsors) 
-              : championship.sponsors || []
-        } as Championship;
-      }) || [];
+              : championship.sponsors || [],
+          status: championship.status as 'upcoming' | 'ongoing' | 'finished'
+        } as ChampionshipType;
+      });
       
       setChampionships(processedData);
     } catch (error) {
@@ -166,7 +157,7 @@ const ChampionshipManagement = () => {
       // Convert categories string to array
       const categoriesArray = formData.categories.split(',').map(category => category.trim());
       
-      // Use direct SQL query for insertion
+      // Insert new championship
       const { data, error } = await supabase
         .from('championships')
         .insert({
@@ -187,20 +178,29 @@ const ChampionshipManagement = () => {
       if (error) throw error;
 
       if (data) {
-        // Process the returned data to match our Championship type
-        const newChampionship = {
-          ...data[0],
+        // Create a ChampionshipType from the returned data
+        const newChampionship: ChampionshipType = {
+          id: data[0].id,
+          name: data[0].name,
+          year: data[0].year,
+          description: data[0].description || "",
+          banner_image: data[0].banner_image || "",
+          start_date: data[0].start_date,
+          end_date: data[0].end_date,
+          location: data[0].location,
           categories: Array.isArray(data[0].categories) 
             ? data[0].categories 
             : typeof data[0].categories === 'string' 
               ? JSON.parse(data[0].categories) 
               : data[0].categories || [],
+          organizer: data[0].organizer || "",
           sponsors: Array.isArray(data[0].sponsors) 
             ? data[0].sponsors 
             : typeof data[0].sponsors === 'string' 
               ? JSON.parse(data[0].sponsors) 
-              : data[0].sponsors || []
-        } as Championship;
+              : data[0].sponsors || [],
+          status: data[0].status as 'upcoming' | 'ongoing' | 'finished'
+        };
         
         setChampionships([newChampionship, ...championships]);
         
@@ -229,7 +229,7 @@ const ChampionshipManagement = () => {
       // Convert categories string to array
       const categoriesArray = formData.categories.split(',').map(category => category.trim());
       
-      // Use direct SQL query for update
+      // Update championship in database
       const { data, error } = await supabase
         .from('championships')
         .update({
@@ -251,20 +251,29 @@ const ChampionshipManagement = () => {
       if (error) throw error;
 
       if (data) {
-        // Process the returned data to match our Championship type
-        const updatedChampionship = {
-          ...data[0],
+        // Create a ChampionshipType from the returned data
+        const updatedChampionship: ChampionshipType = {
+          id: data[0].id,
+          name: data[0].name,
+          year: data[0].year,
+          description: data[0].description || "",
+          banner_image: data[0].banner_image || "",
+          start_date: data[0].start_date,
+          end_date: data[0].end_date,
+          location: data[0].location,
           categories: Array.isArray(data[0].categories) 
             ? data[0].categories 
             : typeof data[0].categories === 'string' 
               ? JSON.parse(data[0].categories) 
               : data[0].categories || [],
+          organizer: data[0].organizer || "",
           sponsors: Array.isArray(data[0].sponsors) 
             ? data[0].sponsors 
             : typeof data[0].sponsors === 'string' 
               ? JSON.parse(data[0].sponsors) 
-              : data[0].sponsors || []
-        } as Championship;
+              : data[0].sponsors || [],
+          status: data[0].status as 'upcoming' | 'ongoing' | 'finished'
+        };
         
         setChampionships(championships.map(championship => 
           championship.id === selectedChampionship.id ? updatedChampionship : championship
@@ -293,7 +302,6 @@ const ChampionshipManagement = () => {
     if (!confirm("Tem certeza que deseja excluir este campeonato?")) return;
 
     try {
-      // Use a direct SQL query for deletion
       const { error } = await supabase
         .from('championships')
         .delete()
@@ -318,7 +326,7 @@ const ChampionshipManagement = () => {
     }
   };
 
-  const handleEditChampionship = (championship: Championship) => {
+  const handleEditChampionship = (championship: ChampionshipType) => {
     setSelectedChampionship(championship);
     
     // Prepare categories string from array for the form
@@ -383,7 +391,7 @@ const ChampionshipManagement = () => {
   // Get unique years for filter dropdown
   const years = [...new Set(championships.map(championship => championship.year))];
 
-  const formatStatus = (status: ChampionshipStatus) => {
+  const formatStatus = (status: 'upcoming' | 'ongoing' | 'finished') => {
     switch (status) {
       case 'upcoming':
         return 'Próximo';
@@ -707,3 +715,4 @@ const ChampionshipManagement = () => {
 };
 
 export default ChampionshipManagement;
+

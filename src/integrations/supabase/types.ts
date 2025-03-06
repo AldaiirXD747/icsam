@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      championships: {
+        Row: {
+          banner_image: string | null
+          categories: Json | null
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          location: string
+          name: string
+          organizer: string | null
+          sponsors: Json | null
+          start_date: string
+          status: string | null
+          year: string
+        }
+        Insert: {
+          banner_image?: string | null
+          categories?: Json | null
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          location: string
+          name: string
+          organizer?: string | null
+          sponsors?: Json | null
+          start_date: string
+          status?: string | null
+          year: string
+        }
+        Update: {
+          banner_image?: string | null
+          categories?: Json | null
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          location?: string
+          name?: string
+          organizer?: string | null
+          sponsors?: Json | null
+          start_date?: string
+          status?: string | null
+          year?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -203,6 +251,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "players_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          team_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_accounts_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
