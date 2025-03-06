@@ -4,7 +4,6 @@ import HeroSection from '@/components/HeroSection';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AboutSection from '@/components/AboutSection';
-import TransparencySection from '@/components/TransparencySection';
 import ContactSection from '@/components/ContactSection';
 import ProgramsSection from '@/components/ProgramsSection';
 import PartnersSection from '@/components/PartnersSection';
@@ -34,9 +33,6 @@ const Index = () => {
         
         {/* Programs/Activities Section */}
         <ProgramsSection />
-        
-        {/* Transparency Section */}
-        <TransparencySection />
         
         {/* Partners Section */}
         <PartnersSection />
