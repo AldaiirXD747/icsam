@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,9 +62,14 @@ const MatchManagement = () => {
   const fetchMatches = async () => {
     setIsLoading(true);
     try {
+      // Updated query to specify the relationship columns explicitly
       const { data, error } = await supabase
         .from('matches')
-        .select('*, home_team_id:home_team(id, name), away_team_id:away_team(id, name)')
+        .select(`
+          *,
+          home_team_details:teams!matches_home_team_fkey(id, name),
+          away_team_details:teams!matches_away_team_fkey(id, name)
+        `)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -81,8 +87,8 @@ const MatchManagement = () => {
         category: match.category,
         round: match.round,
         championshipId: match.championship_id,
-        homeTeamName: match.home_team_id?.name || '',
-        awayTeamName: match.away_team_id?.name || '',
+        homeTeamName: match.home_team_details?.name || '',
+        awayTeamName: match.away_team_details?.name || '',
       }));
 
       setMatches(transformedData);
@@ -162,7 +168,11 @@ const MatchManagement = () => {
           round: formData.round,
           championship_id: formData.championshipId,
         })
-        .select('*, home_team_id:home_team(id, name), away_team_id:away_team(id, name)');
+        .select(`
+          *,
+          home_team_details:teams!matches_home_team_fkey(id, name),
+          away_team_details:teams!matches_away_team_fkey(id, name)
+        `);
 
       if (error) throw error;
 
@@ -179,8 +189,8 @@ const MatchManagement = () => {
         category: data[0].category,
         round: data[0].round,
         championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_id?.name || '',
-        awayTeamName: data[0].away_team_id?.name || '',
+        homeTeamName: data[0].home_team_details?.name || '',
+        awayTeamName: data[0].away_team_details?.name || '',
       };
 
       setMatches([newMatch, ...matches]);
@@ -222,7 +232,11 @@ const MatchManagement = () => {
           championship_id: formData.championshipId,
         })
         .eq('id', selectedMatch.id)
-        .select('*, home_team_id:home_team(id, name), away_team_id:away_team(id, name)');
+        .select(`
+          *,
+          home_team_details:teams!matches_home_team_fkey(id, name),
+          away_team_details:teams!matches_away_team_fkey(id, name)
+        `);
 
       if (error) throw error;
 
@@ -239,8 +253,8 @@ const MatchManagement = () => {
         category: data[0].category,
         round: data[0].round,
         championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_id?.name || '',
-        awayTeamName: data[0].away_team_id?.name || '',
+        homeTeamName: data[0].home_team_details?.name || '',
+        awayTeamName: data[0].away_team_details?.name || '',
       };
 
       setMatches(matches.map(m => 
@@ -696,4 +710,3 @@ const MatchManagement = () => {
 };
 
 export default MatchManagement;
-
