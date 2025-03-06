@@ -317,6 +317,110 @@ export type Database = {
         }
         Relationships: []
       }
+      top_scorers: {
+        Row: {
+          category: string
+          championship_id: string | null
+          created_at: string
+          goals: number
+          id: string
+          player_id: string | null
+          team_id: string | null
+        }
+        Insert: {
+          category: string
+          championship_id?: string | null
+          created_at?: string
+          goals?: number
+          id?: string
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          category?: string
+          championship_id?: string | null
+          created_at?: string
+          goals?: number
+          id?: string
+          player_id?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "top_scorers_championship_id_fkey"
+            columns: ["championship_id"]
+            isOneToOne: false
+            referencedRelation: "championships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "top_scorers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "top_scorers_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yellow_card_leaders: {
+        Row: {
+          category: string
+          championship_id: string | null
+          created_at: string
+          id: string
+          player_id: string | null
+          team_id: string | null
+          yellow_cards: number
+        }
+        Insert: {
+          category: string
+          championship_id?: string | null
+          created_at?: string
+          id?: string
+          player_id?: string | null
+          team_id?: string | null
+          yellow_cards?: number
+        }
+        Update: {
+          category?: string
+          championship_id?: string | null
+          created_at?: string
+          id?: string
+          player_id?: string | null
+          team_id?: string | null
+          yellow_cards?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yellow_card_leaders_championship_id_fkey"
+            columns: ["championship_id"]
+            isOneToOne: false
+            referencedRelation: "championships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "yellow_card_leaders_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "yellow_card_leaders_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,4 @@
 
-
 export interface Team {
   id: string;
   name: string;
@@ -83,4 +82,3 @@ export interface Player {
   team_logo?: string;
   team_category?: string;
 }
-

@@ -1,4 +1,5 @@
 
+
 export type ChampionshipType = {
   id: string;
   name: string;
@@ -41,4 +42,24 @@ export type Match = {
   created_at?: string;
   home_team_name?: string;
   away_team_name?: string;
+};
+
+export type TopScorerType = {
+  id: string;
+  player_id: string;
+  team_id: string;
+  goals: number;
+  category: string;
+  championship_id: string | null;
+  created_at?: string;
+};
+
+export type YellowCardLeaderType = {
+  id: string;
+  player_id: string;
+  team_id: string;
+  yellow_cards: number;
+  category: string;
+  championship_id: string | null;
+  created_at?: string;
 };
