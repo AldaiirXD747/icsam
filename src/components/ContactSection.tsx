@@ -96,9 +96,16 @@ const ContactSection = () => {
                   <div>
                     <p className="font-medium text-blue-primary">Endereço</p>
                     <address className="text-gray-600 not-italic">
-                      Quadra 1, Conjunto O, Lote 27<br />
+                      Campo Sintético - Quadra 120<br />
                       Santa Maria, DF<br />
-                      CEP: 00000-000
+                      <a 
+                        href="https://maps.app.goo.gl/aTubWnA4QMfVt3JR9" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-primary hover:underline mt-1 inline-block"
+                      >
+                        Ver no Google Maps
+                      </a>
                     </address>
                   </div>
                 </div>
@@ -203,6 +210,22 @@ const ContactSection = () => {
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+        
+        <div className="mt-16">
+          <div className="glass-card overflow-hidden rounded-lg">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3839.025568058366!2d-47.979166923826064!3d-15.791169723437043!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x935a2a9c5ee9a8fb%3A0xfbeb2f7be63af7ea!2sQuadra%20120%20de%20Santa%20Maria%20-%20Santa%20Maria%2C%20Bras%C3%ADlia%20-%20DF!5e0!3m2!1spt-BR!2sbr!4v1699973558586!5m2!1spt-BR!2sbr" 
+              width="100%" 
+              height="450" 
+              style={{ border: 0 }} 
+              allowFullScreen 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Localização do Campo Sintético - Quadra 120"
+              className="w-full"
+            ></iframe>
           </div>
         </div>
       </div>

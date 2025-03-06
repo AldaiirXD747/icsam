@@ -91,7 +91,17 @@ const Footer = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </span>
-                <span className="text-gray-300">Santa Maria, DF</span>
+                <span className="text-gray-300">
+                  Campo Sintético - Quadra 120, Santa Maria, DF
+                  <a 
+                    href="https://maps.app.goo.gl/aTubWnA4QMfVt3JR9" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block text-lime-primary hover:underline mt-1"
+                  >
+                    Ver no Google Maps
+                  </a>
+                </span>
               </li>
             </ul>
           </div>
