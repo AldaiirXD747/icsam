@@ -145,7 +145,7 @@ export const deleteTeam = async (id: string): Promise<void> => {
   }
 };
 
-// Mock user functions - these could be replaced with actual user management
+// Get users
 export const getUsers = async (): Promise<User[]> => {
   try {
     // In a real application, you might fetch team members or admins from Supabase
@@ -174,6 +174,7 @@ export const getUsers = async (): Promise<User[]> => {
   }
 };
 
+// Update user
 export const updateUser = async (user: User): Promise<User> => {
   try {
     const { data, error } = await supabase

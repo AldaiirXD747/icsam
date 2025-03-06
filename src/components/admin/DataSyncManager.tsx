@@ -5,17 +5,41 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Database, RefreshCw } from 'lucide-react';
 import { migrateDataToSupabase } from '@/utils/migrateDataToSupabase';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const DataSyncManager = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [migrationSummary, setMigrationSummary] = useState<{
+    championships: number;
+    teams: number;
+    players: number;
+    matches: number;
+    topScorers: number;
+    yellowCards: number;
+  }>({
+    championships: 0,
+    teams: 0,
+    players: 0,
+    matches: 0,
+    topScorers: 0,
+    yellowCards: 0
+  });
   const { toast } = useToast();
 
   const handleMigration = async () => {
     if (isRunning) return;
     
     setIsRunning(true);
-    setLogs(["Starting migration process..."]);
+    setLogs(["Iniciando processo de migração..."]);
+    setMigrationSummary({
+      championships: 0,
+      teams: 0,
+      players: 0,
+      matches: 0,
+      topScorers: 0,
+      yellowCards: 0
+    });
     
     // Capture console logs
     const originalConsoleLog = console.log;
@@ -24,11 +48,26 @@ const DataSyncManager = () => {
     console.log = (message) => {
       originalConsoleLog(message);
       setLogs(prev => [...prev, `INFO: ${message}`]);
+      
+      // Update summary counts based on log messages
+      if (message.includes('Championship') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, championships: prev.championships + 1 }));
+      } else if (message.includes('Team') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, teams: prev.teams + 1 }));
+      } else if (message.includes('Player') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, players: prev.players + 1 }));
+      } else if (message.includes('Match') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, matches: prev.matches + 1 }));
+      } else if (message.includes('Top scorer') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, topScorers: prev.topScorers + 1 }));
+      } else if (message.includes('Yellow card leader') && message.includes('migrated successfully')) {
+        setMigrationSummary(prev => ({ ...prev, yellowCards: prev.yellowCards + 1 }));
+      }
     };
     
     console.error = (message) => {
       originalConsoleError(message);
-      setLogs(prev => [...prev, `ERROR: ${message}`]);
+      setLogs(prev => [...prev, `ERRO: ${message}`]);
     };
     
     try {
@@ -39,7 +78,7 @@ const DataSyncManager = () => {
         description: "Dados migrados com sucesso para o Supabase."
       });
     } catch (error) {
-      console.error("Error running migration:", error);
+      console.error("Erro durante a migração:", error);
       
       toast({
         variant: "destructive",
@@ -87,20 +126,43 @@ const DataSyncManager = () => {
             )}
           </Button>
           
-          {logs.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium mb-2">Logs de Sincronização:</h3>
-              <div className="bg-gray-100 p-3 rounded-md max-h-60 overflow-y-auto">
-                {logs.map((log, index) => (
-                  <div 
-                    key={index} 
-                    className={`text-xs mb-1 font-mono ${log.startsWith('ERROR') ? 'text-red-600' : 'text-gray-700'}`}
-                  >
-                    {log}
-                  </div>
-                ))}
-              </div>
+          {(migrationSummary.championships > 0 || 
+            migrationSummary.teams > 0 || 
+            migrationSummary.players > 0 || 
+            migrationSummary.matches > 0 || 
+            migrationSummary.topScorers > 0 || 
+            migrationSummary.yellowCards > 0) && (
+            <div className="mt-4 p-4 border rounded-md bg-blue-50">
+              <h3 className="text-md font-medium mb-2">Resumo da Migração:</h3>
+              <ul className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <li className="text-sm">Campeonatos: <span className="font-semibold">{migrationSummary.championships}</span></li>
+                <li className="text-sm">Times: <span className="font-semibold">{migrationSummary.teams}</span></li>
+                <li className="text-sm">Jogadores: <span className="font-semibold">{migrationSummary.players}</span></li>
+                <li className="text-sm">Partidas: <span className="font-semibold">{migrationSummary.matches}</span></li>
+                <li className="text-sm">Artilheiros: <span className="font-semibold">{migrationSummary.topScorers}</span></li>
+                <li className="text-sm">Cartões: <span className="font-semibold">{migrationSummary.yellowCards}</span></li>
+              </ul>
             </div>
+          )}
+          
+          {logs.length > 0 && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="logs">
+                <AccordionTrigger>Logs de Sincronização ({logs.length})</AccordionTrigger>
+                <AccordionContent>
+                  <div className="bg-gray-100 p-3 rounded-md max-h-60 overflow-y-auto">
+                    {logs.map((log, index) => (
+                      <div 
+                        key={index} 
+                        className={`text-xs mb-1 font-mono ${log.startsWith('ERRO') ? 'text-red-600' : 'text-gray-700'}`}
+                      >
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
         </div>
       </CardContent>
