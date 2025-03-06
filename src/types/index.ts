@@ -1,4 +1,5 @@
 
+
 export interface Team {
   id: string;
   name: string;
@@ -48,3 +49,38 @@ export interface Match {
   homeTeamName?: string;
   awayTeamName?: string;
 }
+
+export interface TopScorer {
+  id: string;
+  playerId: string;
+  name: string;
+  team: string;
+  teamId: string;
+  goals: number;
+  category: string;
+  championshipId?: string;
+}
+
+export interface YellowCardLeader {
+  id: string;
+  playerId: string;
+  name: string;
+  team: string;
+  teamId: string;
+  yellowCards: number;
+  category: string;
+  championshipId?: string;
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  position: string;
+  number?: number | null;
+  photo?: string | null;
+  team_id: string;
+  team_name?: string;
+  team_logo?: string;
+  team_category?: string;
+}
+
