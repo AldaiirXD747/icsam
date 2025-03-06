@@ -6,10 +6,10 @@ import Footer from '../components/Footer';
 import TeamCard from '../components/TeamCard';
 import { Search } from 'lucide-react';
 
-// Mock data for teams
+// Mock data for teams with numeric ids
 const teamsData = [
   {
-    id: 'guerreiros',
+    id: 1,
     name: 'Guerreiros',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/9.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -20,7 +20,7 @@ const teamsData = [
     players: 18
   },
   {
-    id: 'furacao',
+    id: 2,
     name: 'Furacão',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -31,7 +31,7 @@ const teamsData = [
     players: 22
   },
   {
-    id: 'atletico-city',
+    id: 3,
     name: 'Atlético City',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -42,7 +42,7 @@ const teamsData = [
     players: 20
   },
   {
-    id: 'federal',
+    id: 4,
     name: 'Federal',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -53,7 +53,7 @@ const teamsData = [
     players: 24
   },
   {
-    id: 'estrela',
+    id: 5,
     name: 'Estrela',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -64,7 +64,7 @@ const teamsData = [
     players: 19
   },
   {
-    id: 'bsa',
+    id: 6,
     name: 'BSA',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -75,7 +75,7 @@ const teamsData = [
     players: 21
   },
   {
-    id: 'monte',
+    id: 7,
     name: 'Monte',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -86,7 +86,7 @@ const teamsData = [
     players: 23
   },
   {
-    id: 'alvinegro',
+    id: 8,
     name: 'Alvinegro',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/1.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -97,7 +97,7 @@ const teamsData = [
     players: 20
   },
   {
-    id: 'lyon',
+    id: 9,
     name: 'Lyon',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -108,7 +108,7 @@ const teamsData = [
     players: 19
   },
   {
-    id: 'gremio',
+    id: 10,
     name: 'Grêmio',
     logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png',
     categories: ['SUB-11', 'SUB-13'],
@@ -213,10 +213,6 @@ const Teams = () => {
                   id={team.id}
                   name={team.name}
                   logo={team.logo}
-                  location={team.location}
-                  foundingYear={team.foundingYear}
-                  players={team.players}
-                  coach={team.coach}
                   categories={team.categories}
                   group={team.group}
                 />

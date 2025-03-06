@@ -4,6 +4,7 @@ import React from 'react';
 type MatchStatus = 'scheduled' | 'live' | 'finished';
 
 interface MatchCardProps {
+  id: number;
   homeTeam: {
     name: string;
     logo: string;
@@ -39,6 +40,7 @@ const StatusBadge: React.FC<{ status: MatchStatus }> = ({ status }) => {
 };
 
 const MatchCard: React.FC<MatchCardProps> = ({
+  id,
   homeTeam,
   awayTeam,
   category,

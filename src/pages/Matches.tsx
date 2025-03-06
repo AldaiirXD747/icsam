@@ -7,9 +7,9 @@ import MatchCard from '../components/MatchCard';
 import { Calendar, Search, Filter } from 'lucide-react';
 
 // Define types to match MatchCard component requirements
-type MatchStatus = 'scheduled' | 'live' | 'completed';
+type MatchStatus = 'scheduled' | 'live' | 'finished';
 
-// Mock data for matches
+// Mock data for matches with the correct status types
 const matchesData = [
   {
     id: 1,
@@ -27,7 +27,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '09:00',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -46,7 +46,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '10:30',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -65,7 +65,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '09:00',
     group: 'B',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -84,7 +84,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '10:30',
     group: 'B',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -103,7 +103,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '09:00',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -122,7 +122,7 @@ const matchesData = [
     date: '09/02/2025',
     time: '10:30',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -141,7 +141,7 @@ const matchesData = [
     date: '16/02/2025',
     time: '09:00',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -160,7 +160,7 @@ const matchesData = [
     date: '16/02/2025',
     time: '10:30',
     group: 'A',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -179,7 +179,7 @@ const matchesData = [
     date: '15/02/2025',
     time: '09:00',
     group: 'B',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -198,7 +198,7 @@ const matchesData = [
     date: '15/02/2025',
     time: '10:30',
     group: 'B',
-    status: 'completed' as MatchStatus,
+    status: 'finished' as MatchStatus,
     venue: 'Campo do Instituto'
   },
   {
@@ -374,7 +374,7 @@ const Matches = () => {
                   <option value="all">Todos os Status</option>
                   <option value="scheduled">Agendados</option>
                   <option value="live">Ao Vivo</option>
-                  <option value="completed">Concluídos</option>
+                  <option value="finished">Concluídos</option>
                 </select>
               </div>
             </div>

@@ -1,429 +1,520 @@
 
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, MapPin, Clock, Calendar, User, Shield } from 'lucide-react';
+import { Clock, MapPin, Users, Award, Calendar, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-// Define types
-type MatchStatus = 'scheduled' | 'live' | 'completed';
+// Mock data for the match
+const matchData = {
+  id: 1,
+  homeTeam: {
+    id: 'furacao',
+    name: 'Furacão',
+    logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png',
+    score: 6
+  },
+  awayTeam: {
+    id: 'federal',
+    name: 'Federal',
+    logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png',
+    score: 0
+  },
+  category: 'SUB-11',
+  date: '09/02/2025',
+  time: '09:00',
+  group: 'A',
+  status: 'completed',
+  venue: 'Campo do Instituto',
+  attendance: 120,
+  referee: 'Carlos Santos',
+  roundInfo: 'Primeira Rodada',
+  events: [
+    {
+      id: 1,
+      type: 'goal',
+      minute: 12,
+      player: {
+        id: 101,
+        name: 'Pedro Silva',
+        team: 'Furacão'
+      }
+    },
+    {
+      id: 2,
+      type: 'goal',
+      minute: 18,
+      player: {
+        id: 102,
+        name: 'João Oliveira',
+        team: 'Furacão'
+      }
+    },
+    {
+      id: 3,
+      type: 'yellowCard',
+      minute: 24,
+      player: {
+        id: 201,
+        name: 'Ricardo Almeida',
+        team: 'Federal'
+      }
+    },
+    {
+      id: 4,
+      type: 'goal',
+      minute: 31,
+      player: {
+        id: 103,
+        name: 'Lucas Pereira',
+        team: 'Furacão'
+      }
+    },
+    {
+      id: 5,
+      type: 'goal',
+      minute: 38,
+      player: {
+        id: 101,
+        name: 'Pedro Silva',
+        team: 'Furacão'
+      }
+    },
+    {
+      id: 6,
+      type: 'substitution',
+      minute: 42,
+      player: {
+        id: 202,
+        name: 'Carlos Mendes',
+        team: 'Federal'
+      },
+      substitutionPlayer: {
+        id: 203,
+        name: 'Roberto Gomes',
+        team: 'Federal'
+      }
+    },
+    {
+      id: 7,
+      type: 'goal',
+      minute: 48,
+      player: {
+        id: 104,
+        name: 'Miguel Santos',
+        team: 'Furacão'
+      }
+    },
+    {
+      id: 8,
+      type: 'yellowCard',
+      minute: 52,
+      player: {
+        id: 204,
+        name: 'André Lima',
+        team: 'Federal'
+      }
+    },
+    {
+      id: 9,
+      type: 'goal',
+      minute: 58,
+      player: {
+        id: 101,
+        name: 'Pedro Silva',
+        team: 'Furacão'
+      }
+    }
+  ],
+  lineups: {
+    home: {
+      starting: [
+        { id: 101, name: 'Pedro Silva', position: 'Forward' },
+        { id: 102, name: 'João Oliveira', position: 'Forward' },
+        { id: 103, name: 'Lucas Pereira', position: 'Midfielder' },
+        { id: 104, name: 'Miguel Santos', position: 'Midfielder' },
+        { id: 105, name: 'Rafael Costa', position: 'Midfielder' },
+        { id: 106, name: 'Alexandre Sousa', position: 'Defender' },
+        { id: 107, name: 'Bruno Ferreira', position: 'Defender' },
+        { id: 108, name: 'Gustavo Monteiro', position: 'Defender' },
+        { id: 109, name: 'Diego Alves', position: 'Defender' },
+        { id: 110, name: 'Tiago Ribeiro', position: 'Goalkeeper' }
+      ],
+      substitutes: [
+        { id: 111, name: 'Fernando Martins', position: 'Goalkeeper' },
+        { id: 112, name: 'Paulo Rocha', position: 'Defender' },
+        { id: 113, name: 'Marcelo Pinto', position: 'Midfielder' },
+        { id: 114, name: 'Roberto Silva', position: 'Forward' }
+      ]
+    },
+    away: {
+      starting: [
+        { id: 201, name: 'Ricardo Almeida', position: 'Forward' },
+        { id: 202, name: 'Carlos Mendes', position: 'Forward' },
+        { id: 204, name: 'André Lima', position: 'Midfielder' },
+        { id: 205, name: 'Felipe Nunes', position: 'Midfielder' },
+        { id: 206, name: 'Eduardo Santos', position: 'Midfielder' },
+        { id: 207, name: 'Marcos Teixeira', position: 'Defender' },
+        { id: 208, name: 'Victor Cardoso', position: 'Defender' },
+        { id: 209, name: 'Sérgio Oliveira', position: 'Defender' },
+        { id: 210, name: 'Renato Gomes', position: 'Defender' },
+        { id: 211, name: 'Júlio César', position: 'Goalkeeper' }
+      ],
+      substitutes: [
+        { id: 212, name: 'Leonardo Dias', position: 'Goalkeeper' },
+        { id: 213, name: 'Daniel Barbosa', position: 'Defender' },
+        { id: 203, name: 'Roberto Gomes', position: 'Midfielder' },
+        { id: 214, name: 'Gabriel Costa', position: 'Forward' }
+      ]
+    }
+  },
+  stats: {
+    possession: { home: 65, away: 35 },
+    shots: { home: 14, away: 5 },
+    shotsOnTarget: { home: 9, away: 1 },
+    corners: { home: 7, away: 2 },
+    fouls: { home: 8, away: 12 },
+    yellowCards: { home: 1, away: 2 },
+    redCards: { home: 0, away: 0 }
+  }
+};
 
-interface MatchPlayer {
-  id: number;
-  name: string;
-  number: number;
-  photo: string;
-  goals: number;
-  yellowCards: number;
-  redCards: number;
-}
-
+// Type for the events with substitution player
 interface MatchEvent {
   id: number;
-  type: 'goal' | 'yellow-card' | 'red-card' | 'substitution';
+  type: string;
   minute: number;
   player: {
     id: number;
     name: string;
-    team: 'home' | 'away';
+    team: string;
   };
   substitutionPlayer?: {
     id: number;
     name: string;
+    team: string;
   };
 }
 
-// Mock data for match details
-const matchData = {
-  '1': {
-    id: 1,
-    homeTeam: {
-      id: 'furacao',
-      name: 'Furacão',
-      logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png',
-      score: 6,
-      players: [
-        { id: 1, name: 'Miguel Gomes', number: 1, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol-com-espaco-de-copia_23-2148770377.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 2, name: 'Renato Lima', number: 4, photo: 'https://img.freepik.com/fotos-gratis/retrato-de-uma-crianca-feliz-com-uma-bola-de-futebol_23-2148860243.jpg', goals: 1, yellowCards: 0, redCards: 0 },
-        { id: 3, name: 'Leandro Sousa', number: 5, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol_23-2148844646.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 4, name: 'Leonardo Ribeiro', number: 8, photo: 'https://img.freepik.com/fotos-gratis/menino-com-bola-isolada-na-parede-branca_231208-1392.jpg', goals: 2, yellowCards: 0, redCards: 0 },
-        { id: 5, name: 'Carlos Mendes', number: 9, photo: 'https://img.freepik.com/fotos-gratis/crianca-masculina-feliz-jogando-futebol-sozinho_23-2148900152.jpg', goals: 3, yellowCards: 0, redCards: 0 }
-      ]
-    },
-    awayTeam: {
-      id: 'federal',
-      name: 'Federal',
-      logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png',
-      score: 0,
-      players: [
-        { id: 6, name: 'Eduardo Pereira', number: 1, photo: 'https://img.freepik.com/fotos-gratis/crianca-masculina-feliz-jogando-futebol-sozinho_23-2148900152.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 7, name: 'Daniel Alves', number: 2, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol_23-2148844646.jpg', goals: 0, yellowCards: 1, redCards: 0 },
-        { id: 8, name: 'Felipe Rodrigues', number: 4, photo: 'https://img.freepik.com/fotos-gratis/menino-com-bola-isolada-na-parede-branca_231208-1392.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 9, name: 'Gustavo Miranda', number: 7, photo: 'https://img.freepik.com/fotos-gratis/retrato-de-uma-crianca-feliz-com-uma-bola-de-futebol_23-2148860243.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 10, name: 'Bruno Santos', number: 9, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol-com-espaco-de-copia_23-2148770377.jpg', goals: 0, yellowCards: 0, redCards: 0 }
-      ]
-    },
-    category: 'SUB-11',
-    date: '09/02/2025',
-    time: '09:00',
-    group: 'A',
-    status: 'completed' as MatchStatus,
-    venue: 'Campo do Instituto',
-    events: [
-      { id: 1, type: 'goal', minute: 12, player: { id: 5, name: 'Carlos Mendes', team: 'home' } },
-      { id: 2, type: 'yellow-card', minute: 18, player: { id: 7, name: 'Daniel Alves', team: 'away' } },
-      { id: 3, type: 'goal', minute: 22, player: { id: 4, name: 'Leonardo Ribeiro', team: 'home' } },
-      { id: 4, type: 'goal', minute: 29, player: { id: 5, name: 'Carlos Mendes', team: 'home' } },
-      { id: 5, type: 'goal', minute: 34, player: { id: 5, name: 'Carlos Mendes', team: 'home' } },
-      { id: 6, type: 'goal', minute: 42, player: { id: 4, name: 'Leonardo Ribeiro', team: 'home' } },
-      { id: 7, type: 'goal', minute: 48, player: { id: 2, name: 'Renato Lima', team: 'home' } }
-    ]
-  },
-  '2': {
-    id: 2,
-    homeTeam: {
-      id: 'gremio',
-      name: 'Grêmio',
-      logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png',
-      score: 2,
-      players: [
-        { id: 11, name: 'Pedro Costa', number: 1, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol-com-espaco-de-copia_23-2148770377.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 12, name: 'Rafael Silva', number: 3, photo: 'https://img.freepik.com/fotos-gratis/retrato-de-uma-crianca-feliz-com-uma-bola-de-futebol_23-2148860243.jpg', goals: 1, yellowCards: 0, redCards: 0 },
-        { id: 13, name: 'Marcos Oliveira', number: 5, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol_23-2148844646.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 14, name: 'João Fernandes', number: 8, photo: 'https://img.freepik.com/fotos-gratis/menino-com-bola-isolada-na-parede-branca_231208-1392.jpg', goals: 0, yellowCards: 1, redCards: 0 },
-        { id: 15, name: 'Lucas Martins', number: 10, photo: 'https://img.freepik.com/fotos-gratis/crianca-masculina-feliz-jogando-futebol-sozinho_23-2148900152.jpg', goals: 1, yellowCards: 0, redCards: 0 }
-      ]
-    },
-    awayTeam: {
-      id: 'estrela',
-      name: 'Estrela',
-      logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
-      score: 1,
-      players: [
-        { id: 16, name: 'Henrique Lima', number: 1, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol_23-2148844646.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 17, name: 'Ricardo Soares', number: 2, photo: 'https://img.freepik.com/fotos-gratis/crianca-masculina-feliz-jogando-futebol-sozinho_23-2148900152.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 18, name: 'André Ferreira', number: 4, photo: 'https://img.freepik.com/fotos-gratis/retrato-de-uma-crianca-feliz-com-uma-bola-de-futebol_23-2148860243.jpg', goals: 0, yellowCards: 0, redCards: 0 },
-        { id: 19, name: 'Paulo Gomes', number: 8, photo: 'https://img.freepik.com/fotos-gratis/menino-com-bola-isolada-na-parede-branca_231208-1392.jpg', goals: 1, yellowCards: 0, redCards: 0 },
-        { id: 20, name: 'Caio Santos', number: 9, photo: 'https://img.freepik.com/fotos-gratis/menino-jogando-futebol-com-espaco-de-copia_23-2148770377.jpg', goals: 0, yellowCards: 0, redCards: 0 }
-      ]
-    },
-    category: 'SUB-11',
-    date: '09/02/2025',
-    time: '10:30',
-    group: 'A',
-    status: 'completed' as MatchStatus,
-    venue: 'Campo do Instituto',
-    events: [
-      { id: 1, type: 'goal', minute: 15, player: { id: 12, name: 'Rafael Silva', team: 'home' } },
-      { id: 2, type: 'yellow-card', minute: 22, player: { id: 14, name: 'João Fernandes', team: 'home' } },
-      { id: 3, type: 'goal', minute: 27, player: { id: 19, name: 'Paulo Gomes', team: 'away' } },
-      { id: 4, type: 'goal', minute: 44, player: { id: 15, name: 'Lucas Martins', team: 'home' } }
-    ]
-  }
-};
-
 const MatchDetail = () => {
-  const { matchId } = useParams<{ matchId: string }>();
-  const match = matchId ? matchData[matchId as keyof typeof matchData] : undefined;
+  const { matchId } = useParams<{ matchId?: string }>();
+  const [activeTab, setActiveTab] = useState<'summary' | 'lineups' | 'stats'>('summary');
   
-  if (!match) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="pt-24 flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-blue-primary mb-4">Jogo não encontrado</h1>
-            <p className="text-gray-600 mb-8">O jogo que você está procurando não existe.</p>
-            <Link to="/matches" className="btn-primary">
-              Voltar para Jogos
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Group events by team
-  const homeEvents = match.events.filter(event => event.player.team === 'home');
-  const awayEvents = match.events.filter(event => event.player.team === 'away');
+  // In a real app, you would fetch the match data based on matchId
+  const match = matchData;
+  
+  const EventIcon = ({ type }: { type: string }) => {
+    switch (type) {
+      case 'goal':
+        return <span className="inline-block w-5 h-5 bg-lime-primary rounded-full text-white text-xs font-bold flex items-center justify-center">⚽</span>;
+      case 'yellowCard':
+        return <span className="inline-block w-5 h-5 bg-yellow-400 rounded-sm"></span>;
+      case 'redCard':
+        return <span className="inline-block w-5 h-5 bg-red-600 rounded-sm"></span>;
+      case 'substitution':
+        return <span className="inline-block w-5 h-5 text-blue-primary">↔️</span>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="pt-24 flex-grow">
         <div className="container mx-auto px-4 py-8">
-          <Link to="/matches" className="inline-flex items-center mb-8 text-blue-primary hover:text-blue-light transition-colors">
-            <ArrowLeft size={20} className="mr-2" />
+          <Link to="/matches" className="inline-flex items-center text-blue-primary hover:underline mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar para Jogos
           </Link>
           
           {/* Match Header */}
-          <div className="glass-card mb-8 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-primary to-blue-light p-6 text-white">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="flex items-center">
-                    <Shield className="mr-2" size={16} />
-                    <span>Grupo {match.group}</span>
-                  </div>
-                  <div className="flex items-center mt-1">
-                    <User className="mr-2" size={16} />
-                    <span>{match.category}</span>
-                  </div>
+          <div className="glass-card p-6 mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-6">
+              <div className="text-center md:text-left mb-4 md:mb-0">
+                <h1 className="text-2xl md:text-3xl font-bold text-blue-primary">
+                  {match.homeTeam.name} vs {match.awayTeam.name}
+                </h1>
+                <p className="text-gray-600">{match.category} - Grupo {match.group}</p>
+                <p className="text-gray-500 text-sm">{match.roundInfo}</p>
+              </div>
+              
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                  <span className="text-xl font-bold">
+                    {match.homeTeam.score} - {match.awayTeam.score}
+                  </span>
                 </div>
-                
-                <div className="text-center">
-                  <div className="flex items-center">
-                    <Calendar className="mr-2" size={16} />
-                    <span>{match.date}</span>
-                  </div>
-                  <div className="flex items-center mt-1">
-                    <Clock className="mr-2" size={16} />
-                    <span>{match.time}</span>
-                  </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="flex items-center justify-end">
-                    <MapPin className="mr-2" size={16} />
-                    <span>{match.venue}</span>
-                  </div>
-                  <div className="mt-1">
-                    <span className="uppercase font-semibold px-2 py-1 rounded-full text-xs bg-white text-blue-primary">
-                      {match.status === 'completed' ? 'Finalizado' : match.status === 'live' ? 'Ao Vivo' : 'Agendado'}
-                    </span>
-                  </div>
-                </div>
+                <p className="text-gray-500 mt-2 text-sm">
+                  {match.status === 'live' ? (
+                    <span className="text-red-500 font-semibold animate-pulse">AO VIVO</span>
+                  ) : match.status === 'completed' ? (
+                    'Finalizado'
+                  ) : (
+                    'Agendado'
+                  )}
+                </p>
               </div>
             </div>
             
-            {/* Score */}
-            <div className="p-8">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="flex flex-col items-center md:items-start mb-6 md:mb-0 order-2 md:order-1">
-                  <Link to={`/teams/${match.homeTeam.id}`} className="flex flex-col items-center md:items-start">
-                    <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="w-24 h-24 object-contain mb-2" />
-                    <span className="text-xl font-bold">{match.homeTeam.name}</span>
-                  </Link>
-                </div>
-                
-                <div className="flex items-center order-1 md:order-2 mb-6 md:mb-0">
-                  <div className="text-center mx-6 w-28">
-                    <div className="flex justify-center items-center py-4">
-                      <span className="text-5xl font-bold text-blue-primary">{match.homeTeam.score}</span>
-                      <span className="mx-3 text-3xl text-gray-400">-</span>
-                      <span className="text-5xl font-bold text-blue-primary">{match.awayTeam.score}</span>
-                    </div>
-                    {match.status === 'completed' && (
-                      <span className="text-sm text-gray-500">Resultado Final</span>
-                    )}
-                    {match.status === 'live' && (
-                      <span className="text-sm text-red-500 animate-pulse font-medium">Ao Vivo</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center md:items-end order-3">
-                  <Link to={`/teams/${match.awayTeam.id}`} className="flex flex-col items-center md:items-end">
-                    <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="w-24 h-24 object-contain mb-2" />
-                    <span className="text-xl font-bold">{match.awayTeam.name}</span>
-                  </Link>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex items-center">
+                <Calendar className="text-blue-primary mr-2" size={18} />
+                <span className="text-gray-700">{match.date}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="text-blue-primary mr-2" size={18} />
+                <span className="text-gray-700">{match.time}</span>
+              </div>
+              <div className="flex items-center">
+                <MapPin className="text-blue-primary mr-2" size={18} />
+                <span className="text-gray-700">{match.venue}</span>
+              </div>
+              <div className="flex items-center">
+                <Users className="text-blue-primary mr-2" size={18} />
+                <span className="text-gray-700">Público: {match.attendance}</span>
               </div>
             </div>
           </div>
           
-          {/* Match Events Timeline */}
-          <div className="glass-card p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-blue-primary mb-6 text-center">Linha do Tempo</h2>
-            
-            {match.events.length > 0 ? (
-              <div className="relative">
-                {/* Timeline Center Line */}
-                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 transform -translate-x-1/2"></div>
-
-                {/* Events */}
-                {match.events.sort((a, b) => a.minute - b.minute).map((event, index) => (
-                  <div key={event.id} className={`relative flex ${
-                    event.player.team === 'home' ? 'justify-end md:justify-start' : 'justify-end'
-                  } mb-8`}>
-                    <div className={`w-full md:w-5/12 ${
-                      event.player.team === 'home' ? 'md:text-right md:pr-8' : 'md:pl-8'
-                    }`}>
-                      <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="bg-blue-primary text-white text-xs px-2 py-1 rounded-full">
-                            {event.minute}'
-                          </span>
-                          <span className="font-semibold">
-                            {event.player.team === 'home' ? match.homeTeam.name : match.awayTeam.name}
-                          </span>
-                        </div>
-                        
-                        {event.type === 'goal' && (
-                          <div className="flex items-center">
-                            <div className="mr-2 bg-green-100 p-1 rounded-full">
-                              <span className="text-green-600 text-xl">⚽</span>
-                            </div>
-                            <div>
-                              <div className="font-medium">Gol!</div>
-                              <div className="text-sm text-gray-600">Marcado por {event.player.name}</div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {event.type === 'yellow-card' && (
-                          <div className="flex items-center">
-                            <div className="mr-2 p-1">
-                              <div className="w-4 h-6 bg-yellow-500"></div>
-                            </div>
-                            <div>
-                              <div className="font-medium">Cartão Amarelo</div>
-                              <div className="text-sm text-gray-600">Para {event.player.name}</div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {event.type === 'red-card' && (
-                          <div className="flex items-center">
-                            <div className="mr-2 p-1">
-                              <div className="w-4 h-6 bg-red-500"></div>
-                            </div>
-                            <div>
-                              <div className="font-medium">Cartão Vermelho</div>
-                              <div className="text-sm text-gray-600">Para {event.player.name}</div>
-                            </div>
-                          </div>
-                        )}
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 mb-6">
+            <button
+              className={`py-3 px-6 font-medium ${
+                activeTab === 'summary' ? 'text-blue-primary border-b-2 border-blue-primary' : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('summary')}
+            >
+              Resumo
+            </button>
+            <button
+              className={`py-3 px-6 font-medium ${
+                activeTab === 'lineups' ? 'text-blue-primary border-b-2 border-blue-primary' : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('lineups')}
+            >
+              Escalações
+            </button>
+            <button
+              className={`py-3 px-6 font-medium ${
+                activeTab === 'stats' ? 'text-blue-primary border-b-2 border-blue-primary' : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('stats')}
+            >
+              Estatísticas
+            </button>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="mb-10">
+            {activeTab === 'summary' && (
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-semibold text-blue-primary mb-4">Eventos da Partida</h2>
+                <div className="space-y-4">
+                  {match.events.map((event: MatchEvent) => (
+                    <div key={event.id} className="flex items-center p-2 hover:bg-gray-50 rounded-lg">
+                      <div className="w-12 text-center font-medium text-gray-600">{event.minute}'</div>
+                      <div className="mx-3">
+                        <EventIcon type={event.type} />
+                      </div>
+                      <div>
+                        <span className="font-medium">{event.player.name}</span>
+                        <span className="text-sm text-gray-500 ml-2">({event.player.team})</span>
                         
                         {event.type === 'substitution' && event.substitutionPlayer && (
-                          <div className="flex items-center">
-                            <div className="mr-2 p-1">
-                              <span className="text-blue-primary text-xl">↔️</span>
-                            </div>
-                            <div>
-                              <div className="font-medium">Substituição</div>
-                              <div className="text-sm text-gray-600">
-                                Entra: {event.player.name}, Sai: {event.substitutionPlayer.name}
-                              </div>
-                            </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            Saiu: {event.substitutionPlayer.name}
                           </div>
                         )}
                       </div>
                     </div>
-                    
-                    {/* Center Circle */}
-                    <div className="absolute left-1/2 w-4 h-4 bg-blue-primary rounded-full transform -translate-x-1/2 top-4"></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Nenhum evento registrado para esta partida.</p>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-          
-          {/* Team Lineups */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* Home Team */}
-            <div className="glass-card p-6">
-              <div className="flex items-center mb-4">
-                <img src={match.homeTeam.logo} alt={match.homeTeam.name} className="w-12 h-12 object-contain mr-3" />
-                <h3 className="text-xl font-semibold text-blue-primary">{match.homeTeam.name}</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {match.homeTeam.players.map(player => (
-                  <div key={player.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                        <img src={player.photo} alt={player.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <Link to={`/player/${player.id}`} className="font-medium hover:text-blue-primary">
-                          {player.name}
-                        </Link>
-                        <div className="text-xs text-gray-500">#{player.number}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {player.goals > 0 && (
-                        <div className="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                          <span className="mr-1">⚽</span>
-                          <span>{player.goals}</span>
-                        </div>
-                      )}
-                      
-                      {player.yellowCards > 0 && (
-                        <div className="flex items-center bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs">
-                          <div className="w-2 h-3 bg-yellow-500 mr-1"></div>
-                          <span>{player.yellowCards}</span>
-                        </div>
-                      )}
-                      
-                      {player.redCards > 0 && (
-                        <div className="flex items-center bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                          <div className="w-2 h-3 bg-red-500 mr-1"></div>
-                          <span>{player.redCards}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
             
-            {/* Away Team */}
-            <div className="glass-card p-6">
-              <div className="flex items-center mb-4">
-                <img src={match.awayTeam.logo} alt={match.awayTeam.name} className="w-12 h-12 object-contain mr-3" />
-                <h3 className="text-xl font-semibold text-blue-primary">{match.awayTeam.name}</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {match.awayTeam.players.map(player => (
-                  <div key={player.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
-                        <img src={player.photo} alt={player.name} className="w-full h-full object-cover" />
+            {activeTab === 'lineups' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Home Team Lineup */}
+                <div className="glass-card p-6">
+                  <div className="flex items-center mb-4">
+                    <img 
+                      src={match.homeTeam.logo} 
+                      alt={match.homeTeam.name} 
+                      className="w-10 h-10 mr-3"
+                    />
+                    <h2 className="text-xl font-semibold text-blue-primary">{match.homeTeam.name}</h2>
+                  </div>
+                  
+                  <h3 className="font-medium text-gray-700 mb-2">Titulares</h3>
+                  <div className="space-y-2 mb-6">
+                    {match.lineups.home.starting.map(player => (
+                      <div key={player.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                        <span>{player.name}</span>
+                        <span className="text-sm text-gray-500">{player.position}</span>
                       </div>
-                      <div>
-                        <Link to={`/player/${player.id}`} className="font-medium hover:text-blue-primary">
-                          {player.name}
-                        </Link>
-                        <div className="text-xs text-gray-500">#{player.number}</div>
+                    ))}
+                  </div>
+                  
+                  <h3 className="font-medium text-gray-700 mb-2">Reservas</h3>
+                  <div className="space-y-2">
+                    {match.lineups.home.substitutes.map(player => (
+                      <div key={player.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                        <span>{player.name}</span>
+                        <span className="text-sm text-gray-500">{player.position}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Away Team Lineup */}
+                <div className="glass-card p-6">
+                  <div className="flex items-center mb-4">
+                    <img 
+                      src={match.awayTeam.logo} 
+                      alt={match.awayTeam.name} 
+                      className="w-10 h-10 mr-3"
+                    />
+                    <h2 className="text-xl font-semibold text-blue-primary">{match.awayTeam.name}</h2>
+                  </div>
+                  
+                  <h3 className="font-medium text-gray-700 mb-2">Titulares</h3>
+                  <div className="space-y-2 mb-6">
+                    {match.lineups.away.starting.map(player => (
+                      <div key={player.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                        <span>{player.name}</span>
+                        <span className="text-sm text-gray-500">{player.position}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <h3 className="font-medium text-gray-700 mb-2">Reservas</h3>
+                  <div className="space-y-2">
+                    {match.lineups.away.substitutes.map(player => (
+                      <div key={player.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                        <span>{player.name}</span>
+                        <span className="text-sm text-gray-500">{player.position}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'stats' && (
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-semibold text-blue-primary mb-6 text-center">Estatísticas da Partida</h2>
+                
+                <div className="space-y-6">
+                  {/* Possession */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{match.stats.possession.home}%</span>
+                      <span className="text-gray-600">Posse de Bola</span>
+                      <span className="font-medium">{match.stats.possession.away}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-primary rounded-full" 
+                        style={{ width: `${match.stats.possession.home}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Shots */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{match.stats.shots.home}</span>
+                      <span className="text-gray-600">Finalizações</span>
+                      <span className="font-medium">{match.stats.shots.away}</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-primary rounded-full" 
+                        style={{ width: `${(match.stats.shots.home / (match.stats.shots.home + match.stats.shots.away)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Shots on Target */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{match.stats.shotsOnTarget.home}</span>
+                      <span className="text-gray-600">Finalizações no Gol</span>
+                      <span className="font-medium">{match.stats.shotsOnTarget.away}</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-primary rounded-full" 
+                        style={{ width: `${(match.stats.shotsOnTarget.home / (match.stats.shotsOnTarget.home + match.stats.shotsOnTarget.away)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Corners */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{match.stats.corners.home}</span>
+                      <span className="text-gray-600">Escanteios</span>
+                      <span className="font-medium">{match.stats.corners.away}</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-primary rounded-full" 
+                        style={{ width: `${(match.stats.corners.home / (match.stats.corners.home + match.stats.corners.away)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Fouls */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium">{match.stats.fouls.home}</span>
+                      <span className="text-gray-600">Faltas</span>
+                      <span className="font-medium">{match.stats.fouls.away}</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-primary rounded-full" 
+                        style={{ width: `${(match.stats.fouls.home / (match.stats.fouls.home + match.stats.fouls.away)) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Cards */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-center font-medium mb-2">Cartões Amarelos</h3>
+                      <div className="flex justify-center items-center space-x-12">
+                        <div className="text-center">
+                          <span className="text-xl font-bold">{match.stats.yellowCards.home}</span>
+                          <p className="text-sm text-gray-600">{match.homeTeam.name}</p>
+                        </div>
+                        <div className="text-center">
+                          <span className="text-xl font-bold">{match.stats.yellowCards.away}</span>
+                          <p className="text-sm text-gray-600">{match.awayTeam.name}</p>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      {player.goals > 0 && (
-                        <div className="flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
-                          <span className="mr-1">⚽</span>
-                          <span>{player.goals}</span>
+                    <div>
+                      <h3 className="text-center font-medium mb-2">Cartões Vermelhos</h3>
+                      <div className="flex justify-center items-center space-x-12">
+                        <div className="text-center">
+                          <span className="text-xl font-bold">{match.stats.redCards.home}</span>
+                          <p className="text-sm text-gray-600">{match.homeTeam.name}</p>
                         </div>
-                      )}
-                      
-                      {player.yellowCards > 0 && (
-                        <div className="flex items-center bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs">
-                          <div className="w-2 h-3 bg-yellow-500 mr-1"></div>
-                          <span>{player.yellowCards}</span>
+                        <div className="text-center">
+                          <span className="text-xl font-bold">{match.stats.redCards.away}</span>
+                          <p className="text-sm text-gray-600">{match.awayTeam.name}</p>
                         </div>
-                      )}
-                      
-                      {player.redCards > 0 && (
-                        <div className="flex items-center bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
-                          <div className="w-2 h-3 bg-red-500 mr-1"></div>
-                          <span>{player.redCards}</span>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
