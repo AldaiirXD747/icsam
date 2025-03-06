@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -24,71 +23,38 @@ const Championship = () => {
           throw new Error("Championship ID is required");
         }
         
-        // Execute raw SQL query instead of using the ORM
-        const { data, error } = await supabase.rpc('get_championship_by_id', { 
-          championship_id: championshipId 
-        }).returns<ChampionshipType>();
+        const { data, error } = await supabase
+          .from('championships')
+          .select('*')
+          .eq('id', championshipId)
+          .single();
         
         if (error) {
-          // If the RPC function doesn't exist, fall back to direct query
-          const { data: directData, error: directError } = await supabase
-            .from('championships')
-            .select('*')
-            .eq('id', championshipId)
-            .single();
-          
-          if (directError) {
-            throw directError;
-          }
-          
-          if (directData) {
-            // Process JSON fields
-            const processedChampionship: ChampionshipType = {
-              id: directData.id,
-              name: directData.name,
-              year: directData.year,
-              description: directData.description || "",
-              banner_image: directData.banner_image || "",
-              start_date: directData.start_date,
-              end_date: directData.end_date,
-              location: directData.location,
-              categories: Array.isArray(directData.categories) 
-                ? directData.categories 
-                : typeof directData.categories === 'string' 
-                  ? JSON.parse(directData.categories) 
-                  : directData.categories || [],
-              organizer: directData.organizer || "",
-              sponsors: Array.isArray(directData.sponsors) 
-                ? directData.sponsors 
-                : typeof directData.sponsors === 'string' 
-                  ? JSON.parse(directData.sponsors) 
-                  : directData.sponsors || [],
-              status: directData.status as 'upcoming' | 'ongoing' | 'finished'
-            };
-            
-            setChampionship(processedChampionship);
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Campeonato não encontrado",
-              description: "O campeonato solicitado não existe."
-            });
-            navigate('/');
-          }
-        } else if (data) {
-          // Process RPC data
+          throw error;
+        }
+        
+        if (data) {
           const processedChampionship: ChampionshipType = {
-            ...data as any,
+            id: data.id,
+            name: data.name,
+            year: data.year,
+            description: data.description || "",
+            banner_image: data.banner_image || "",
+            start_date: data.start_date,
+            end_date: data.end_date,
+            location: data.location,
             categories: Array.isArray(data.categories) 
               ? data.categories 
               : typeof data.categories === 'string' 
                 ? JSON.parse(data.categories) 
                 : data.categories || [],
+            organizer: data.organizer || "",
             sponsors: Array.isArray(data.sponsors) 
               ? data.sponsors 
               : typeof data.sponsors === 'string' 
                 ? JSON.parse(data.sponsors) 
-                : data.sponsors || []
+                : data.sponsors || [],
+            status: data.status as 'upcoming' | 'ongoing' | 'finished'
           };
           
           setChampionship(processedChampionship);
@@ -145,7 +111,7 @@ const Championship = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="pt-20 flex-grow">
-        <ChampionshipDetails {...championship} />
+        {championship && <ChampionshipDetails {...championship} />}
       </div>
       <Footer />
     </div>

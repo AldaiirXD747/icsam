@@ -1,159 +1,93 @@
-
-import { useState, useEffect } from 'react';
+importtypescript
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, LogIn } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import logo from '../assets/logo.svg';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
-    <nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white bg-opacity-90 backdrop-blur-md shadow-md py-2' : 'bg-transparent py-4'
-      }`}
-    >
-      <div className="container mx-auto px-4 flex justify-between items-center">
+    <nav className="bg-blue-primary fixed top-0 left-0 w-full z-50">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img 
-            src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
-            alt="Instituto Criança Santa Maria" 
-            className="h-14 mr-2"
-          />
-          <div className="hidden md:block">
-            <h1 className="text-blue-primary text-lg font-semibold">Instituto</h1>
-            <p className="text-xs text-gray-600">Criança Santa Maria</p>
-          </div>
+          <img src={logo} alt="Base Forte" className="h-8 mr-2" />
+          <span className="text-white font-bold text-lg">Base Forte</span>
         </Link>
-        
-        {/* Desktop Navigation */}
+
+        {/* Mobile Menu Button */}
+        <button onClick={toggleMenu} className="md:hidden text-white focus:outline-none">
+          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+
+        {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
+          <Link to="/" className="text-white hover:text-lime-primary transition">
             Início
           </Link>
-          <Link to="/sobre" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
+          <Link to="/teams" className="text-white hover:text-lime-primary transition">
+            Times
+          </Link>
+          <Link to="/matches" className="text-white hover:text-lime-primary transition">
+            Partidas
+          </Link>
+          <Link to="/statistics" className="text-white hover:text-lime-primary transition">
+            Estatísticas
+          </Link>
+          <Link to="/standings" className="text-white hover:text-lime-primary transition">
+            Classificação
+          </Link>
+          <Link to="/championships" className="text-white hover:text-lime-primary transition">
+            Campeonatos
+          </Link>
+          <Link to="/sobre" className="text-white hover:text-lime-primary transition">
             Sobre
           </Link>
-          <Link to="/transparencia" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
+          <Link to="/transparencia" className="text-white hover:text-lime-primary transition">
             Transparência
           </Link>
-          <div className="relative group">
-            <button className="text-blue-primary hover:text-blue-light font-medium transition-colors flex items-center">
-              Campeonatos <ChevronDown size={16} className="ml-1" />
-            </button>
-            <div className="absolute z-10 right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100">
-              <div className="py-1" role="menu" aria-orientation="vertical">
-                <Link to="/championships" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Todos os Campeonatos
-                </Link>
-                <Link to="/teams" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Times
-                </Link>
-                <Link to="/matches" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Jogos
-                </Link>
-                <Link to="/statistics" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Estatísticas
-                </Link>
-                <Link to="/standings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50" role="menuitem">
-                  Classificação
-                </Link>
-              </div>
-            </div>
-          </div>
-          <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
+          <Link to="/contato" className="text-white hover:text-lime-primary transition">
             Contato
           </Link>
-          <Link 
-            to="/login" 
-            className="btn-primary flex items-center gap-2"
-          >
-            <LogIn size={18} /> Login
+        </div>
+      </div>
+
+      {/* Mobile Menu Content */}
+      <div className={`md:hidden ${isMenuOpen ? 'block' : 'none'} bg-blue-primary py-4`}>
+        <div className="flex flex-col items-center space-y-4">
+          <Link to="/" className="text-white hover:text-lime-primary transition block">
+            Início
+          </Link>
+          <Link to="/teams" className="text-white hover:text-lime-primary transition block">
+            Times
+          </Link>
+          <Link to="/matches" className="text-white hover:text-lime-primary transition block">
+            Partidas
+          </Link>
+          <Link to="/statistics" className="text-white hover:text-lime-primary transition block">
+            Estatísticas
+          </Link>
+          <Link to="/standings" className="text-white hover:text-lime-primary transition block">
+            Classificação
+          </Link>
+          <Link to="/championships" className="text-white hover:text-lime-primary transition block">
+            Campeonatos
+          </Link>
+          <Link to="/sobre" className="text-white hover:text-lime-primary transition block">
+            Sobre
+          </Link>
+          <Link to="/transparencia" className="text-white hover:text-lime-primary transition block">
+            Transparência
+          </Link>
+          <Link to="/contato" className="text-white hover:text-lime-primary transition block">
+            Contato
           </Link>
         </div>
-        
-        {/* Mobile menu button */}
-        <button 
-          onClick={toggleMenu} 
-          className="md:hidden text-blue-primary"
-          aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
       </div>
-      
-      {/* Mobile Navigation */}
-      {isOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white bg-opacity-95 backdrop-blur-md shadow-md animate-slide-in-left">
-          <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            <Link to="/" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
-              Início
-            </Link>
-            <Link to="/sobre" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
-              Sobre
-            </Link>
-            <Link to="/transparencia" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
-              Transparência
-            </Link>
-            <div className="py-2 border-b">
-              <button 
-                onClick={() => {
-                  const submenu = document.getElementById('campeonatos-submenu');
-                  if (submenu) {
-                    submenu.classList.toggle('hidden');
-                  }
-                }}
-                className="text-blue-primary hover:text-blue-light font-medium transition-colors flex items-center"
-              >
-                Campeonatos <ChevronDown size={16} className="ml-1" />
-              </button>
-              <div id="campeonatos-submenu" className="hidden pl-4 mt-2">
-                <Link to="/championships" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Todos os Campeonatos
-                </Link>
-                <Link to="/teams" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Times
-                </Link>
-                <Link to="/matches" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Jogos
-                </Link>
-                <Link to="/statistics" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Estatísticas
-                </Link>
-                <Link to="/standings" className="block py-2 text-blue-primary hover:text-blue-light transition-colors">
-                  Classificação
-                </Link>
-              </div>
-            </div>
-            <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
-              Contato
-            </Link>
-            <Link 
-              to="/login" 
-              className="btn-primary text-center flex items-center justify-center gap-2"
-            >
-              <LogIn size={18} /> Login
-            </Link>
-          </div>
-        </div>
-      )}
     </nav>
   );
 };

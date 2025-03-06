@@ -13,6 +13,7 @@ import Matches from "./pages/Matches";
 import Statistics from "./pages/Statistics";
 import Standings from "./pages/Standings";
 import Championship from "./pages/Championship";
+import Championships from "./pages/Championships";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import About from "./pages/About";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/matches" element={<Matches />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/standings" element={<Standings />} />
+          <Route path="/championships" element={<Championships />} />
           <Route path="/championships/:championshipId" element={<Championship />} />
           <Route path="/championships/:championshipId/teams" element={<Teams />} />
           <Route path="/championships/:championshipId/matches" element={<Matches />} />
