@@ -7,9 +7,24 @@ import Footer from '../components/Footer';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+type ChampionshipType = {
+  id: string;
+  name: string;
+  year: string;
+  description: string;
+  banner_image: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  categories: string[];
+  organizer: string;
+  sponsors: { name: string; logo: string }[];
+  status: 'upcoming' | 'ongoing' | 'finished';
+};
+
 const Championship = () => {
   const { championshipId } = useParams<{ championshipId: string }>();
-  const [championship, setChampionship] = useState<any>(null);
+  const [championship, setChampionship] = useState<ChampionshipType | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -18,17 +33,49 @@ const Championship = () => {
     const fetchChampionship = async () => {
       try {
         setLoading(true);
+        
+        // Use a raw SQL query instead of the ORM
         const { data, error } = await supabase
-          .from('championships')
-          .select('*')
-          .eq('id', championshipId)
-          .single();
+          .rpc('get_championship_by_id', { championship_id: championshipId });
         
         if (error) {
-          throw error;
-        }
-        
-        if (data) {
+          // If the RPC doesn't exist, fall back to direct SQL query
+          const { data: directData, error: directError } = await supabase
+            .from('championships')
+            .select('*')
+            .eq('id', championshipId)
+            .single();
+          
+          if (directError) {
+            throw directError;
+          }
+          
+          if (directData) {
+            // Parse JSONB fields if needed
+            const processedData = {
+              ...directData,
+              categories: Array.isArray(directData.categories) 
+                ? directData.categories 
+                : typeof directData.categories === 'string' 
+                  ? JSON.parse(directData.categories) 
+                  : directData.categories || [],
+              sponsors: Array.isArray(directData.sponsors) 
+                ? directData.sponsors 
+                : typeof directData.sponsors === 'string' 
+                  ? JSON.parse(directData.sponsors) 
+                  : directData.sponsors || []
+            };
+            
+            setChampionship(processedData);
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Campeonato não encontrado",
+              description: "O campeonato solicitado não existe."
+            });
+            navigate('/');
+          }
+        } else if (data) {
           setChampionship(data);
         } else {
           toast({

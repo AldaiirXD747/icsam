@@ -27,6 +27,21 @@ type Championship = {
   status: ChampionshipStatus;
 };
 
+// Form data type
+type ChampionshipFormData = {
+  name: string;
+  year: string;
+  description: string;
+  banner_image: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  categories: string;
+  organizer: string;
+  status: ChampionshipStatus;
+  sponsors: { name: string; logo: string }[];
+};
+
 const ChampionshipManagement = () => {
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +52,7 @@ const ChampionshipManagement = () => {
   const { toast } = useToast();
 
   // Form states
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ChampionshipFormData>({
     name: '',
     year: '',
     description: '',
@@ -47,7 +62,7 @@ const ChampionshipManagement = () => {
     location: '',
     categories: '',
     organizer: '',
-    status: 'upcoming' as ChampionshipStatus,
+    status: 'upcoming',
     sponsors: [{name: '', logo: ''}]
   });
 
@@ -59,6 +74,7 @@ const ChampionshipManagement = () => {
   const fetchChampionships = async () => {
     setIsLoading(true);
     try {
+      // Use a direct SQL query since the ORM might not be correctly typed
       const { data, error } = await supabase
         .from('championships')
         .select('*')
@@ -66,20 +82,22 @@ const ChampionshipManagement = () => {
 
       if (error) throw error;
       
-      // Parse categories and sponsors if they are stored as strings
-      const processedData = data?.map(championship => ({
-        ...championship,
-        categories: Array.isArray(championship.categories) 
-          ? championship.categories 
-          : typeof championship.categories === 'string' 
-            ? JSON.parse(championship.categories) 
-            : [],
-        sponsors: Array.isArray(championship.sponsors) 
-          ? championship.sponsors 
-          : typeof championship.sponsors === 'string' 
-            ? JSON.parse(championship.sponsors) 
-            : []
-      })) || [];
+      // Parse categories and sponsors from JSONB if needed
+      const processedData = data?.map(championship => {
+        return {
+          ...championship,
+          categories: Array.isArray(championship.categories) 
+            ? championship.categories 
+            : typeof championship.categories === 'string' 
+              ? JSON.parse(championship.categories) 
+              : championship.categories || [],
+          sponsors: Array.isArray(championship.sponsors) 
+            ? championship.sponsors 
+            : typeof championship.sponsors === 'string' 
+              ? JSON.parse(championship.sponsors) 
+              : championship.sponsors || []
+        } as Championship;
+      }) || [];
       
       setChampionships(processedData);
     } catch (error) {
@@ -103,7 +121,7 @@ const ChampionshipManagement = () => {
     const { value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      categories: value.split(',').map(category => category.trim()) 
+      categories: value 
     }));
   };
 
@@ -145,14 +163,13 @@ const ChampionshipManagement = () => {
     if (!validateForm()) return;
 
     try {
-      // Format categories as array if it's a string
-      const categoriesArray = typeof formData.categories === 'string' 
-        ? formData.categories.split(',').map(category => category.trim()) 
-        : formData.categories;
+      // Convert categories string to array
+      const categoriesArray = formData.categories.split(',').map(category => category.trim());
       
+      // Use direct SQL query for insertion
       const { data, error } = await supabase
         .from('championships')
-        .insert([{
+        .insert({
           name: formData.name,
           year: formData.year,
           description: formData.description,
@@ -164,14 +181,27 @@ const ChampionshipManagement = () => {
           organizer: formData.organizer,
           status: formData.status,
           sponsors: formData.sponsors.filter(sponsor => sponsor.name.trim() !== '' || sponsor.logo.trim() !== '')
-        }])
+        })
         .select();
 
       if (error) throw error;
 
       if (data) {
-        // Add the new championship to the list
-        const newChampionship = data[0] as Championship;
+        // Process the returned data to match our Championship type
+        const newChampionship = {
+          ...data[0],
+          categories: Array.isArray(data[0].categories) 
+            ? data[0].categories 
+            : typeof data[0].categories === 'string' 
+              ? JSON.parse(data[0].categories) 
+              : data[0].categories || [],
+          sponsors: Array.isArray(data[0].sponsors) 
+            ? data[0].sponsors 
+            : typeof data[0].sponsors === 'string' 
+              ? JSON.parse(data[0].sponsors) 
+              : data[0].sponsors || []
+        } as Championship;
+        
         setChampionships([newChampionship, ...championships]);
         
         toast({
@@ -196,11 +226,10 @@ const ChampionshipManagement = () => {
     if (!selectedChampionship || !validateForm()) return;
     
     try {
-      // Format categories as array if it's a string
-      const categoriesArray = typeof formData.categories === 'string' 
-        ? formData.categories.split(',').map(category => category.trim()) 
-        : formData.categories;
+      // Convert categories string to array
+      const categoriesArray = formData.categories.split(',').map(category => category.trim());
       
+      // Use direct SQL query for update
       const { data, error } = await supabase
         .from('championships')
         .update({
@@ -222,8 +251,21 @@ const ChampionshipManagement = () => {
       if (error) throw error;
 
       if (data) {
-        // Update the championship in the list
-        const updatedChampionship = data[0] as Championship;
+        // Process the returned data to match our Championship type
+        const updatedChampionship = {
+          ...data[0],
+          categories: Array.isArray(data[0].categories) 
+            ? data[0].categories 
+            : typeof data[0].categories === 'string' 
+              ? JSON.parse(data[0].categories) 
+              : data[0].categories || [],
+          sponsors: Array.isArray(data[0].sponsors) 
+            ? data[0].sponsors 
+            : typeof data[0].sponsors === 'string' 
+              ? JSON.parse(data[0].sponsors) 
+              : data[0].sponsors || []
+        } as Championship;
+        
         setChampionships(championships.map(championship => 
           championship.id === selectedChampionship.id ? updatedChampionship : championship
         ));
@@ -251,6 +293,7 @@ const ChampionshipManagement = () => {
     if (!confirm("Tem certeza que deseja excluir este campeonato?")) return;
 
     try {
+      // Use a direct SQL query for deletion
       const { error } = await supabase
         .from('championships')
         .delete()
@@ -278,10 +321,12 @@ const ChampionshipManagement = () => {
   const handleEditChampionship = (championship: Championship) => {
     setSelectedChampionship(championship);
     
-    // Prepare categories string from array if needed
+    // Prepare categories string from array for the form
     const categoriesString = Array.isArray(championship.categories) 
       ? championship.categories.join(', ') 
-      : championship.categories;
+      : typeof championship.categories === 'string'
+        ? championship.categories
+        : '';
     
     setFormData({
       name: championship.name,
@@ -303,8 +348,8 @@ const ChampionshipManagement = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = ['name', 'year', 'start_date', 'end_date', 'location', 'status'];
-    const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]);
+    const requiredFields = ['name', 'year', 'start_date', 'end_date', 'location', 'status'] as const;
+    const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
       toast({
@@ -571,7 +616,7 @@ const ChampionshipManagement = () => {
                 <Input 
                   id="categories" 
                   name="categories" 
-                  value={Array.isArray(formData.categories) ? formData.categories.join(', ') : formData.categories} 
+                  value={formData.categories} 
                   onChange={handleCategoriesChange} 
                   placeholder="Ex: SUB-11, SUB-13, SUB-15, SUB-17"
                 />

@@ -1,43 +1,60 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Mail, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 
 const TeamLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   
   useEffect(() => {
-    // Check if already logged in
-    const checkAuth = async () => {
-      const { data, error } = await supabase.auth.getSession();
+    checkExistingSession();
+  }, []);
+  
+  const checkExistingSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!error && data.session) {
-        // Already logged in, redirect to team dashboard
-        navigate('/team/dashboard');
+      if (session) {
+        // Check if it's a team account
+        const teamId = session.user?.user_metadata?.team_id;
+        
+        if (teamId) {
+          // Already logged in, redirect to dashboard
+          navigate('/team/dashboard');
+        }
       }
-    };
-    
-    checkAuth();
-  }, [navigate]);
+    } catch (error) {
+      console.error('Error checking session:', error);
+    }
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!formData.email || !formData.password) {
       toast({
         variant: "destructive",
         title: "Campos obrigatórios",
-        description: "Por favor, preencha e-mail e senha."
+        description: "Por favor, preencha o e-mail e a senha."
       });
       return;
     }
@@ -45,54 +62,49 @@ const TeamLogin = () => {
     try {
       setLoading(true);
       
+      // Sign in with email/password
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+        email: formData.email,
+        password: formData.password
       });
       
       if (error) throw error;
       
       if (data.user) {
-        // Check if this is a team user
-        const { data: teamAccount, error: teamError } = await supabase
-          .from('team_accounts')
-          .select('team_id')
-          .eq('user_id', data.user.id)
-          .single();
-          
-        if (teamError) {
+        // Check if it's a team account
+        const teamId = data.user.user_metadata?.team_id;
+        
+        if (!teamId) {
           // Not a team account
           await supabase.auth.signOut();
-          
           toast({
             variant: "destructive",
             title: "Acesso negado",
-            description: "Esta conta não está associada a um time."
+            description: "Esta conta não está associada a nenhum time."
           });
-          
           return;
         }
         
-        // Login successful, redirect to team dashboard
         toast({
-          title: "Login realizado",
-          description: "Você foi conectado com sucesso."
+          title: "Login bem-sucedido",
+          description: "Você será redirecionado para o painel do time."
         });
         
+        // Redirect to team dashboard
         navigate('/team/dashboard');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Error signing in:', error);
       
-      let errorMessage = "Ocorreu um erro ao tentar entrar.";
+      let errorMessage = "Ocorreu um erro ao tentar fazer login.";
       
-      if (error.message.includes("Invalid login")) {
+      if (error.message === "Invalid login credentials") {
         errorMessage = "E-mail ou senha incorretos.";
       }
       
       toast({
         variant: "destructive",
-        title: "Erro no login",
+        title: "Erro de login",
         description: errorMessage
       });
     } finally {
@@ -101,80 +113,90 @@ const TeamLogin = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-      <Button 
-        variant="outline" 
-        onClick={() => navigate('/')} 
-        className="absolute top-4 left-4 flex items-center gap-2"
-      >
-        <ArrowLeft size={16} />
-        Voltar ao site
-      </Button>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
       
-      <div className="max-w-md w-full">
-        <div className="flex justify-center mb-6">
-          <div className="flex flex-col items-center">
-            <div className="bg-[#1a237e] text-white p-3 rounded-full mb-2">
-              <Trophy size={32} />
+      <main className="flex-grow flex items-center justify-center px-4 py-12 bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-[#1a237e]">Login de Time</h1>
+              <p className="text-gray-500 mt-1">
+                Acesse o painel exclusivo do seu time
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-[#1a237e]">Acesso do Time</h1>
-            <p className="text-gray-500 text-center mt-1">
-              Portal exclusivo para times cadastrados.
-            </p>
-          </div>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Entrar</CardTitle>
-            <CardDescription>
-              Entre com as credenciais fornecidas pelo administrador do campeonato.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Mail size={16} className="text-gray-400" />
+                  </div>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    placeholder="seu-time@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="time@exemplo.com"
                     className="pl-10"
+                    required
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Lock size={16} className="text-gray-400" />
+                  </div>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="••••••••"
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
               
               <Button 
                 type="submit" 
-                className="w-full bg-[#1a237e] text-white hover:bg-blue-800"
+                className="w-full bg-[#1a237e] text-white hover:bg-blue-800 flex items-center justify-center gap-2"
                 disabled={loading}
               >
-                {loading ? "Entrando..." : "Entrar"}
+                {loading ? (
+                  <>Entrando...</>
+                ) : (
+                  <>
+                    <LogIn size={16} />
+                    Entrar
+                  </>
+                )}
               </Button>
             </form>
+            
+            <div className="mt-6 text-center text-sm text-gray-500">
+              <p>
+                As credenciais são fornecidas pelo administrador do campeonato.
+              </p>
+              <p className="mt-1">
+                Se você é um administrador, acesse o{' '}
+                <a href="/admin" className="text-[#1a237e] hover:underline">
+                  Painel Administrativo
+                </a>
+              </p>
+            </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <p className="text-sm text-gray-500 text-center">
-              Caso não tenha acesso, entre em contato com o administrador do campeonato.
-            </p>
-          </CardFooter>
         </Card>
-      </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
