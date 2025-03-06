@@ -36,10 +36,11 @@ const PartnersSection = () => {
           
           {/* Secretaria de Esporte e Lazer Box */}
           <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <div className="text-center">
-              <h3 className="font-semibold text-blue-primary">Secretaria de Esporte e Lazer</h3>
-              <p className="text-sm text-gray-500 mt-1">Governo do Distrito Federal</p>
-            </div>
+            <img 
+              src="/lovable-uploads/71480ca7-a47e-49be-bcbf-3fdc06bdfcde.png" 
+              alt="Ministério do Esporte - Governo Federal" 
+              className="max-h-16 object-contain"
+            />
           </div>
           
           {/* Administração Regional Box */}
