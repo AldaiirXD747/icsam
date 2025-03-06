@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,8 +67,8 @@ const MatchManagement = () => {
         .from('matches')
         .select(`
           *,
-          home_team_name:home_team (name),
-          away_team_name:away_team (name)
+          home_team:home_team(id, name),
+          away_team:away_team(id, name)
         `)
         .order('date', { ascending: false });
 
@@ -81,16 +80,16 @@ const MatchManagement = () => {
         date: match.date,
         time: match.time,
         location: match.location,
-        homeTeam: match.home_team,
-        awayTeam: match.away_team,
+        homeTeam: match.home_team?.id || match.home_team,
+        awayTeam: match.away_team?.id || match.away_team,
         homeScore: match.home_score,
         awayScore: match.away_score,
         status: match.status as Match['status'],
         category: match.category,
         round: match.round,
         championshipId: match.championship_id,
-        homeTeamName: match.home_team_name ? match.home_team_name.name : '',
-        awayTeamName: match.away_team_name ? match.away_team_name.name : '',
+        homeTeamName: match.home_team?.name || '',
+        awayTeamName: match.away_team?.name || '',
       }));
 
       setMatches(transformedData);
@@ -172,8 +171,8 @@ const MatchManagement = () => {
         })
         .select(`
           *,
-          home_team_name:home_team (name),
-          away_team_name:away_team (name)
+          home_team:home_team(id, name),
+          away_team:away_team(id, name)
         `);
 
       if (error) throw error;
@@ -184,16 +183,16 @@ const MatchManagement = () => {
         date: data[0].date,
         time: data[0].time,
         location: data[0].location,
-        homeTeam: data[0].home_team,
-        awayTeam: data[0].away_team,
+        homeTeam: data[0].home_team?.id || data[0].home_team,
+        awayTeam: data[0].away_team?.id || data[0].away_team,
         homeScore: data[0].home_score,
         awayScore: data[0].away_score,
         status: data[0].status as Match['status'],
         category: data[0].category,
         round: data[0].round,
         championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_name ? data[0].home_team_name.name : '',
-        awayTeamName: data[0].away_team_name ? data[0].away_team_name.name : '',
+        homeTeamName: data[0].home_team?.name || '',
+        awayTeamName: data[0].away_team?.name || '',
       };
 
       setMatches([newMatch, ...matches]);
@@ -237,8 +236,8 @@ const MatchManagement = () => {
         .eq('id', selectedMatch.id)
         .select(`
           *,
-          home_team_name:home_team (name),
-          away_team_name:away_team (name)
+          home_team:home_team(id, name),
+          away_team:away_team(id, name)
         `);
 
       if (error) throw error;
@@ -249,16 +248,16 @@ const MatchManagement = () => {
         date: data[0].date,
         time: data[0].time,
         location: data[0].location,
-        homeTeam: data[0].home_team,
-        awayTeam: data[0].away_team,
+        homeTeam: data[0].home_team?.id || data[0].home_team,
+        awayTeam: data[0].away_team?.id || data[0].away_team,
         homeScore: data[0].home_score,
         awayScore: data[0].away_score,
         status: data[0].status as Match['status'],
         category: data[0].category,
         round: data[0].round,
         championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_name ? data[0].home_team_name.name : '',
-        awayTeamName: data[0].away_team_name ? data[0].away_team_name.name : '',
+        homeTeamName: data[0].home_team?.name || '',
+        awayTeamName: data[0].away_team?.name || '',
       };
 
       setMatches(matches.map(m => 
@@ -437,7 +436,6 @@ const MatchManagement = () => {
                 className="rounded-md border border-input px-3 py-2 text-sm"
               >
                 <option value="all">Todas as Categorias</option>
-                {/* Aqui você pode adicionar as opções de categoria dinamicamente, se necessário */}
                 <option value="SUB-11">SUB-11</option>
                 <option value="SUB-13">SUB-13</option>
                 <option value="SUB-15">SUB-15</option>
