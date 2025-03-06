@@ -49,7 +49,7 @@ const About = () => {
                     Desde o início, Cesar teve como objetivo utilizar o futebol e outras atividades esportivas como ferramentas para inclusão social e desenvolvimento pessoal. Inicialmente, o Instituto começou como um projeto voluntário, oferecendo oportunidades para crianças em situação de vulnerabilidade.
                   </p>
                   <p>
-                    Foi em outubro de 2021 que o ICSAM foi formalmente registrado, consolidando-se como uma organização sem fins lucrativos dedicada ao bem-estar e ao crescimento dos jovens da região.
+                    Foi em 14 de outubro de 2021 que o ICSAM foi formalmente registrado sob o CNPJ 43.999.350/0001-16, consolidando-se como uma organização sem fins lucrativos dedicada ao bem-estar e ao crescimento dos jovens da região.
                   </p>
                 </div>
               </div>
@@ -77,11 +77,11 @@ const About = () => {
               <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                   <div className="text-blue-primary font-bold text-5xl mb-2">2004</div>
-                  <p className="text-gray-600">Fundação do Instituto por Cesar da Conceição</p>
+                  <p className="text-gray-600">Início das atividades por Cesar da Conceição</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                   <div className="text-blue-primary font-bold text-5xl mb-2">2021</div>
-                  <p className="text-gray-600">Registro formal como organização sem fins lucrativos</p>
+                  <p className="text-gray-600">Registro formal como organização em 14/10/2021</p>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm">
                   <div className="text-blue-primary font-bold text-5xl mb-2">450+</div>

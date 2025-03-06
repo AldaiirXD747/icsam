@@ -16,7 +16,7 @@ const AboutSection = () => {
               Instituto Criança Santa Maria
             </h2>
             <p className="text-gray-700 mb-4">
-              Fundado em 2011, o Instituto Criança Santa Maria nasceu com a missão de transformar a vida de crianças e adolescentes através do esporte, cultura e educação, proporcionando oportunidades de desenvolvimento integral.
+              Fundado em 2004, o Instituto Criança Santa Maria nasceu com a missão de transformar a vida de crianças e adolescentes através do esporte, cultura e educação, proporcionando oportunidades de desenvolvimento integral.
             </p>
             <p className="text-gray-700 mb-6">
               Nossa visão é ser referência em projetos sociais que utilizam o esporte como ferramenta de inclusão e desenvolvimento humano, formando não apenas atletas, mas cidadãos conscientes e preparados para enfrentar os desafios da vida.
@@ -24,7 +24,7 @@ const AboutSection = () => {
             <div className="flex flex-wrap items-center gap-6 mb-6">
               <div className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-blue-primary flex items-center justify-center text-white font-bold text-xl">
-                  +10
+                  19
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Anos de</p>
@@ -64,11 +64,11 @@ const AboutSection = () => {
               <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg hidden md:block">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-full bg-lime-primary flex items-center justify-center">
-                    <span className="text-blue-primary font-bold text-2xl">12</span>
+                    <span className="text-blue-primary font-bold text-2xl">3</span>
                   </div>
                   <div>
                     <p className="text-gray-500 text-sm">Anos de</p>
-                    <p className="text-blue-primary font-bold">Atuação</p>
+                    <p className="text-blue-primary font-bold">Atuação formal</p>
                   </div>
                 </div>
               </div>

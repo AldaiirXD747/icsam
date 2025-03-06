@@ -2,7 +2,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { FileText, Download, FileBarChart, FilePieChart, Users, File, FileCheck, MapPin } from 'lucide-react';
+import { FileText, Download, FileBarChart, FilePieChart, Users, File, FileCheck, MapPin, Building } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DocumentCardProps {
@@ -37,6 +37,12 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ title, description, icon, u
 const Transparencia = () => {
   // Data for transparency documents based on the provided image
   const documents: DocumentCardProps[] = [
+    {
+      title: 'DADOS DO INSTITUTO',
+      description: 'CNPJ: 43.999.350/0001-16 | Data de Abertura: 14/10/2021',
+      icon: <Building size={24} />,
+      url: '#'
+    },
     {
       title: 'PROJETOS APROVADOS',
       description: 'Lista completa de emendas parlamentares executadas pelo Instituto.',
@@ -107,7 +113,7 @@ const Transparencia = () => {
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Transparência e Prestação de Contas</h1>
               <p className="text-white/80 max-w-2xl mx-auto">
-                Acesso à informação e documentos oficiais do Instituto Criança Santa Maria
+                Acesso à informação e documentos oficiais do Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16)
               </p>
             </div>
           </div>

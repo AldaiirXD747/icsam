@@ -19,7 +19,7 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-gray-300 mb-4 max-w-md">
-              O Campeonato Base Forte é um projeto do Instituto Criança Santa Maria que visa promover o esporte e revelar novos talentos nas categorias de base.
+              O Campeonato Base Forte é um projeto do Instituto Criança Santa Maria (CNPJ 43.999.350/0001-16) que visa promover o esporte e revelar novos talentos nas categorias de base.
             </p>
             <div className="flex space-x-4">
               <a href="#" aria-label="Facebook" className="text-white hover:text-lime-primary transition-colors">
@@ -108,7 +108,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-blue-light mt-12 pt-8 text-center text-sm text-gray-300">
-          <p>&copy; {new Date().getFullYear()} Instituto Criança Santa Maria. Todos os direitos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Instituto Criança Santa Maria (CNPJ: 43.999.350/0001-16). Todos os direitos reservados.</p>
           <p className="mt-2">
             Desenvolvido com ❤️ para o Campeonato Base Forte – 2025
           </p>
