@@ -82,7 +82,7 @@ const Footer = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </span>
-                <span className="text-gray-300">(00) 0000-0000</span>
+                <span className="text-gray-300">(61) 99312-8187</span>
               </li>
               <li className="flex items-start">
                 <span className="text-lime-primary mr-2">
