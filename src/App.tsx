@@ -15,6 +15,8 @@ import Standings from "./pages/Standings";
 import Championship from "./pages/Championship";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
+import About from "./pages/About";
+import Transparencia from "./pages/Transparencia";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,8 @@ const App = () => (
           <Route path="/championships/:championshipId/matches" element={<Matches />} />
           <Route path="/championships/:championshipId/statistics" element={<Statistics />} />
           <Route path="/championships/:championshipId/standings" element={<Standings />} />
+          <Route path="/sobre" element={<About />} />
+          <Route path="/transparencia" element={<Transparencia />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
