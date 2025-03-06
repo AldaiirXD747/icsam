@@ -16,6 +16,7 @@ const PartnersSection = () => {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* GDF Logo Box */}
           <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up">
             <img 
               src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
@@ -24,21 +25,41 @@ const PartnersSection = () => {
             />
           </div>
           
+          {/* Secretaria de Educação Logo Box */}
           <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <img 
+              src="/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png" 
+              alt="Secretaria de Educação - GDF" 
+              className="max-h-16 object-contain"
+            />
+          </div>
+          
+          {/* Secretaria de Esporte e Lazer Box */}
+          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <div className="text-center">
               <h3 className="font-semibold text-blue-primary">Secretaria de Esporte e Lazer</h3>
               <p className="text-sm text-gray-500 mt-1">Governo do Distrito Federal</p>
             </div>
           </div>
           
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          {/* Administração Regional Box */}
+          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
             <div className="text-center">
               <h3 className="font-semibold text-blue-primary">Administração Regional</h3>
               <p className="text-sm text-gray-500 mt-1">Santa Maria - DF</p>
             </div>
           </div>
           
-          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          {/* Ministério do Esporte Box */}
+          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="text-center">
+              <h3 className="font-semibold text-blue-primary">Ministério do Esporte</h3>
+              <p className="text-sm text-gray-500 mt-1">Governo Federal</p>
+            </div>
+          </div>
+          
+          {/* Empresas Apoiadoras Box */}
+          <div className="glass-card p-6 flex items-center justify-center h-32 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="text-center">
               <h3 className="font-semibold text-blue-primary">Empresas Apoiadoras</h3>
               <p className="text-sm text-gray-500 mt-1">Diversos Segmentos</p>
