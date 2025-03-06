@@ -83,7 +83,8 @@ const Footer = () => {
               <li className="flex items-start">
                 <MapPin className="text-lime-primary mr-2 h-5 w-5 shrink-0 mt-0.5" />
                 <span className="text-gray-300">
-                  Quadra 320 Conjunto - E lote 01, Santa Maria, DF
+                  Quadra 309 Conjunto A - lote 12<br />
+                  Santa Maria, Brasília - DF
                   <a 
                     href="https://maps.app.goo.gl/DCN2rJ3GmN2CwmXL7" 
                     target="_blank" 

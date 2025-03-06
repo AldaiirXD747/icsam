@@ -96,8 +96,8 @@ const ContactSection = () => {
                   <div>
                     <p className="font-medium text-blue-primary">Endereço</p>
                     <address className="text-gray-600 not-italic">
-                      Quadra 320 Conjunto - E lote 01<br />
-                      Santa Maria, DF<br />
+                      Quadra 309 Conjunto A - lote 12<br />
+                      Santa Maria, Brasília - DF<br />
                       <a 
                         href="https://maps.app.goo.gl/DCN2rJ3GmN2CwmXL7" 
                         target="_blank" 
@@ -210,22 +210,6 @@ const ContactSection = () => {
                 </div>
               </form>
             </div>
-          </div>
-        </div>
-        
-        <div className="mt-16">
-          <div className="glass-card overflow-hidden rounded-lg">
-            <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3839.7582991300897!2d-47.97850262323122!3d-15.761290324207522!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x935a34378a84935f%3A0x7cf8a7e8da2cd901!2sQd.%20320%20Conj.%20E%20-%20Santa%20Maria%2C%20Bras%C3%ADlia%20-%20DF%2C%2072548-210!5e0!3m2!1spt-BR!2sbr!4v1717086123397!5m2!1spt-BR!2sbr" 
-              width="100%" 
-              height="450" 
-              style={{ border: 0 }} 
-              allowFullScreen 
-              loading="lazy" 
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Localização do Instituto Criança Santa Maria"
-              className="w-full"
-            ></iframe>
           </div>
         </div>
       </div>
