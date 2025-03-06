@@ -1,11 +1,10 @@
-<lov-code>
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Calendar, MapPin, Trophy, Users, User, ArrowLeft } from 'lucide-react';
 
-// Define player interface
+// Define interfaces
 interface Player {
   id: number;
   name: string;
@@ -22,7 +21,6 @@ interface Player {
   };
 }
 
-// Define match interface for team history
 interface TeamMatch {
   id: number;
   date: string;
@@ -36,7 +34,182 @@ interface TeamMatch {
   category: string;
 }
 
-// Mock data for the team details
+interface Team {
+  id: number;
+  name: string;
+  logo: string;
+  categories: string[];
+  group: string;
+  foundingYear: string;
+  location: string;
+  coach: string;
+  assistantCoach: string;
+  director: string;
+  colors: string;
+  stadium: string;
+  achievements: string[];
+  players: Player[];
+  matchHistory: TeamMatch[];
+}
+
+const TeamDetail = () => {
+  const { teamId } = useParams<{ teamId: string }>();
+  const [team, setTeam] = useState<Team | null>(null);
+
+  useEffect(() => {
+    // For now, we'll use the mock data directly
+    const mockTeam = teamsData.find(t => t.id === Number(teamId));
+    setTeam(mockTeam || null);
+  }, [teamId]);
+
+  if (!team) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Time não encontrado</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Link to="/teams" className="flex items-center mb-6 text-blue-600 hover:text-blue-800">
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Voltar para Times
+        </Link>
+
+        {/* Team Header */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center gap-6">
+            <img src={team.logo} alt={team.name} className="w-32 h-32 object-contain" />
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{team.name}</h1>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center text-gray-600">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  {team.location}
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <Trophy className="w-5 h-5 mr-2" />
+                  Grupo {team.group}
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Fundado em {team.foundingYear}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Team Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">Informações do Time</h2>
+            <div className="space-y-3">
+              <p><strong>Categorias:</strong> {team.categories.join(', ')}</p>
+              <p><strong>Cores:</strong> {team.colors}</p>
+              <p><strong>Estádio:</strong> {team.stadium}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">Comissão Técnica</h2>
+            <div className="space-y-3">
+              <p><strong>Técnico:</strong> {team.coach}</p>
+              <p><strong>Auxiliar Técnico:</strong> {team.assistantCoach}</p>
+              <p><strong>Diretor:</strong> {team.director}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Achievement Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">Conquistas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {team.achievements.map((achievement, index) => (
+              <div key={index} className="flex items-center">
+                <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+                <span>{achievement}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Players Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4">Jogadores</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {team.players.map((player) => (
+              <Link key={player.id} to={`/players/${player.id}`} className="block">
+                <div className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="aspect-w-1 aspect-h-1 mb-4">
+                    <img
+                      src={player.photo || '/placeholder.svg'}
+                      alt={player.name}
+                      className="rounded-lg object-cover w-full h-full"
+                    />
+                  </div>
+                  <h3 className="font-semibold">{player.name}</h3>
+                  <p className="text-sm text-gray-600">#{player.number} - {player.position}</p>
+                  <div className="mt-2 text-sm">
+                    <p>Jogos: {player.stats.games}</p>
+                    <p>Gols: {player.stats.goals}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Match History Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold mb-4">Histórico de Partidas</h2>
+          <div className="space-y-4">
+            {team.matchHistory.map((match) => (
+              <div key={match.id} className="border-b pb-4 last:border-b-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-600">{match.date}</div>
+                    <div className="font-semibold">{match.category}</div>
+                  </div>
+                  <div className={`text-sm font-semibold ${
+                    match.result === 'win' ? 'text-green-600' :
+                    match.result === 'loss' ? 'text-red-600' :
+                    'text-yellow-600'
+                  }`}>
+                    {match.result === 'win' ? 'Vitória' :
+                     match.result === 'loss' ? 'Derrota' :
+                     'Empate'}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-2">
+                    <img src={team.logo} alt={team.name} className="w-8 h-8 object-contain" />
+                    <span className="font-semibold">{team.name}</span>
+                  </div>
+                  <div className="font-bold text-lg">{match.score.team} - {match.score.opponent}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{match.opponent}</span>
+                    <img src={match.opponentLogo} alt={match.opponent} className="w-8 h-8 object-contain" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+// Mock data
 const teamsData = [
   {
     id: 1,
@@ -778,3 +951,7 @@ const teamsData = [
         position: 'Atacante',
         age: 12,
         photo: 'https://images.unsplash.com/photo-1533107862482-0e
+  },
+];
+
+export default TeamDetail;
