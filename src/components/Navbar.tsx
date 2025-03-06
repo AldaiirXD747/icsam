@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, LogIn } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -81,14 +81,12 @@ const Navbar = () => {
           <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors">
             Contato
           </Link>
-          <a 
-            href="https://institutocriancasantamaria.com.br/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="btn-primary"
+          <Link 
+            to="/login" 
+            className="btn-primary flex items-center gap-2"
           >
-            Site Oficial
-          </a>
+            <LogIn size={18} /> Login
+          </Link>
         </div>
         
         {/* Mobile menu button */}
@@ -147,14 +145,12 @@ const Navbar = () => {
             <Link to="/contato" className="text-blue-primary hover:text-blue-light font-medium transition-colors py-2 border-b">
               Contato
             </Link>
-            <a 
-              href="https://institutocriancasantamaria.com.br/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="btn-primary text-center"
+            <Link 
+              to="/login" 
+              className="btn-primary text-center flex items-center justify-center gap-2"
             >
-              Site Oficial
-            </a>
+              <LogIn size={18} /> Login
+            </Link>
           </div>
         </div>
       )}
