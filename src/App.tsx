@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Teams from "./pages/Teams";
+import TeamDetail from "./pages/TeamDetail";
+import PlayerDetail from "./pages/PlayerDetail";
 import Matches from "./pages/Matches";
 import Statistics from "./pages/Statistics";
 import Standings from "./pages/Standings";
@@ -23,6 +25,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/teams" element={<Teams />} />
+          <Route path="/teams/:teamId" element={<TeamDetail />} />
+          <Route path="/players/:playerId" element={<PlayerDetail />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/standings" element={<Standings />} />
