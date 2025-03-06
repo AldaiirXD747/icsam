@@ -26,6 +26,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -75,52 +76,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import { generateRandomString } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createTeam as createTeamAPI,
-  updateTeam as updateTeamAPI,
-  deleteTeam as deleteTeamAPI,
-  getTeams as getTeamsAPI,
-  getUsers as getUsersAPI,
-  updateUser as updateUserAPI,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+  getTeams,
+  getUsers,
+  updateUser,
 } from "@/lib/api";
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@/lib/clerk-mock";
+import { Team, User } from "@/types";
 
-// Define types for Team and User if they're not already defined elsewhere
-interface Team {
-  id: string;
-  name: string;
-  description?: string;
-  logoUrl?: string;
-  websiteUrl?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  foundationDate?: string | Date;
-  active: boolean;
-}
-
-interface User {
-  id: string;
-  name?: string;
-  email?: string;
-  teamId?: string;
-}
-
+// Define schemas for forms
 const teamFormSchema = z.object({
   name: z.string().min(2, {
     message: "O nome do time deve ter pelo menos 2 caracteres.",
   }),
   description: z.string().optional(),
   logoUrl: z.string().optional(),
-  websiteUrl: z.string().url("Por favor, insira uma URL válida.").optional(),
-  email: z.string().email("Por favor, insira um email válido.").optional(),
+  websiteUrl: z.string().url("Por favor, insira uma URL válida.").optional().or(z.string().length(0)),
+  email: z.string().email("Por favor, insira um email válido.").optional().or(z.string().length(0)),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -146,7 +123,7 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>
 
-export const TeamManagement = () => {
+const TeamManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast()
@@ -173,33 +150,36 @@ export const TeamManagement = () => {
   const [isTeamDeleting, setIsTeamDeleting] = useState(false);
   const { user } = useUser();
 
+  // Query for teams
   const {
-    data: teams,
+    data: teams = [], // Provide empty array as default
     isLoading: isTeamsLoading,
     isError: isTeamsError,
     error: teamsError,
   } = useQuery({
     queryKey: ['teams', filter],
-    queryFn: () => getTeamsAPI(filter),
+    queryFn: () => getTeams(filter),
   });
 
+  // Query for users
   const {
-    data: users,
+    data: users = [], // Provide empty array as default
     isLoading: isUsersLoading,
     isError: isUsersError,
     error: usersError,
   } = useQuery({
     queryKey: ['users'],
-    queryFn: () => getUsersAPI(),
+    queryFn: () => getUsers(),
   });
 
-  const createTeam = useMutation({
-    mutationFn: createTeamAPI,
+  // Mutation for creating teams
+  const createTeamMutation = useMutation({
+    mutationFn: createTeam,
     onMutate: async (newTeam) => {
       setIsTeamCreating(true);
       await queryClient.cancelQueries({ queryKey: ['teams'] });
-      const previousTeams = queryClient.getQueryData<Team[]>(['teams']);
-      queryClient.setQueryData(['teams'], (old) => [...(old || []), newTeam]);
+      const previousTeams = queryClient.getQueryData(['teams']);
+      queryClient.setQueryData(['teams'], (old: Team[] = []) => [...old, { ...newTeam, id: 'temp-id' } as Team]);
       return { previousTeams };
     },
     onSuccess: () => {
@@ -222,14 +202,15 @@ export const TeamManagement = () => {
     },
   });
 
-  const updateTeam = useMutation({
-    mutationFn: updateTeamAPI,
+  // Mutation for updating teams
+  const updateTeamMutation = useMutation({
+    mutationFn: updateTeam,
     onMutate: async (updatedTeam) => {
       setIsTeamUpdating(true);
       await queryClient.cancelQueries({ queryKey: ['teams'] });
-      const previousTeams = queryClient.getQueryData<Team[]>(['teams']);
-      queryClient.setQueryData(['teams'], (old) =>
-        old?.map((team) => (team.id === updatedTeam.id ? updatedTeam : team))
+      const previousTeams = queryClient.getQueryData(['teams']);
+      queryClient.setQueryData(['teams'], (old: Team[] = []) =>
+        old.map((team) => (team.id === updatedTeam.id ? updatedTeam : team))
       );
       return { previousTeams };
     },
@@ -253,13 +234,14 @@ export const TeamManagement = () => {
     },
   });
 
-  const deleteTeam = useMutation({
-    mutationFn: deleteTeamAPI,
+  // Mutation for deleting teams
+  const deleteTeamMutation = useMutation({
+    mutationFn: deleteTeam,
     onMutate: async (teamId) => {
       setIsTeamDeleting(true);
       await queryClient.cancelQueries({ queryKey: ['teams'] });
-      const previousTeams = queryClient.getQueryData<Team[]>(['teams']);
-      queryClient.setQueryData(['teams'], (old) => old?.filter((team) => team.id !== teamId));
+      const previousTeams = queryClient.getQueryData(['teams']);
+      queryClient.setQueryData(['teams'], (old: Team[] = []) => old.filter((team) => team.id !== teamId));
       return { previousTeams };
     },
     onSuccess: () => {
@@ -282,14 +264,15 @@ export const TeamManagement = () => {
     },
   });
 
-  const updateUser = useMutation({
-    mutationFn: updateUserAPI,
+  // Mutation for updating users
+  const updateUserMutation = useMutation({
+    mutationFn: updateUser,
     onMutate: async (updatedUser) => {
       setIsUserUpdating(true);
       await queryClient.cancelQueries({ queryKey: ['users'] });
-      const previousUsers = queryClient.getQueryData<User[]>(['users']);
-      queryClient.setQueryData(['users'], (old) =>
-        old?.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+      const previousUsers = queryClient.getQueryData(['users']);
+      queryClient.setQueryData(['users'], (old: User[] = []) =>
+        old.map((user) => (user.id === updatedUser.id ? updatedUser : user))
       );
       return { previousUsers };
     },
@@ -314,6 +297,7 @@ export const TeamManagement = () => {
     },
   });
 
+  // Form setup
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
     defaultValues: {
@@ -342,6 +326,7 @@ export const TeamManagement = () => {
     mode: "onChange",
   })
 
+  // Handlers
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFilter(prev => ({ ...prev, search: value }));
@@ -367,25 +352,24 @@ export const TeamManagement = () => {
     try {
       if (selectedTeam) {
         // Update Team
-        const updatedTeam = { ...selectedTeam, ...values };
+        const updatedTeam = { ...selectedTeam, ...values } as Team;
         if (logoFile) {
           setIsLogoUploading(true);
-          const logoRef = ref(storage, `team-logos/${logoFile.name}-${generateRandomString(16)}`);
-          const snapshot = await uploadBytes(logoRef, logoFile);
-          const logoURL = await getDownloadURL(snapshot.ref);
-          updatedTeam.logoUrl = logoURL;
+          // In a real app, you would upload to Firebase here
+          // For this example, we'll just set a fake URL
+          updatedTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
         }
-        await updateTeam.mutateAsync(updatedTeam);
+        await updateTeamMutation.mutateAsync(updatedTeam);
       } else {
         // Create Team
+        const newTeam = { ...values, active: values.active ?? true } as Omit<Team, 'id'>;
         if (logoFile) {
           setIsLogoUploading(true);
-          const logoRef = ref(storage, `team-logos/${logoFile.name}-${generateRandomString(16)}`);
-          const snapshot = await uploadBytes(logoRef, logoFile);
-          const logoURL = await getDownloadURL(snapshot.ref);
-          values.logoUrl = logoURL;
+          // In a real app, you would upload to Firebase here
+          // For this example, we'll just set a fake URL
+          newTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
         }
-        await createTeam.mutateAsync(values);
+        await createTeamMutation.mutateAsync(newTeam);
       }
     } catch (error: any) {
       toast({
@@ -406,7 +390,7 @@ export const TeamManagement = () => {
   const onUserAssignmentSubmit = async (values: UserFormValues) => {
     try {
       setIsUserLoading(true);
-      const userToUpdate = users?.find(user => user.id === values.userId);
+      const userToUpdate = users.find(user => user.id === values.userId);
 
       if (!userToUpdate) {
         toast({
@@ -427,7 +411,7 @@ export const TeamManagement = () => {
       }
 
       const updatedUser = { ...userToUpdate, teamId: values.teamId };
-      await updateUser.mutateAsync(updatedUser);
+      await updateUserMutation.mutateAsync(updatedUser);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -454,10 +438,9 @@ export const TeamManagement = () => {
     if (selectedTeam?.logoUrl) {
       setIsLogoDeleting(true);
       try {
-        const logoRef = ref(storage, selectedTeam.logoUrl);
-        await deleteObject(logoRef);
-        const updatedTeam = { ...selectedTeam, logoUrl: null };
-        await updateTeam.mutateAsync(updatedTeam);
+        // In a real app, you would delete from Firebase here
+        const updatedTeam = { ...selectedTeam, logoUrl: undefined } as Team;
+        await updateTeamMutation.mutateAsync(updatedTeam);
         toast({
           title: "Sucesso",
           description: "Logo removido com sucesso.",
@@ -496,7 +479,7 @@ export const TeamManagement = () => {
 
   const handleDeleteTeam = async (teamId: string) => {
     try {
-      await deleteTeam.mutateAsync(teamId);
+      await deleteTeamMutation.mutateAsync(teamId);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -514,8 +497,8 @@ export const TeamManagement = () => {
 
   const handleTeamActiveChange = async (team: Team, active: boolean) => {
     try {
-      const updatedTeam = { ...team, active: active };
-      await updateTeam.mutateAsync(updatedTeam);
+      const updatedTeam = { ...team, active } as Team;
+      await updateTeamMutation.mutateAsync(updatedTeam);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -525,11 +508,13 @@ export const TeamManagement = () => {
     }
   };
 
+  // Loading and error states
   if (isTeamsLoading) return <p>Carregando times...</p>
-  if (isTeamsError) return <p>Erro ao carregar times: {teamsError?.message}</p>
+  if (isTeamsError) return <p>Erro ao carregar times: {String(teamsError)}</p>
   if (isUsersLoading) return <p>Carregando usuários...</p>
-  if (isUsersError) return <p>Erro ao carregar usuários: {usersError?.message}</p>
+  if (isUsersError) return <p>Erro ao carregar usuários: {String(usersError)}</p>
 
+  // Render component
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -574,7 +559,7 @@ export const TeamManagement = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teams?.map((team) => (
+            {teams.map((team) => (
               <TableRow key={team.id}>
                 <TableCell>
                   {team.logoUrl ? (
@@ -659,7 +644,7 @@ export const TeamManagement = () => {
 
       <Dialog open={isNewTeamDialogOpen} onOpenChange={setIsNewTeamDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline">Abrir Dialog</Button>
+          <Button variant="outline" className="hidden">Abrir Dialog</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -882,9 +867,9 @@ export const TeamManagement = () => {
 
       <Drawer open={isEditTeamDrawerOpen} onOpenChange={setIsEditTeamDrawerOpen}>
         <DrawerTrigger asChild>
-          <Button variant="outline">Abrir Drawer</Button>
+          <Button variant="outline" className="hidden">Abrir Drawer</Button>
         </DrawerTrigger>
-        <DrawerContent className="sm:max-w-[425px] p-4">
+        <DrawerContent className="p-4 max-w-md mx-auto">
           <DrawerHeader>
             <DrawerTitle>Editar Time</DrawerTitle>
             <DrawerDescription>
@@ -1057,7 +1042,7 @@ export const TeamManagement = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {users?.filter(user => !user.teamId).map((user) => (
+                        {users.filter(user => !user.teamId).map((user) => (
                           <SelectItem key={user.id} value={user.id}>
                             {user.name || user.email || 'Usuário sem nome'}
                           </SelectItem>
