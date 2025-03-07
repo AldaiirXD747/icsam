@@ -1,5 +1,5 @@
 import { supabase } from '../integrations/supabase/client';
-import { Team, User, Championship } from '../types';
+import { Team, User, Championship, Player } from '../types';
 
 // Get teams with optional filtering
 export const getTeams = async (filter?: any): Promise<Team[]> => {
@@ -271,5 +271,121 @@ export const getChampionships = async (): Promise<Championship[]> => {
   } catch (error) {
     console.error('Error fetching championships:', error);
     return [];
+  }
+};
+
+// Get players for a team
+export const getTeamPlayers = async (teamId: string): Promise<Player[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('name');
+    
+    if (error) throw error;
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching team players:', error);
+    return [];
+  }
+};
+
+// Upload player photo
+export const uploadPlayerPhoto = async (file: File): Promise<string | null> => {
+  try {
+    // Check if storage bucket exists, if not create it
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === 'player-photos');
+    
+    if (!bucketExists) {
+      const { error: createError } = await supabase.storage.createBucket('player-photos', {
+        public: true
+      });
+      
+      if (createError) throw createError;
+    }
+    
+    // Generate a unique filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+    
+    // Upload the file
+    const { error: uploadError } = await supabase.storage
+      .from('player-photos')
+      .upload(filePath, file);
+    
+    if (uploadError) throw uploadError;
+    
+    // Get public URL
+    const { data } = supabase.storage
+      .from('player-photos')
+      .getPublicUrl(filePath);
+    
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Error uploading player photo:', error);
+    return null;
+  }
+};
+
+// Create or update player
+export const savePlayer = async (player: Partial<Player>): Promise<Player | null> => {
+  try {
+    if (player.id) {
+      // Update existing player
+      const { data, error } = await supabase
+        .from('players')
+        .update({
+          name: player.name,
+          number: player.number,
+          position: player.position,
+          photo: player.photo,
+          team_id: player.teamId || player.team_id
+        })
+        .eq('id', player.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } else {
+      // Create new player
+      const { data, error } = await supabase
+        .from('players')
+        .insert({
+          name: player.name,
+          number: player.number,
+          position: player.position,
+          photo: player.photo,
+          team_id: player.teamId || player.team_id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  } catch (error) {
+    console.error('Error saving player:', error);
+    return null;
+  }
+};
+
+// Delete player
+export const deletePlayer = async (playerId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', playerId);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting player:', error);
+    return false;
   }
 };

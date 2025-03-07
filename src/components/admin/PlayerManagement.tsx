@@ -4,9 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { PlusCircle, Pencil, Trash2, User, Users } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, User, Users, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { MultiFileUpload, FileWithPreview } from '@/components/ui/multi-file-upload';
 
 type Player = {
   id: string;
@@ -37,6 +38,8 @@ const PlayerManagement = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTeam, setFilterTeam] = useState("all");
+  const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   // Form state
@@ -114,6 +117,42 @@ const PlayerManagement = () => {
       photo: "",
       team_id: ""
     });
+    setUploadedFiles([]);
+  };
+
+  const handleFilesChange = (files: FileWithPreview[]) => {
+    setUploadedFiles(files);
+  };
+
+  const uploadPhoto = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `player-photos/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('player-photos')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage
+        .from('player-photos')
+        .getPublicUrl(filePath);
+      
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar foto",
+        description: "Não foi possível fazer o upload da foto."
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCreatePlayer = async () => {
@@ -127,13 +166,22 @@ const PlayerManagement = () => {
     }
 
     try {
+      let photoUrl = formData.photo;
+      
+      if (uploadedFiles.length > 0) {
+        const uploadedUrl = await uploadPhoto(uploadedFiles[0].file);
+        if (uploadedUrl) {
+          photoUrl = uploadedUrl;
+        }
+      }
+
       const { data, error } = await supabase
         .from('players')
         .insert([{
           name: formData.name,
           position: formData.position,
           number: formData.number ? parseInt(formData.number) : null,
-          photo: formData.photo || null,
+          photo: photoUrl || null,
           team_id: formData.team_id
         }])
         .select(`
@@ -188,13 +236,22 @@ const PlayerManagement = () => {
     }
 
     try {
+      let photoUrl = formData.photo;
+      
+      if (uploadedFiles.length > 0) {
+        const uploadedUrl = await uploadPhoto(uploadedFiles[0].file);
+        if (uploadedUrl) {
+          photoUrl = uploadedUrl;
+        }
+      }
+
       const { data, error } = await supabase
         .from('players')
         .update({
           name: formData.name,
           position: formData.position,
           number: formData.number ? parseInt(formData.number) : null,
-          photo: formData.photo || null,
+          photo: photoUrl || null,
           team_id: formData.team_id
         })
         .eq('id', selectedPlayer.id)
@@ -276,6 +333,7 @@ const PlayerManagement = () => {
       photo: player.photo || "",
       team_id: player.team_id
     });
+    setUploadedFiles([]);
     setIsEditing(true);
   };
 
@@ -353,14 +411,27 @@ const PlayerManagement = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label htmlFor="photo" className="text-sm font-medium">URL da Foto</label>
-                <Input
-                  id="photo"
-                  name="photo"
-                  value={formData.photo}
-                  onChange={handleInputChange}
-                  placeholder="https://exemplo.com/foto.png"
-                />
+                <label className="text-sm font-medium">Foto do Jogador</label>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Upload de Foto</label>
+                    <MultiFileUpload 
+                      onFilesChange={handleFilesChange} 
+                      maxFiles={1} 
+                    />
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <label htmlFor="photo" className="text-sm font-medium">Ou URL da Foto</label>
+                    <Input
+                      id="photo"
+                      name="photo"
+                      value={formData.photo}
+                      onChange={handleInputChange}
+                      placeholder="https://exemplo.com/foto.png"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -368,8 +439,12 @@ const PlayerManagement = () => {
                 setIsCreating(false);
                 resetForm();
               }}>Cancelar</Button>
-              <Button onClick={handleCreatePlayer} className="bg-[#1a237e] text-white hover:bg-blue-800">
-                Adicionar Jogador
+              <Button 
+                onClick={handleCreatePlayer} 
+                className="bg-[#1a237e] text-white hover:bg-blue-800"
+                disabled={isUploading}
+              >
+                {isUploading ? "Enviando..." : "Adicionar Jogador"}
               </Button>
             </div>
           </DialogContent>
@@ -543,14 +618,27 @@ const PlayerManagement = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label htmlFor="edit-photo" className="text-sm font-medium">URL da Foto</label>
-              <Input
-                id="edit-photo"
-                name="photo"
-                value={formData.photo}
-                onChange={handleInputChange}
-                placeholder="https://exemplo.com/foto.png"
-              />
+              <label className="text-sm font-medium">Foto do Jogador</label>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Upload de Foto</label>
+                  <MultiFileUpload 
+                    onFilesChange={handleFilesChange} 
+                    maxFiles={1} 
+                  />
+                </div>
+                
+                <div className="border-t pt-4">
+                  <label htmlFor="edit-photo" className="text-sm font-medium">Ou URL da Foto</label>
+                  <Input
+                    id="edit-photo"
+                    name="photo"
+                    value={formData.photo}
+                    onChange={handleInputChange}
+                    placeholder="https://exemplo.com/foto.png"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-2">
@@ -559,8 +647,12 @@ const PlayerManagement = () => {
               setSelectedPlayer(null);
               resetForm();
             }}>Cancelar</Button>
-            <Button onClick={handleUpdatePlayer} className="bg-[#1a237e] text-white hover:bg-blue-800">
-              Atualizar Jogador
+            <Button 
+              onClick={handleUpdatePlayer} 
+              className="bg-[#1a237e] text-white hover:bg-blue-800"
+              disabled={isUploading}
+            >
+              {isUploading ? "Enviando..." : "Atualizar Jogador"}
             </Button>
           </div>
         </DialogContent>
