@@ -5,13 +5,17 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getChampionships } from '@/lib/api';
-import { Loader2, Calendar, MapPin, Trophy, AlertTriangle } from 'lucide-react';
+import { Loader2, Calendar, MapPin, Trophy, Users, AlertTriangle, ClipboardList, BarChart2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Championship } from '@/types';
 import Navbar from '@/components/Navbar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 const Championships = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'ongoing' | 'upcoming' | 'finished'>('all');
+  const [selectedChampionship, setSelectedChampionship] = useState<string | null>(null);
   
   const { data: championships = [], isLoading, error } = useQuery({
     queryKey: ['championships'],
@@ -81,6 +85,101 @@ const Championships = () => {
     }
   };
 
+  // Create a championship selector component for the top
+  const ChampionshipSelector = () => {
+    return (
+      <div className="bg-gradient-to-r from-blue-900 to-blue-700 py-8 px-4 mb-8 rounded-xl shadow-lg">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">Selecione um Campeonato</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {sortedChampionships.map((championship) => (
+            <Card 
+              key={championship.id}
+              className={`cursor-pointer transition-all duration-300 overflow-hidden ${
+                selectedChampionship === championship.id 
+                  ? 'ring-2 ring-blue-500 shadow-lg scale-105' 
+                  : 'hover:shadow-md hover:scale-105'
+              }`}
+              onClick={() => setSelectedChampionship(championship.id)}
+            >
+              <div className="h-20 bg-gradient-to-br from-blue-800 to-blue-600 relative overflow-hidden">
+                {championship.banner_image && (
+                  <img
+                    src={championship.banner_image}
+                    alt={championship.name}
+                    className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
+                  />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center p-2">
+                  <span className="text-white font-bold text-center text-sm">{championship.name}</span>
+                </div>
+                <div className="absolute bottom-1 right-1">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadgeColor(championship.status)}`}>
+                    {championship.year}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Show championship dashboard if one is selected
+  const ChampionshipDashboard = ({ championshipId }: { championshipId: string }) => {
+    const championship = championships.find(c => c.id === championshipId);
+    
+    if (!championship) return null;
+    
+    return (
+      <Card className="mb-8 overflow-hidden">
+        <div className="h-40 relative">
+          <img
+            src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'}
+            alt={championship.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+            <div className="flex justify-between items-end">
+              <div>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(championship.status)} mb-2`}>
+                  {getStatusLabel(championship.status)}
+                </span>
+                <h1 className="text-2xl font-bold text-white">{championship.name}</h1>
+                <p className="text-white/80">{championship.year}</p>
+              </div>
+              <Link to={`/campeonatos/${championship.id}`}>
+                <Button variant="outline" className="bg-white text-blue-700 hover:bg-blue-50">
+                  Ver Completo
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+        
+        <CardContent className="p-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 divide-x divide-gray-100">
+            <Link to={`/times?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+              <Users className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
+              <span className="text-sm font-medium">Times</span>
+              <span className="text-xs text-gray-500">Ver todos os times</span>
+            </Link>
+            <Link to={`/jogos?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+              <ClipboardList className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
+              <span className="text-sm font-medium">Partidas</span>
+              <span className="text-xs text-gray-500">Calendário de jogos</span>
+            </Link>
+            <Link to={`/classificacao?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+              <BarChart2 className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
+              <span className="text-sm font-medium">Classificação</span>
+              <span className="text-xs text-gray-500">Tabela de pontos</span>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -91,7 +190,16 @@ const Championships = () => {
             <p className="text-gray-600">Confira todos os campeonatos organizados pelo Instituto Criança Santa Maria</p>
           </div>
           
+          {/* Championship selector at the top */}
+          <ChampionshipSelector />
+          
+          {/* Championship dashboard if one is selected */}
+          {selectedChampionship && (
+            <ChampionshipDashboard championshipId={selectedChampionship} />
+          )}
+          
           <div className="mb-8">
+            <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Explorar Campeonatos</h2>
             <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
               <TabsList>
                 <TabsTrigger value="all">Todos</TabsTrigger>

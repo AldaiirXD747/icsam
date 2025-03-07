@@ -131,7 +131,7 @@ const Championship = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="pt-20 flex-grow flex items-center justify-center">
+        <div className="pt-24 flex-grow flex items-center justify-center">
           <p className="text-gray-500">Carregando detalhes do campeonato...</p>
         </div>
       </div>
@@ -142,7 +142,7 @@ const Championship = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="pt-20 flex-grow flex items-center justify-center">
+        <div className="pt-24 flex-grow flex items-center justify-center">
           <div className="text-center">
             <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-700 mb-2">Campeonato não encontrado</h2>
@@ -162,7 +162,7 @@ const Championship = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="pt-20 flex-grow">
+      <div className="pt-24 flex-grow">
         <div className="relative">
           <div className="w-full h-64 sm:h-80 md:h-96 bg-gray-300 relative">
             <img 
