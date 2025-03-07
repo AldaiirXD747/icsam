@@ -107,6 +107,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
+      {/* We only need to include the Footer once */}
       <Footer />
     </div>
   );
