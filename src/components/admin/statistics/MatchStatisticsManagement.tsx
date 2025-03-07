@@ -120,6 +120,9 @@ const MatchStatisticsManagement: React.FC = () => {
             away_players: awayPlayers
           } as Match;
         });
+      } catch (error) {
+        console.error("Erro ao buscar partidas:", error);
+        return [];
       }
     }
   });

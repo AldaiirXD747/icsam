@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          password_hash: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          password_hash: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          password_hash?: string
+          role?: string
+        }
+        Relationships: []
+      }
       championships: {
         Row: {
           banner_image: string | null
@@ -537,6 +564,42 @@ export type Database = {
           },
         ]
       }
+      user_team_associations: {
+        Row: {
+          created_at: string
+          id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_team_associations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_team_associations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       yellow_card_leaders: {
         Row: {
           category: string
@@ -601,6 +664,21 @@ export type Database = {
       create_standings_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      create_user: {
+        Args: {
+          p_name: string
+          p_email: string
+          p_password: string
+          p_role: string
+        }
+        Returns: string
+      }
+      generate_password_hash: {
+        Args: {
+          password: string
+        }
+        Returns: string
       }
       get_matches_with_teams_and_players: {
         Args: {
@@ -710,6 +788,18 @@ export type Database = {
           p_goal_difference: number
         }
         Returns: undefined
+      }
+      verify_user_credentials: {
+        Args: {
+          p_email: string
+          p_password: string
+        }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          role: string
+        }[]
       }
     }
     Enums: {

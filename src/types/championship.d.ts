@@ -83,10 +83,35 @@ export type UserRole = 'admin' | 'team_manager';
 // User management interfaces
 export interface UserAccount {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: UserRole;
-  team_id?: string | null;
-  team_name?: string | null;
   created_at?: string;
+  teams?: UserTeamAssociation[];
+}
+
+export interface UserTeamAssociation {
+  id: string;
+  user_id: string;
+  team_id: string;
+  team_name?: string;
+  team_category?: string;
+  team_logo?: string | null;
+}
+
+export interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  teams?: string[];
+}
+
+export interface UpdateUserPayload {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  password?: string;
+  teams?: string[];
 }
