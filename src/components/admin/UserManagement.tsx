@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -202,20 +201,29 @@ const UserManagement: React.FC = () => {
 
   // Mutation para criar usuário
   const createUserMutation = useMutation({
-    mutationFn: async (userData: CreateUserPayload) => {
+    mutationFn: async (userData: z.infer<typeof createUserSchema>) => {
+      // Ensure we're passing a valid CreateUserPayload object with required fields
+      const createUserData: CreateUserPayload = {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
+        teams: userData.teams,
+      };
+
       // 1. Criar o usuário
       const { data: user, error } = await supabase.rpc('create_user', {
-        p_name: userData.name,
-        p_email: userData.email,
-        p_password: userData.password,
-        p_role: userData.role
+        p_name: createUserData.name,
+        p_email: createUserData.email,
+        p_password: createUserData.password,
+        p_role: createUserData.role
       });
 
       if (error) throw error;
 
       // 2. Se for gerente de time, associar aos times selecionados
-      if (userData.role === 'team_manager' && userData.teams && userData.teams.length > 0) {
-        const associations = userData.teams.map(teamId => ({
+      if (createUserData.role === 'team_manager' && createUserData.teams && createUserData.teams.length > 0) {
+        const associations = createUserData.teams.map(teamId => ({
           user_id: user,
           team_id: teamId
         }));
@@ -256,18 +264,28 @@ const UserManagement: React.FC = () => {
 
   // Mutation para atualizar usuário
   const updateUserMutation = useMutation({
-    mutationFn: async (userData: UpdateUserPayload) => {
-      // 1. Atualizar dados básicos do usuário
-      const updateData: any = {
+    mutationFn: async (userData: z.infer<typeof updateUserSchema>) => {
+      // Ensure we're passing a valid UpdateUserPayload object with required fields
+      const updateUserData: UpdateUserPayload = {
+        id: userData.id,
         name: userData.name,
         email: userData.email,
-        role: userData.role
+        role: userData.role,
+        password: userData.password,
+        teams: userData.teams,
+      };
+
+      // 1. Atualizar dados básicos do usuário
+      const updateData: any = {
+        name: updateUserData.name,
+        email: updateUserData.email,
+        role: updateUserData.role
       };
 
       // Se senha foi fornecida, gerar hash
-      if (userData.password) {
+      if (updateUserData.password) {
         const { data: passwordHash } = await supabase.rpc('generate_password_hash', {
-          password: userData.password
+          password: updateUserData.password
         });
         updateData.password_hash = passwordHash;
       }
@@ -275,24 +293,24 @@ const UserManagement: React.FC = () => {
       const { error } = await supabase
         .from('app_users')
         .update(updateData)
-        .eq('id', userData.id);
+        .eq('id', updateUserData.id);
 
       if (error) throw error;
 
       // 2. Atualizar associações com times
-      if (userData.role === 'team_manager') {
+      if (updateUserData.role === 'team_manager') {
         // Primeiro remover todas as associações existentes
         const { error: deleteError } = await supabase
           .from('user_team_associations')
           .delete()
-          .eq('user_id', userData.id);
+          .eq('user_id', updateUserData.id);
 
         if (deleteError) throw deleteError;
 
         // Depois adicionar as novas associações
-        if (userData.teams && userData.teams.length > 0) {
-          const associations = userData.teams.map(teamId => ({
-            user_id: userData.id,
+        if (updateUserData.teams && updateUserData.teams.length > 0) {
+          const associations = updateUserData.teams.map(teamId => ({
+            user_id: updateUserData.id,
             team_id: teamId
           }));
 
@@ -304,7 +322,7 @@ const UserManagement: React.FC = () => {
         }
       }
 
-      return userData.id;
+      return updateUserData.id;
     },
     onSuccess: () => {
       toast({
