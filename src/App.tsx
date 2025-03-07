@@ -55,6 +55,7 @@ function App() {
 
         {/* Rotas Admin */}
         <Route path="/admin/login" element={<Login />} />
+        <Route path="/login" element={<Login />} /> {/* New route added for /login */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/championships" element={<AdminDashboard />} />
         <Route path="/admin/teams" element={<AdminDashboard />} />
