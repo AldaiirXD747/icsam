@@ -1,4 +1,3 @@
-
 import { AdminMatch, Match, TopScorer, YellowCardLeader } from '@/types';
 
 /**
@@ -73,13 +72,16 @@ export const convertDbMatchToMatch = (dbMatch: any): Match => {
 export const normalizeTopScorer = (scorer: any): TopScorer => {
   return {
     id: scorer.id,
-    playerId: scorer.playerId || scorer.player_id,
-    teamId: scorer.teamId || scorer.team_id,
-    name: scorer.name,
-    team: scorer.team,
+    player_id: scorer.player_id || scorer.playerId,
+    team_id: scorer.team_id || scorer.teamId,
+    championship_id: scorer.championship_id || scorer.championshipId,
+    playerId: scorer.player_id || scorer.playerId,
+    teamId: scorer.team_id || scorer.teamId,
+    championshipId: scorer.championship_id || scorer.championshipId,
     goals: scorer.goals,
     category: scorer.category,
-    championshipId: scorer.championshipId || scorer.championship_id,
+    name: scorer.name,
+    team: scorer.team
   };
 };
 
@@ -89,12 +91,16 @@ export const normalizeTopScorer = (scorer: any): TopScorer => {
 export const normalizeYellowCardLeader = (leader: any): YellowCardLeader => {
   return {
     id: leader.id,
-    playerId: leader.playerId || leader.player_id,
-    teamId: leader.teamId || leader.team_id,
-    name: leader.name,
-    team: leader.team,
-    yellowCards: leader.yellowCards || leader.yellow_cards,
+    player_id: leader.player_id || leader.playerId,
+    team_id: leader.team_id || leader.teamId,
+    yellow_cards: leader.yellow_cards || leader.yellowCards,
+    championship_id: leader.championship_id || leader.championshipId,
+    playerId: leader.player_id || leader.playerId,
+    teamId: leader.team_id || leader.teamId,
+    yellowCards: leader.yellow_cards || leader.yellowCards,
+    championshipId: leader.championship_id || leader.championshipId,
     category: leader.category,
-    championshipId: leader.championshipId || leader.championship_id,
+    name: leader.name,
+    team: leader.team
   };
 };
