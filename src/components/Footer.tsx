@@ -153,20 +153,8 @@ const Footer = () => {
         </motion.div>
         
         {/* Footer bottom */}
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between">
-          <div className="mb-8 md:mb-0 flex items-center">
-            <div className="bg-white p-1.5 rounded-xl shadow-md">
-              <img 
-                src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
-                alt="GDF - Governo do Distrito Federal" 
-                className="h-14"
-              />
-            </div>
-            <span className="ml-4 text-sm text-gray-300 hidden md:block">
-              Apoio: Governo do Distrito Federal
-            </span>
-          </div>
-          <div className="text-center md:text-right">
+        <div className="mt-16 pt-8 border-t border-white/10 flex justify-center">
+          <div className="text-center">
             <p className="text-gray-300 text-sm">CNPJ: 43.999.350/0001-16</p>
             <p className="mt-1 text-gray-300 text-sm">&copy; {currentYear} Instituto Criança Santa Maria. Todos os direitos reservados.</p>
           </div>
