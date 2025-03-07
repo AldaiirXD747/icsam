@@ -192,9 +192,9 @@ const HeroSection = () => {
           />
           
           <StatCard 
-            number="4" 
+            number="5" 
             title="Categorias" 
-            description="Atividades específicas para diferentes faixas etárias: SUB-11, SUB-13, SUB-15 e SUB-17."
+            description="Atividades específicas para diferentes faixas etárias: SUB-09, SUB-11, SUB-13, SUB-15 e SUB-17."
             icon={<Star />}
             delay={0.4}
           />

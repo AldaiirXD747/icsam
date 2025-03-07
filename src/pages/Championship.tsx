@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -25,7 +26,7 @@ const mockChampionships: ChampionshipType[] = [
     start_date: "2023-03-15",
     end_date: "2023-11-20",
     location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
+    categories: ["SUB-09", "SUB-11", "SUB-13", "SUB-15", "SUB-17"],
     organizer: "Instituto Criança Santa Maria",
     sponsors: [
       { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
@@ -42,7 +43,7 @@ const mockChampionships: ChampionshipType[] = [
     start_date: "2024-03-10",
     end_date: "2024-11-25",
     location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
+    categories: ["SUB-09", "SUB-11", "SUB-13", "SUB-15", "SUB-17"],
     organizer: "Instituto Criança Santa Maria",
     sponsors: [
       { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
@@ -59,7 +60,7 @@ const mockChampionships: ChampionshipType[] = [
     start_date: "2025-01-15",
     end_date: "2025-06-30",
     location: "Estádio Municipal - Brasília, DF",
-    categories: ["SUB-13", "SUB-15"],
+    categories: ["SUB-09", "SUB-13", "SUB-15"],
     organizer: "Instituto Criança Santa Maria",
     sponsors: [
       { name: "Patrocinador 2", logo: "https://example.com/logo2.png" },
