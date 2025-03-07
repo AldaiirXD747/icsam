@@ -1,67 +1,52 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPublicData } from "./fetchPublicData";
-import { migrateChampionships } from "./migrateChampionships";
-import { migrateTeams } from "./migrateTeams";
-import { migratePlayers } from "./migratePlayers";
-import { migrateMatches } from "./migrateMatches";
-import { migrateStatistics, createStandingsTable } from "./migrateStatistics";
 
 /**
- * This utility script migrates existing data to Supabase
- * It fetches data from public endpoints and harmonizes it with the admin panel's data structure
+ * This utility script helps manage data between public and admin interfaces
  */
-export const migrateDataToSupabase = async () => {
+
+// Function to clean all data from the database
+export const cleanAllData = async () => {
   try {
-    console.log("Iniciando migração de dados para o Supabase...");
+    console.log("Iniciando limpeza de todos os dados...");
     
-    // Adicionar coluna category à tabela players usando a RPC function
-    try {
-      console.log("Verificando e adicionando coluna 'category' à tabela players...");
-      const { error } = await supabase.rpc("add_category_to_players");
+    // Delete all records from tables in the correct order to respect foreign key constraints
+    const tables = [
+      "goals",
+      "match_events",
+      "top_scorers",
+      "yellow_card_leaders",
+      "standings",
+      "matches",
+      "players",
+      "team_accounts",
+      "teams",
+      "championships"
+    ];
+    
+    for (const table of tables) {
+      console.log(`Removendo registros da tabela ${table}...`);
+      const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      
       if (error) {
-        console.error("Erro ao adicionar coluna category:", error);
+        console.error(`Erro ao limpar tabela ${table}:`, error);
       } else {
-        console.log("Coluna 'category' verificada/adicionada com sucesso.");
+        console.log(`Tabela ${table} limpa com sucesso.`);
       }
-    } catch (error) {
-      console.error("Erro ao executar add_category_to_players:", error);
     }
     
-    // Criar tabela de classificação se não existir
-    await createStandingsTable();
-    
-    // Fetch data from public endpoints
-    const publicDataSources = await fetchPublicData();
-    
-    // Migrate championships
-    await migrateChampionships(publicDataSources.championships);
-    
-    // Migrate teams
-    const teamsMap = await migrateTeams(publicDataSources.teams);
-    
-    // Migrate players
-    const playersMap = await migratePlayers(publicDataSources.players, teamsMap);
-    
-    // Migrate matches
-    await migrateMatches(publicDataSources.matches, teamsMap);
-    
-    // Migrate statistics
-    await migrateStatistics(publicDataSources.statistics, playersMap, teamsMap);
-    
-    console.log("Migração de dados concluída!");
-    
-    // Recalcular estatísticas após migração
-    try {
-      await supabase.rpc("recalculate_standings");
-      console.log("Classificação recalculada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao recalcular classificação:", error);
-    }
-    
+    console.log("Limpeza de dados concluída!");
     return true;
   } catch (error) {
-    console.error("Erro durante a migração de dados:", error);
+    console.error("Erro durante a limpeza de dados:", error);
     return false;
   }
+};
+
+// The old migrateDataToSupabase function is now disabled
+// It's kept here for reference but no longer used
+export const migrateDataToSupabase = async () => {
+  console.log("A função de migração automática foi desativada.");
+  console.log("Por favor, cadastre todos os dados através do Painel Administrativo.");
+  return false;
 };

@@ -1,171 +1,234 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { Database, RefreshCw } from 'lucide-react';
-import { migrateDataToSupabase } from '@/utils/dataMigration';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Database, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
+import { cleanAllData, migrateDataToSupabase } from '@/utils/dataMigration';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const DataSyncManager = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
-  const [migrationSummary, setMigrationSummary] = useState<{
-    championships: number;
-    teams: number;
-    players: number;
-    matches: number;
-    topScorers: number;
-    yellowCards: number;
-  }>({
-    championships: 0,
-    teams: 0,
-    players: 0,
-    matches: 0,
-    topScorers: 0,
-    yellowCards: 0
-  });
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [activeTab, setActiveTab] = useState('sync');
+  const [migrationResult, setMigrationResult] = useState<{ success: boolean; message: string } | null>(null);
   const { toast } = useToast();
 
   const handleMigration = async () => {
-    if (isRunning) return;
-    
-    setIsRunning(true);
-    setLogs(["Iniciando processo de migração..."]);
-    setMigrationSummary({
-      championships: 0,
-      teams: 0,
-      players: 0,
-      matches: 0,
-      topScorers: 0,
-      yellowCards: 0
-    });
-    
-    // Capture console logs
-    const originalConsoleLog = console.log;
-    const originalConsoleError = console.error;
-    
-    console.log = (message) => {
-      originalConsoleLog(message);
-      setLogs(prev => [...prev, `INFO: ${message}`]);
-      
-      // Update summary counts based on log messages
-      if (message.includes('Championship') && message.includes('migrated successfully')) {
-        setMigrationSummary(prev => ({ ...prev, championships: prev.championships + 1 }));
-      } else if (message.includes('Time') && message.includes('migrado com sucesso')) {
-        setMigrationSummary(prev => ({ ...prev, teams: prev.teams + 1 }));
-      } else if (message.includes('Player') && message.includes('migrated successfully')) {
-        setMigrationSummary(prev => ({ ...prev, players: prev.players + 1 }));
-      } else if (message.includes('Match') && message.includes('migrated successfully')) {
-        setMigrationSummary(prev => ({ ...prev, matches: prev.matches + 1 }));
-      } else if (message.includes('Top scorer') && message.includes('migrated successfully')) {
-        setMigrationSummary(prev => ({ ...prev, topScorers: prev.topScorers + 1 }));
-      } else if (message.includes('Yellow card leader') && message.includes('migrated successfully')) {
-        setMigrationSummary(prev => ({ ...prev, yellowCards: prev.yellowCards + 1 }));
-      }
-    };
-    
-    console.error = (message) => {
-      originalConsoleError(message);
-      setLogs(prev => [...prev, `ERRO: ${message}`]);
-    };
-    
     try {
-      await migrateDataToSupabase();
+      setIsMigrating(true);
+      setMigrationResult(null);
+      
+      const result = await migrateDataToSupabase();
+      
+      setMigrationResult({
+        success: result,
+        message: result 
+          ? "Migração de dados concluída com sucesso!" 
+          : "A migração automática foi desativada. Use o Painel Admin para cadastrar dados."
+      });
       
       toast({
-        title: "Sincronização concluída",
-        description: "Dados migrados com sucesso para o Supabase."
+        title: result ? "Sucesso" : "Informação",
+        description: result 
+          ? "Dados migrados com sucesso!" 
+          : "A migração automática foi desativada. Use o Painel Admin para cadastrar dados.",
+        variant: result ? "default" : "destructive",
       });
     } catch (error) {
       console.error("Erro durante a migração:", error);
+      setMigrationResult({
+        success: false,
+        message: `Erro durante a migração: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
       
       toast({
+        title: "Erro",
+        description: "Houve um erro durante a migração de dados.",
         variant: "destructive",
-        title: "Erro na sincronização",
-        description: "Ocorreu um erro durante a migração dos dados."
       });
     } finally {
-      // Restore original console functions
-      console.log = originalConsoleLog;
-      console.error = originalConsoleError;
-      setIsRunning(false);
+      setIsMigrating(false);
+    }
+  };
+
+  const handleCleanData = async () => {
+    if (!confirm("ATENÇÃO: Esta ação irá apagar TODOS os dados do sistema. Deseja continuar?")) {
+      return;
+    }
+    
+    try {
+      setIsCleaning(true);
+      setMigrationResult(null);
+      
+      const result = await cleanAllData();
+      
+      setMigrationResult({
+        success: result,
+        message: result 
+          ? "Todos os dados foram apagados com sucesso!" 
+          : "Houve um erro ao apagar os dados."
+      });
+      
+      toast({
+        title: result ? "Sucesso" : "Erro",
+        description: result 
+          ? "Todos os dados foram apagados. Você pode começar a cadastrar novos dados pelo Painel Admin." 
+          : "Houve um erro ao apagar os dados.",
+        variant: result ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error("Erro durante a limpeza de dados:", error);
+      setMigrationResult({
+        success: false,
+        message: `Erro durante a limpeza: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
+      
+      toast({
+        title: "Erro",
+        description: "Houve um erro durante a limpeza de dados.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
+  const handleRecalculateStandings = async () => {
+    try {
+      setIsMigrating(true);
+      setMigrationResult(null);
+      
+      const { error } = await supabase.rpc("recalculate_standings");
+      
+      if (error) throw error;
+      
+      setMigrationResult({
+        success: true,
+        message: "Classificação recalculada com sucesso!"
+      });
+      
+      toast({
+        title: "Sucesso",
+        description: "Classificação recalculada com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao recalcular classificação:", error);
+      setMigrationResult({
+        success: false,
+        message: `Erro ao recalcular classificação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
+      
+      toast({
+        title: "Erro",
+        description: "Houve um erro ao recalcular a classificação.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMigrating(false);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl text-[#1a237e]">Sincronização de Dados</CardTitle>
+        <CardTitle className="text-xl font-bold text-blue-primary flex items-center">
+          <Database className="mr-2 h-5 w-5" />
+          Gerenciamento de Dados
+        </CardTitle>
         <CardDescription>
-          Sincronize dados entre a área pública e o painel administrativo
+          Gerencie a sincronização de dados e outras operações do sistema.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Use esta ferramenta para migrar dados existentes para o banco de dados Supabase, 
-            garantindo que a área pública e o painel administrativo utilizem a mesma fonte de dados.
-          </p>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="sync">Sincronização</TabsTrigger>
+            <TabsTrigger value="clean">Limpeza de Dados</TabsTrigger>
+          </TabsList>
           
-          <Button 
-            onClick={handleMigration} 
-            disabled={isRunning}
-            className="bg-[#1a237e] text-white hover:bg-blue-800"
-          >
-            {isRunning ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Sincronizando...
-              </>
-            ) : (
-              <>
-                <Database className="mr-2 h-4 w-4" />
-                Iniciar Sincronização de Dados
-              </>
-            )}
-          </Button>
-          
-          {(migrationSummary.championships > 0 || 
-            migrationSummary.teams > 0 || 
-            migrationSummary.players > 0 || 
-            migrationSummary.matches > 0 || 
-            migrationSummary.topScorers > 0 || 
-            migrationSummary.yellowCards > 0) && (
-            <div className="mt-4 p-4 border rounded-md bg-blue-50">
-              <h3 className="text-md font-medium mb-2">Resumo da Migração:</h3>
-              <ul className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                <li className="text-sm">Campeonatos: <span className="font-semibold">{migrationSummary.championships}</span></li>
-                <li className="text-sm">Times: <span className="font-semibold">{migrationSummary.teams}</span></li>
-                <li className="text-sm">Jogadores: <span className="font-semibold">{migrationSummary.players}</span></li>
-                <li className="text-sm">Partidas: <span className="font-semibold">{migrationSummary.matches}</span></li>
-                <li className="text-sm">Artilheiros: <span className="font-semibold">{migrationSummary.topScorers}</span></li>
-                <li className="text-sm">Cartões: <span className="font-semibold">{migrationSummary.yellowCards}</span></li>
-              </ul>
+          <TabsContent value="sync">
+            <div className="space-y-4">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Atenção</AlertTitle>
+                <AlertDescription>
+                  A sincronização automática está desativada. Por favor, cadastre todos os dados através do Painel Administrativo.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex flex-col gap-4">
+                <Button 
+                  variant="outline" 
+                  onClick={handleRecalculateStandings}
+                  disabled={isMigrating}
+                  className="flex items-center"
+                >
+                  {isMigrating ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Recalculando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Recalcular Classificação
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          )}
+          </TabsContent>
           
-          {logs.length > 0 && (
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="logs">
-                <AccordionTrigger>Logs de Sincronização ({logs.length})</AccordionTrigger>
-                <AccordionContent>
-                  <div className="bg-gray-100 p-3 rounded-md max-h-60 overflow-y-auto">
-                    {logs.map((log, index) => (
-                      <div 
-                        key={index} 
-                        className={`text-xs mb-1 font-mono ${log.startsWith('ERRO') ? 'text-red-600' : 'text-gray-700'}`}
-                      >
-                        {log}
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
-        </div>
+          <TabsContent value="clean">
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Atenção: Ação Destrutiva</AlertTitle>
+                <AlertDescription>
+                  Esta ação irá apagar TODOS os dados do sistema (times, campeonatos, jogadores, partidas, etc).
+                  Esta ação não pode ser desfeita!
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex flex-col gap-4">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCleanData}
+                  disabled={isCleaning}
+                  className="flex items-center"
+                >
+                  {isCleaning ? (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4 animate-spin" />
+                      Limpando Dados...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Apagar Todos os Dados
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        {migrationResult && (
+          <Alert variant={migrationResult.success ? "default" : "destructive"} className="mt-4">
+            <AlertTitle>{migrationResult.success ? "Sucesso" : "Erro"}</AlertTitle>
+            <AlertDescription>
+              {migrationResult.message}
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
+      <CardFooter className="text-sm text-gray-500">
+        Última atualização: {new Date().toLocaleString()}
+      </CardFooter>
     </Card>
   );
 };
