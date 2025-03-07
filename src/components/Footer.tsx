@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { MapPin, Mail, Phone, Facebook, Instagram, Twitter, ExternalLink, Heart, ChevronRight, Globe, Users, Trophy, BarChart2, Image, Star, Info, Calendar } from 'lucide-react';
+import { MapPin, Mail, Phone, Facebook, Instagram, Twitter, ExternalLink, Heart, ChevronRight, Globe, Users, Trophy, BarChart2, Image, Star, Info, Calendar, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Footer = () => {
@@ -69,10 +69,10 @@ const Footer = () => {
             </p>
             
             <div className="flex flex-wrap gap-4 mt-8">
-              <SocialLink href="https://www.facebook.com/share/1AAG7QWqqo/" icon={<Facebook size={20} />} label="Facebook" />
-              <SocialLink href="https://www.instagram.com/institutocriancasanta/" icon={<Instagram size={20} />} label="Instagram" />
-              <SocialLink href="https://twitter.com" icon={<Twitter size={20} />} label="Twitter" />
-              <SocialLink href="https://institutocriancasantamaria.com.br" icon={<Globe size={20} />} label="Website" />
+              <SocialLink href="https://www.facebook.com/share/1AAG7QWqqo/" icon={<Facebook />} label="Facebook" />
+              <SocialLink href="https://www.instagram.com/institutocriancasanta/" icon={<Instagram />} label="Instagram" />
+              <SocialLink href="https://twitter.com" icon={<Twitter />} label="Twitter" />
+              <SocialLink href="https://institutocriancasantamaria.com.br" icon={<Globe />} label="Website" />
             </div>
           </motion.div>
           
@@ -95,7 +95,7 @@ const Footer = () => {
               <FooterLink to="/estatisticas" icon={<BarChart2 size={16} />}>Estatísticas</FooterLink>
               <FooterLink to="/classificacao" icon={<Star size={16} />}>Classificação</FooterLink>
               <FooterLink to="/galeria" icon={<Image size={16} />}>Galeria</FooterLink>
-              <FooterLink to="/transparencia" icon={<FileDocument size={16} />}>Transparência</FooterLink>
+              <FooterLink to="/transparencia" icon={<FileDocument />}>Transparência</FooterLink>
               <FooterLink to="/contato" icon={<Mail size={16} />}>Contato</FooterLink>
             </ul>
           </motion.div>

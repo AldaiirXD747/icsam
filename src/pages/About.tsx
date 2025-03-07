@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import { ArrowRight } from 'lucide-react';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const About = () => {
   return (

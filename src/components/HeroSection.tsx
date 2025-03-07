@@ -134,7 +134,7 @@ const HeroSection = () => {
                 className="absolute -top-10 -right-10 bg-white p-4 rounded-xl shadow-xl z-20 flex items-center gap-3"
               >
                 <div className="bg-blue-primary/10 p-2 rounded-lg">
-                  <Trophy size={24} className="text-blue-primary" />
+                  <Trophy className="text-blue-primary" />
                 </div>
                 <div>
                   <span className="text-gray-500 text-xs">Campeonatos</span>
@@ -149,7 +149,7 @@ const HeroSection = () => {
                 className="absolute -bottom-10 -left-6 bg-white p-4 rounded-xl shadow-xl z-20 flex items-center gap-3"
               >
                 <div className="bg-lime-primary/20 p-2 rounded-lg">
-                  <Users size={24} className="text-blue-primary" />
+                  <Users className="text-blue-primary" />
                 </div>
                 <div>
                   <span className="text-gray-500 text-xs">Crianças e Jovens</span>
