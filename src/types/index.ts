@@ -1,4 +1,3 @@
-
 export interface Team {
   id: string;
   name: string;
@@ -41,7 +40,7 @@ export interface Match {
   awayTeam: string;
   homeScore?: number | null;
   awayScore?: number | null;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
+  status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'canceled';
   category: string;
   round?: string | null;
   championshipId?: string | null;

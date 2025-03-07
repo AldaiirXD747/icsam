@@ -6,8 +6,10 @@ import MatchCard from '@/components/MatchCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, CalendarClock, CalendarCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Match } from '@/types';
 
-interface Match {
+// Interface to represent the database response
+interface MatchResponse {
   id: string;
   date: string;
   time: string;
@@ -23,11 +25,11 @@ interface Match {
   homeTeam?: {
     name: string;
     logo: string | null;
-  };
+  } | null;
   awayTeam?: {
     name: string;
     logo: string | null;
-  };
+  } | null;
 }
 
 const Matches = () => {
@@ -52,7 +54,26 @@ const Matches = () => {
         
         if (error) throw error;
         
-        setMatches(data || []);
+        // Transform the data to match the expected Match type
+        const transformedData = (data || []).map((match: MatchResponse): Match => ({
+          id: match.id,
+          date: match.date,
+          time: match.time,
+          location: match.location,
+          homeTeam: match.home_team,
+          awayTeam: match.away_team,
+          homeScore: match.home_score,
+          awayScore: match.away_score,
+          status: mapStatus(match.status),
+          category: match.category,
+          round: match.round,
+          championshipId: match.championship_id,
+          homeTeamName: match.homeTeam?.name || 'Time da Casa',
+          awayTeamName: match.awayTeam?.name || 'Time Visitante',
+          // Add other properties from Match type as needed
+        }));
+        
+        setMatches(transformedData);
       } catch (err) {
         console.error('Erro ao carregar partidas:', err);
         setError('Não foi possível carregar as partidas. Por favor, tente novamente mais tarde.');
@@ -64,9 +85,49 @@ const Matches = () => {
     fetchMatches();
   }, []);
 
-  const upcomingMatches = matches.filter(match => match.status === 'scheduled' || match.status === 'upcoming');
-  const ongoingMatches = matches.filter(match => match.status === 'ongoing' || match.status === 'live');
-  const completedMatches = matches.filter(match => match.status === 'completed' || match.status === 'finalizado');
+  // Helper function to map database status to the MatchCard status
+  const mapStatus = (dbStatus: string): 'scheduled' | 'live' | 'finished' => {
+    switch (dbStatus) {
+      case 'ongoing':
+      case 'live':
+        return 'live';
+      case 'completed':
+      case 'finalizado':
+        return 'finished';
+      default:
+        return 'scheduled';
+    }
+  };
+
+  const upcomingMatches = matches.filter(match => match.status === 'scheduled');
+  const ongoingMatches = matches.filter(match => match.status === 'live');
+  const completedMatches = matches.filter(match => match.status === 'finished');
+
+  // Helper function to render each match with properly formatted data for the MatchCard
+  const renderMatchCard = (match: Match) => {
+    return (
+      <MatchCard
+        key={match.id}
+        id={parseInt(match.id)}
+        homeTeam={{
+          name: match.homeTeamName || 'Time da Casa',
+          logo: match.homeTeam ? `/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png` : '/placeholder.svg',
+          score: match.homeScore || 0
+        }}
+        awayTeam={{
+          name: match.awayTeamName || 'Time Visitante',
+          logo: match.awayTeam ? `/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png` : '/placeholder.svg',
+          score: match.awayScore || 0
+        }}
+        category={match.category}
+        date={match.date}
+        time={match.time}
+        group={match.round || 'A'}
+        status={match.status as 'scheduled' | 'live' | 'finished'}
+        venue={match.location}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -123,9 +184,7 @@ const Matches = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {matches.map(match => (
-                      <MatchCard key={match.id} match={match} />
-                    ))}
+                    {matches.map(match => renderMatchCard(match))}
                   </div>
                 )}
               </TabsContent>
@@ -137,9 +196,7 @@ const Matches = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {upcomingMatches.map(match => (
-                      <MatchCard key={match.id} match={match} />
-                    ))}
+                    {upcomingMatches.map(match => renderMatchCard(match))}
                   </div>
                 )}
               </TabsContent>
@@ -151,9 +208,7 @@ const Matches = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {ongoingMatches.map(match => (
-                      <MatchCard key={match.id} match={match} />
-                    ))}
+                    {ongoingMatches.map(match => renderMatchCard(match))}
                   </div>
                 )}
               </TabsContent>
@@ -165,9 +220,7 @@ const Matches = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {completedMatches.map(match => (
-                      <MatchCard key={match.id} match={match} />
-                    ))}
+                    {completedMatches.map(match => renderMatchCard(match))}
                   </div>
                 )}
               </TabsContent>

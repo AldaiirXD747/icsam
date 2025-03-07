@@ -39,6 +39,7 @@ const StatusBadge: React.FC<{ status: MatchStatus }> = ({ status }) => {
   );
 };
 
+// We're now receiving individual props instead of a single match object
 const MatchCard: React.FC<MatchCardProps> = ({
   id,
   homeTeam,
