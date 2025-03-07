@@ -167,3 +167,13 @@ export type MatchStatistic = {
   half?: 'first' | 'second' | 'extra_time' | 'penalties';
   created_at?: string;
 };
+
+export interface TransparencyDocument {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  file_url: string;
+  icon_type: string;
+  published_date: string;
+}
