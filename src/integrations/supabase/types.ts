@@ -261,6 +261,68 @@ export type Database = {
           },
         ]
       }
+      standings: {
+        Row: {
+          category: string
+          created_at: string
+          drawn: number
+          goal_difference: number
+          goals_against: number
+          goals_for: number
+          group_name: string
+          id: string
+          lost: number
+          played: number
+          points: number
+          position: number
+          team_id: string | null
+          updated_at: string
+          won: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          drawn?: number
+          goal_difference?: number
+          goals_against?: number
+          goals_for?: number
+          group_name: string
+          id?: string
+          lost?: number
+          played?: number
+          points?: number
+          position?: number
+          team_id?: string | null
+          updated_at?: string
+          won?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          drawn?: number
+          goal_difference?: number
+          goals_against?: number
+          goals_for?: number
+          group_name?: string
+          id?: string
+          lost?: number
+          played?: number
+          points?: number
+          position?: number
+          team_id?: string | null
+          updated_at?: string
+          won?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_accounts: {
         Row: {
           created_at: string
@@ -429,16 +491,101 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_category_to_players: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_standings_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_standing: {
+        Args: {
+          p_team_id: string
+          p_category: string
+          p_group_name: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          drawn: number
+          goal_difference: number
+          goals_against: number
+          goals_for: number
+          group_name: string
+          id: string
+          lost: number
+          played: number
+          points: number
+          position: number
+          team_id: string | null
+          updated_at: string
+          won: number
+        }[]
+      }
+      get_standings: {
+        Args: {
+          p_category: string
+          p_group_name: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          drawn: number
+          goal_difference: number
+          goals_against: number
+          goals_for: number
+          group_name: string
+          id: string
+          lost: number
+          played: number
+          points: number
+          position: number
+          team_id: string | null
+          updated_at: string
+          won: number
+        }[]
       }
       get_standings_table_exists: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      insert_standing: {
+        Args: {
+          p_team_id: string
+          p_category: string
+          p_group_name: string
+          p_position: number
+          p_points: number
+          p_played: number
+          p_won: number
+          p_drawn: number
+          p_lost: number
+          p_goals_for: number
+          p_goals_against: number
+          p_goal_difference: number
+        }
+        Returns: string
+      }
       recalculate_standings: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_standing: {
+        Args: {
+          p_team_id: string
+          p_category: string
+          p_group_name: string
+          p_position: number
+          p_points: number
+          p_played: number
+          p_won: number
+          p_drawn: number
+          p_lost: number
+          p_goals_for: number
+          p_goals_against: number
+          p_goal_difference: number
+        }
         Returns: undefined
       }
     }

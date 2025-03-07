@@ -1,6 +1,6 @@
 
-// This file is maintained for backward compatibility
-// The functionality has been refactored into smaller modules
-import { migrateDataToSupabase } from "./dataMigration";
+import { supabase } from "@/integrations/supabase/client";
+import { migrateDataToSupabase } from "@/utils/dataMigration"; 
 
+// Re-export the main migration function for backward compatibility
 export { migrateDataToSupabase };

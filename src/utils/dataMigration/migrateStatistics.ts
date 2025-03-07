@@ -1,5 +1,17 @@
-
 import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Create standings table if it doesn't exist
+ */
+export const createStandingsTable = async () => {
+  try {
+    // Chamar a função RPC para criar a tabela
+    await supabase.rpc("create_standings_table");
+    console.log("Tabela standings criada ou verificada com sucesso");
+  } catch (error) {
+    console.error("Erro ao criar tabela standings:", error);
+  }
+};
 
 /**
  * Migrate statistics data to Supabase
@@ -761,19 +773,6 @@ export const migrateStandings = async (
     console.log(`Migração de classificação concluída: ${insertedCount} inseridos, ${updatedCount} atualizados, ${errorCount} erros`);
   } catch (error) {
     console.error("Erro ao migrar classificação:", error);
-  }
-};
-
-/**
- * Create standings table if it doesn't exist
- */
-export const createStandingsTable = async () => {
-  try {
-    // Chamar a função RPC para criar a tabela
-    await supabase.rpc("create_standings_table");
-    console.log("Tabela standings criada ou verificada com sucesso");
-  } catch (error) {
-    console.error("Erro ao criar tabela standings:", error);
   }
 };
 

@@ -1,271 +1,123 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StandingsTable from '../components/StandingsTable';
-
-// Mock data for team standings
-const standingsData = {
-  'SUB-11': {
-    'A': [
-      {
-        id: 'furacao-sub11',
-        name: 'Furacão',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png',
-        played: 2,
-        wins: 2,
-        draws: 0,
-        losses: 0,
-        goalsFor: 7,
-        goalsAgainst: 0,
-        points: 6
-      },
-      {
-        id: 'federal-sub11',
-        name: 'Federal',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png',
-        played: 2,
-        wins: 1,
-        draws: 0,
-        losses: 1,
-        goalsFor: 2,
-        goalsAgainst: 7,
-        points: 3
-      },
-      {
-        id: 'gremio-sub11',
-        name: 'Grêmio',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png',
-        played: 2,
-        wins: 1,
-        draws: 0,
-        losses: 1,
-        goalsFor: 3,
-        goalsAgainst: 2,
-        points: 3
-      },
-      {
-        id: 'estrela-sub11',
-        name: 'Estrela',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
-        played: 2,
-        wins: 1,
-        draws: 0,
-        losses: 1,
-        goalsFor: 4,
-        goalsAgainst: 3,
-        points: 3
-      },
-      {
-        id: 'alvinegro-sub11',
-        name: 'Alvinegro',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/1.png',
-        played: 1,
-        wins: 0,
-        draws: 0,
-        losses: 1,
-        goalsFor: 1,
-        goalsAgainst: 3,
-        points: 0
-      }
-    ],
-    'B': [
-      {
-        id: 'atletico-city-sub11',
-        name: 'Atlético City',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png',
-        played: 2,
-        wins: 2,
-        draws: 0,
-        losses: 0,
-        goalsFor: 6,
-        goalsAgainst: 0,
-        points: 6
-      },
-      {
-        id: 'monte-sub11',
-        name: 'Monte',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png',
-        played: 2,
-        wins: 2,
-        draws: 0,
-        losses: 0,
-        goalsFor: 6,
-        goalsAgainst: 0,
-        points: 6
-      },
-      {
-        id: 'guerreiros-sub11',
-        name: 'Guerreiros',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/9.png',
-        played: 1,
-        wins: 0,
-        draws: 0,
-        losses: 1,
-        goalsFor: 0,
-        goalsAgainst: 3,
-        points: 0
-      },
-      {
-        id: 'lyon-sub11',
-        name: 'Lyon',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png',
-        played: 2,
-        wins: 0,
-        draws: 0,
-        losses: 2,
-        goalsFor: 0,
-        goalsAgainst: 4,
-        points: 0
-      },
-      {
-        id: 'bsa-sub11',
-        name: 'BSA',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png',
-        played: 1,
-        wins: 0,
-        draws: 0,
-        losses: 1,
-        goalsFor: 0,
-        goalsAgainst: 5,
-        points: 0
-      }
-    ]
-  },
-  'SUB-13': {
-    'A': [
-      {
-        id: 'gremio-sub13',
-        name: 'Grêmio',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png',
-        played: 2,
-        wins: 2,
-        draws: 0,
-        losses: 0,
-        goalsFor: 7,
-        goalsAgainst: 1,
-        points: 6
-      },
-      {
-        id: 'furacao-sub13',
-        name: 'Furacão',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png',
-        played: 1,
-        wins: 1,
-        draws: 0,
-        losses: 0,
-        goalsFor: 1,
-        goalsAgainst: 0,
-        points: 3
-      },
-      {
-        id: 'alvinegro-sub13',
-        name: 'Alvinegro',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/1.png',
-        played: 1,
-        wins: 1,
-        draws: 0,
-        losses: 0,
-        goalsFor: 2,
-        goalsAgainst: 0,
-        points: 3
-      },
-      {
-        id: 'federal-sub13',
-        name: 'Federal',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png',
-        played: 2,
-        wins: 0,
-        draws: 0,
-        losses: 2,
-        goalsFor: 1,
-        goalsAgainst: 4,
-        points: 0
-      },
-      {
-        id: 'estrela-sub13',
-        name: 'Estrela',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png',
-        played: 2,
-        wins: 0,
-        draws: 0,
-        losses: 2,
-        goalsFor: 0,
-        goalsAgainst: 6,
-        points: 0
-      }
-    ],
-    'B': [
-      {
-        id: 'monte-sub13',
-        name: 'Monte',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png',
-        played: 2,
-        wins: 2,
-        draws: 0,
-        losses: 0,
-        goalsFor: 10,
-        goalsAgainst: 0,
-        points: 6
-      },
-      {
-        id: 'atletico-city-sub13',
-        name: 'Atlético City',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png',
-        played: 2,
-        wins: 1,
-        draws: 1,
-        losses: 0,
-        goalsFor: 5,
-        goalsAgainst: 4,
-        points: 4
-      },
-      {
-        id: 'lyon-sub13',
-        name: 'Lyon',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png',
-        played: 2,
-        wins: 0,
-        draws: 1,
-        losses: 1,
-        goalsFor: 3,
-        goalsAgainst: 5,
-        points: 1
-      },
-      {
-        id: 'bsa-sub13',
-        name: 'BSA',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png',
-        played: 1,
-        wins: 0,
-        draws: 0,
-        losses: 1,
-        goalsFor: 1,
-        goalsAgainst: 2,
-        points: 0
-      },
-      {
-        id: 'guerreiros-sub13',
-        name: 'Guerreiros',
-        logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/9.png',
-        played: 1,
-        wins: 0,
-        draws: 0,
-        losses: 1,
-        goalsFor: 0,
-        goalsAgainst: 8,
-        points: 0
-      }
-    ]
-  }
-};
+import { supabase } from '@/integrations/supabase/client';
+import { RefreshCw } from 'lucide-react';
 
 const Standings = () => {
   const { championshipId } = useParams<{ championshipId?: string }>();
   const [selectedCategory, setSelectedCategory] = useState<string>('SUB-11');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [standingsData, setStandingsData] = useState<any>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const categories = Object.keys(standingsData);
+  useEffect(() => {
+    fetchCategories();
+    fetchStandingsData();
+  }, []);
+  
+  useEffect(() => {
+    if (selectedCategory) {
+      fetchStandingsData();
+    }
+  }, [selectedCategory]);
+  
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('category')
+        .order('category');
+      
+      if (error) throw error;
+      
+      if (data) {
+        const uniqueCategories = Array.from(new Set(data.map(item => item.category)));
+        setCategories(uniqueCategories);
+        
+        if (uniqueCategories.length > 0 && !selectedCategory) {
+          setSelectedCategory(uniqueCategories[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+      setError('Não foi possível carregar as categorias');
+    }
+  };
+  
+  const fetchStandingsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: groups, error: groupsError } = await supabase
+        .from('teams')
+        .select('group_name')
+        .eq('category', selectedCategory)
+        .order('group_name');
+      
+      if (groupsError) throw groupsError;
+      
+      const uniqueGroups = Array.from(new Set(groups.map(item => item.group_name)));
+      const standingsResult: any = {};
+      
+      for (const group of uniqueGroups) {
+        const { data: standings, error: standingsError } = await supabase
+          .from('standings')
+          .select(`
+            id,
+            position,
+            points,
+            played,
+            won,
+            drawn,
+            lost,
+            goals_for,
+            goals_against,
+            goal_difference,
+            team_id,
+            teams (
+              id,
+              name,
+              logo
+            )
+          `)
+          .eq('category', selectedCategory)
+          .eq('group_name', group)
+          .order('position');
+        
+        if (standingsError) throw standingsError;
+        
+        // Transform to the format expected by StandingsTable
+        const formattedStandings = standings.map(standing => ({
+          id: standing.team_id,
+          name: standing.teams?.name || 'Time desconhecido',
+          logo: standing.teams?.logo || '',
+          played: standing.played,
+          wins: standing.won,
+          draws: standing.drawn,
+          losses: standing.lost,
+          goalsFor: standing.goals_for,
+          goalsAgainst: standing.goals_against,
+          points: standing.points
+        }));
+        
+        standingsResult[group] = formattedStandings;
+      }
+      
+      const categoryData = { ...standingsData };
+      categoryData[selectedCategory] = standingsResult;
+      setStandingsData(categoryData);
+    } catch (error) {
+      console.error('Erro ao buscar dados de classificação:', error);
+      setError('Não foi possível carregar a classificação');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -282,35 +134,66 @@ const Standings = () => {
           </div>
           
           {/* Category Tabs */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex rounded-md shadow-sm">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-2 text-sm font-medium first:rounded-l-lg last:rounded-r-lg transition-colors ${
-                    selectedCategory === category
-                      ? 'bg-blue-primary text-white'
-                      : 'bg-white text-blue-primary border border-blue-primary hover:bg-blue-50'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+          {categories.length > 0 && (
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex rounded-md shadow-sm">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-6 py-2 text-sm font-medium first:rounded-l-lg last:rounded-r-lg transition-colors ${
+                      selectedCategory === category
+                        ? 'bg-blue-primary text-white'
+                        : 'bg-white text-blue-primary border border-blue-primary hover:bg-blue-50'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+          
+          {/* Loading state */}
+          {loading && (
+            <div className="flex justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-primary" />
+            </div>
+          )}
+          
+          {/* Error state */}
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-red-500">{error}</p>
+              <button 
+                onClick={fetchStandingsData} 
+                className="mt-4 px-4 py-2 bg-blue-primary text-white rounded hover:bg-blue-700"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          )}
           
           {/* Standing Tables */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {Object.entries(standingsData[selectedCategory as keyof typeof standingsData]).map(([group, teams]) => (
-              <StandingsTable 
-                key={`${selectedCategory}-${group}`} 
-                teams={teams} 
-                category={selectedCategory} 
-                group={group} 
-              />
-            ))}
-          </div>
+          {!loading && !error && standingsData[selectedCategory] && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {Object.entries(standingsData[selectedCategory]).map(([group, teams]) => (
+                <StandingsTable 
+                  key={`${selectedCategory}-${group}`} 
+                  teams={teams as any[]} 
+                  category={selectedCategory} 
+                  group={group} 
+                />
+              ))}
+            </div>
+          )}
+          
+          {/* No data state */}
+          {!loading && !error && (!standingsData[selectedCategory] || Object.keys(standingsData[selectedCategory]).length === 0) && (
+            <div className="text-center py-12 text-gray-500">
+              Nenhuma classificação encontrada para esta categoria.
+            </div>
+          )}
           
           {/* Legend */}
           <div className="glass-card p-6 mt-8">

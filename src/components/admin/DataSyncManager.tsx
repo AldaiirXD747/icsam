@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Database, RefreshCw } from 'lucide-react';
-import { migrateDataToSupabase } from '@/utils/migrateDataToSupabase';
+import { migrateDataToSupabase } from '@/utils/dataMigration';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const DataSyncManager = () => {
