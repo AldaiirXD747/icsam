@@ -1,9 +1,22 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { FileText, Download, FileBarChart, FilePieChart, Users, File, FileCheck, MapPin, Building } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface TransparencyDocument {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  file_url: string;
+  icon_type: string;
+  published_date: string;
+}
 
 interface DocumentCardProps {
   title: string;
@@ -11,6 +24,29 @@ interface DocumentCardProps {
   icon: React.ReactNode;
   url: string;
 }
+
+const getIconComponent = (iconType: string) => {
+  switch (iconType) {
+    case 'building':
+      return <Building size={24} />;
+    case 'file-pie-chart':
+      return <FilePieChart size={24} />;
+    case 'file-bar-chart':
+      return <FileBarChart size={24} />;
+    case 'file-text':
+      return <FileText size={24} />;
+    case 'file':
+      return <File size={24} />;
+    case 'users':
+      return <Users size={24} />;
+    case 'file-check':
+      return <FileCheck size={24} />;
+    case 'map-pin':
+      return <MapPin size={24} />;
+    default:
+      return <File size={24} />;
+  }
+};
 
 const DocumentCard: React.FC<DocumentCardProps> = ({ title, description, icon, url }) => {
   return (
@@ -34,70 +70,129 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ title, description, icon, u
   );
 };
 
+const DocumentSkeleton = () => (
+  <div className="h-full">
+    <Card className="bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20 rounded-xl shadow-glass h-full">
+      <CardContent className="p-6 flex flex-col items-center text-center h-full">
+        <Skeleton className="h-14 w-14 rounded-full mb-4" />
+        <Skeleton className="h-6 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-full mb-1" />
+        <Skeleton className="h-4 w-5/6 mb-4 flex-grow" />
+        <Skeleton className="h-9 w-32" />
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const Transparencia = () => {
-  // Data for transparency documents based on the provided image
-  const documents: DocumentCardProps[] = [
-    {
-      title: 'DADOS DO INSTITUTO',
-      description: 'CNPJ: 43.999.350/0001-16 | Data de Abertura: 14/10/2021',
-      icon: <Building size={24} />,
-      url: '#'
+  const { data: documents, isLoading } = useQuery({
+    queryKey: ['transparency-documents'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transparency_documents')
+        .select('*')
+        .order('published_date', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data as TransparencyDocument[];
     },
-    {
-      title: 'PROJETOS APROVADOS',
-      description: 'Lista completa de emendas parlamentares executadas pelo Instituto.',
-      icon: <FilePieChart size={24} />,
-      url: '#'
-    },
-    {
-      title: 'RELATÓRIO ANUAL DE GASTOS',
-      description: 'Detalhamento da aplicação de recursos financeiros.',
-      icon: <FileBarChart size={24} />,
-      url: '#'
-    },
-    {
-      title: 'TERMO DE FOMENTO - MINISTÉRIO DO ESPORTE',
-      description: 'Detalhamento do termo de fomento firmado com o Ministério de Esporte.',
-      icon: <FileText size={24} />,
-      url: '#'
-    },
-    {
-      title: 'EDITAIS',
-      description: 'Oportunidades para empresas participarem de projetos.',
-      icon: <File size={24} />,
-      url: '#'
-    },
-    {
-      title: 'RELAÇÃO NOMINAL DIRIGENTES',
-      description: 'Lista dos dirigentes do Instituto.',
-      icon: <Users size={24} />,
-      url: '#'
-    },
-    {
-      title: 'TERMO DE FOMENTO - SECRETARIA DE ESPORTE E LAZER',
-      description: 'Detalhamento do termo de fomento firmado com a Secretaria de Esporte e Lazer - GDF.',
-      icon: <FileText size={24} />,
-      url: '#'
-    },
-    {
-      title: 'ATESTADO DE CAPACIDADE',
-      description: 'Documento que comprova a capacidade técnica do Instituto.',
-      icon: <FileCheck size={24} />,
-      url: '#'
-    },
-    {
-      title: 'ESTATUTO',
-      description: 'Documento que define missão, visão e valores do Instituto.',
-      icon: <File size={24} />,
-      url: '#'
-    },
-    {
-      title: 'REGISTRO DE LOCALIZAÇÃO',
-      description: 'Áreas de atuação do Instituto com destaque para a QR 116.',
-      icon: <MapPin size={24} />,
-      url: '#'
-    }
-  ];
+    // Fallback to mock data if query fails or returns empty
+    placeholderData: [
+      {
+        id: '1',
+        title: 'DADOS DO INSTITUTO',
+        description: 'CNPJ: 43.999.350/0001-16 | Data de Abertura: 14/10/2021',
+        category: 'institutional',
+        file_url: '#',
+        icon_type: 'building',
+        published_date: '2023-01-01'
+      },
+      {
+        id: '2',
+        title: 'PROJETOS APROVADOS',
+        description: 'Lista completa de emendas parlamentares executadas pelo Instituto.',
+        category: 'projects',
+        file_url: '#',
+        icon_type: 'file-pie-chart',
+        published_date: '2023-01-02'
+      },
+      {
+        id: '3',
+        title: 'RELATÓRIO ANUAL DE GASTOS',
+        description: 'Detalhamento da aplicação de recursos financeiros.',
+        category: 'financial',
+        file_url: '#',
+        icon_type: 'file-bar-chart',
+        published_date: '2023-01-03'
+      },
+      {
+        id: '4',
+        title: 'TERMO DE FOMENTO - MINISTÉRIO DO ESPORTE',
+        description: 'Detalhamento do termo de fomento firmado com o Ministério de Esporte.',
+        category: 'partnerships',
+        file_url: '#',
+        icon_type: 'file-text',
+        published_date: '2023-01-04'
+      },
+      {
+        id: '5',
+        title: 'EDITAIS',
+        description: 'Oportunidades para empresas participarem de projetos.',
+        category: 'legal',
+        file_url: '#',
+        icon_type: 'file',
+        published_date: '2023-01-05'
+      },
+      {
+        id: '6',
+        title: 'RELAÇÃO NOMINAL DIRIGENTES',
+        description: 'Lista dos dirigentes do Instituto.',
+        category: 'institutional',
+        file_url: '#',
+        icon_type: 'users',
+        published_date: '2023-01-06'
+      },
+      {
+        id: '7',
+        title: 'TERMO DE FOMENTO - SECRETARIA DE ESPORTE E LAZER',
+        description: 'Detalhamento do termo de fomento firmado com a Secretaria de Esporte e Lazer - GDF.',
+        category: 'partnerships',
+        file_url: '#',
+        icon_type: 'file-text',
+        published_date: '2023-01-07'
+      },
+      {
+        id: '8',
+        title: 'ATESTADO DE CAPACIDADE',
+        description: 'Documento que comprova a capacidade técnica do Instituto.',
+        category: 'legal',
+        file_url: '#',
+        icon_type: 'file-check',
+        published_date: '2023-01-08'
+      },
+      {
+        id: '9',
+        title: 'ESTATUTO',
+        description: 'Documento que define missão, visão e valores do Instituto.',
+        category: 'legal',
+        file_url: '#',
+        icon_type: 'file',
+        published_date: '2023-01-09'
+      },
+      {
+        id: '10',
+        title: 'REGISTRO DE LOCALIZAÇÃO',
+        description: 'Áreas de atuação do Instituto com destaque para a QR 116.',
+        category: 'institutional',
+        file_url: '#',
+        icon_type: 'map-pin',
+        published_date: '2023-01-10'
+      }
+    ]
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -123,12 +218,23 @@ const Transparencia = () => {
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {documents.map((doc, index) => (
-                <DocumentCard 
-                  key={index}
-                  {...doc}
-                />
-              ))}
+              {isLoading ? (
+                // Show skeletons when loading
+                Array(9).fill(0).map((_, index) => (
+                  <DocumentSkeleton key={index} />
+                ))
+              ) : (
+                // Show documents when loaded
+                documents.map((doc) => (
+                  <DocumentCard 
+                    key={doc.id}
+                    title={doc.title}
+                    description={doc.description}
+                    icon={getIconComponent(doc.icon_type)}
+                    url={doc.file_url}
+                  />
+                ))
+              )}
             </div>
           </div>
         </section>

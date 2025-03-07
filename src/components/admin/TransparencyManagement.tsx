@@ -5,14 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Pencil, Trash2, FileText, Upload, Eye, FileUp, ArrowDownToLine, Link as LinkIcon, Download } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, FileText, Upload, Eye, ArrowDownToLine, Link as LinkIcon, Calendar } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-// Mock type for transparency documents
+// Interface for transparency documents
 interface TransparencyDocument {
   id: string;
   title: string;
@@ -22,61 +24,44 @@ interface TransparencyDocument {
   published_date: string;
   size?: string;
   type?: string;
+  icon_type: string;
 }
-
-const mockDocuments: TransparencyDocument[] = [
-  {
-    id: '1',
-    title: 'Relatório Financeiro 2023',
-    category: 'financial',
-    description: 'Relatório anual de prestação de contas e transparência financeira do Instituto.',
-    file_url: 'https://example.com/relatorio-financeiro-2023.pdf',
-    published_date: '2023-12-20',
-    size: '2.4 MB',
-    type: 'PDF'
-  },
-  {
-    id: '2',
-    title: 'Balanço Patrimonial 2023',
-    category: 'financial',
-    description: 'Balanço patrimonial completo do Instituto referente ao ano de 2023.',
-    file_url: 'https://example.com/balanco-patrimonial-2023.pdf',
-    published_date: '2023-12-15',
-    size: '1.8 MB',
-    type: 'PDF'
-  },
-  {
-    id: '3',
-    title: 'Estatuto Social',
-    category: 'legal',
-    description: 'Estatuto social e regimento interno do Instituto Criança Santa Maria.',
-    file_url: 'https://example.com/estatuto-social.pdf',
-    published_date: '2020-03-10',
-    size: '3.2 MB',
-    type: 'PDF'
-  },
-  {
-    id: '4',
-    title: 'Relatório de Atividades 2023',
-    category: 'activities',
-    description: 'Relatório detalhado das atividades e projetos realizados durante o ano de 2023.',
-    file_url: 'https://example.com/relatorio-atividades-2023.pdf',
-    published_date: '2023-12-22',
-    size: '5.1 MB',
-    type: 'PDF'
-  }
-];
 
 const categoryOptions = [
   { value: 'financial', label: 'Financeiro' },
   { value: 'legal', label: 'Jurídico/Legal' },
-  { value: 'activities', label: 'Atividades e Projetos' },
+  { value: 'projects', label: 'Projetos e Atividades' },
   { value: 'partnerships', label: 'Parcerias e Convênios' },
+  { value: 'institutional', label: 'Institucional' },
   { value: 'other', label: 'Outros Documentos' }
 ];
 
+const iconOptions = [
+  { value: 'building', label: 'Prédio (Institucional)' },
+  { value: 'file-pie-chart', label: 'Gráfico de Pizza (Projetos)' },
+  { value: 'file-bar-chart', label: 'Gráfico de Barras (Financeiro)' },
+  { value: 'file-text', label: 'Documento de Texto' },
+  { value: 'file', label: 'Arquivo Genérico' },
+  { value: 'users', label: 'Usuários (Pessoas)' },
+  { value: 'file-check', label: 'Documento Verificado' },
+  { value: 'map-pin', label: 'Localização' }
+];
+
+// Predefined document types that match the public page
+const documentTypes = [
+  { id: 'instituto', title: 'DADOS DO INSTITUTO', category: 'institutional', icon: 'building' },
+  { id: 'projetos', title: 'PROJETOS APROVADOS', category: 'projects', icon: 'file-pie-chart' },
+  { id: 'relatorio', title: 'RELATÓRIO ANUAL DE GASTOS', category: 'financial', icon: 'file-bar-chart' },
+  { id: 'termo1', title: 'TERMO DE FOMENTO - MINISTÉRIO DO ESPORTE', category: 'partnerships', icon: 'file-text' },
+  { id: 'editais', title: 'EDITAIS', category: 'legal', icon: 'file' },
+  { id: 'dirigentes', title: 'RELAÇÃO NOMINAL DIRIGENTES', category: 'institutional', icon: 'users' },
+  { id: 'termo2', title: 'TERMO DE FOMENTO - SECRETARIA DE ESPORTE E LAZER', category: 'partnerships', icon: 'file-text' },
+  { id: 'capacidade', title: 'ATESTADO DE CAPACIDADE', category: 'legal', icon: 'file-check' },
+  { id: 'estatuto', title: 'ESTATUTO', category: 'legal', icon: 'file' },
+  { id: 'localizacao', title: 'REGISTRO DE LOCALIZAÇÃO', category: 'institutional', icon: 'map-pin' }
+];
+
 const TransparencyManagement = () => {
-  const [documents, setDocuments] = useState<TransparencyDocument[]>(mockDocuments);
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -84,6 +69,7 @@ const TransparencyManagement = () => {
   const [editingDocument, setEditingDocument] = useState<TransparencyDocument | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [template, setTemplate] = useState<string>('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -91,10 +77,134 @@ const TransparencyManagement = () => {
     category: 'financial',
     description: '',
     file: null as File | null,
-    file_url: ''
+    file_url: '',
+    icon_type: 'file'
   });
   
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Fetch documents from Supabase
+  const { data: documents = [], isLoading } = useQuery({
+    queryKey: ['transparency-documents'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transparency_documents')
+        .select('*')
+        .order('published_date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching documents:', error);
+        toast({
+          title: "Erro ao carregar documentos",
+          description: error.message,
+          variant: "destructive"
+        });
+        return [];
+      }
+      
+      return data as TransparencyDocument[];
+    }
+  });
+  
+  // Create document mutation
+  const createDocumentMutation = useMutation({
+    mutationFn: async (documentData: Omit<TransparencyDocument, 'id' | 'published_date' | 'size' | 'type'>) => {
+      const { data, error } = await supabase
+        .from('transparency_documents')
+        .insert({
+          title: documentData.title,
+          description: documentData.description || '',
+          category: documentData.category,
+          file_url: documentData.file_url,
+          icon_type: documentData.icon_type,
+          published_date: new Date().toISOString().split('T')[0]
+        })
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transparency-documents'] });
+      toast({
+        title: "Documento adicionado",
+        description: "O documento foi adicionado com sucesso."
+      });
+      setIsAddDialogOpen(false);
+      resetFormData();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao adicionar documento",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Update document mutation
+  const updateDocumentMutation = useMutation({
+    mutationFn: async (documentData: TransparencyDocument) => {
+      const { data, error } = await supabase
+        .from('transparency_documents')
+        .update({
+          title: documentData.title,
+          description: documentData.description || '',
+          category: documentData.category,
+          file_url: documentData.file_url,
+          icon_type: documentData.icon_type
+        })
+        .eq('id', documentData.id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transparency-documents'] });
+      toast({
+        title: "Documento atualizado",
+        description: "O documento foi atualizado com sucesso."
+      });
+      setIsEditDialogOpen(false);
+      setEditingDocument(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar documento",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Delete document mutation
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('transparency_documents')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['transparency-documents'] });
+      toast({
+        title: "Documento excluído",
+        description: "O documento foi excluído com sucesso."
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir documento",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
   
   // Handle filtering documents
   const filteredDocuments = documents.filter(doc => {
@@ -111,8 +221,24 @@ const TransparencyManagement = () => {
   };
   
   // Handle select change
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, category: value }));
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle template selection
+  const handleTemplateChange = (value: string) => {
+    setTemplate(value);
+    if (value) {
+      const selectedTemplate = documentTypes.find(dt => dt.id === value);
+      if (selectedTemplate) {
+        setFormData(prev => ({
+          ...prev,
+          title: selectedTemplate.title,
+          category: selectedTemplate.category,
+          icon_type: selectedTemplate.icon
+        }));
+      }
+    }
   };
   
   // Handle file upload
@@ -130,8 +256,10 @@ const TransparencyManagement = () => {
       category: 'financial',
       description: '',
       file: null,
-      file_url: ''
+      file_url: '',
+      icon_type: 'file'
     });
+    setTemplate('');
   };
   
   // Open edit dialog
@@ -142,7 +270,8 @@ const TransparencyManagement = () => {
       category: document.category,
       description: document.description || '',
       file: null,
-      file_url: document.file_url
+      file_url: document.file_url,
+      icon_type: document.icon_type
     });
     setIsEditDialogOpen(true);
   };
@@ -150,11 +279,7 @@ const TransparencyManagement = () => {
   // Handle document deletion
   const handleDeleteDocument = (id: string) => {
     if (confirm('Tem certeza que deseja excluir este documento?')) {
-      setDocuments(documents.filter(doc => doc.id !== id));
-      toast({
-        title: "Documento excluído",
-        description: "O documento foi excluído com sucesso."
-      });
+      deleteDocumentMutation.mutate(id);
     }
   };
   
@@ -163,29 +288,62 @@ const TransparencyManagement = () => {
     e.preventDefault();
     setIsUploading(true);
     
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const newDocument: TransparencyDocument = {
-        id: Math.random().toString(36).substr(2, 9),
+    if (!formData.title || (!formData.file && !formData.file_url)) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha o título e adicione um arquivo ou URL",
+        variant: "destructive"
+      });
+      setIsUploading(false);
+      return;
+    }
+
+    // If a file is uploaded, upload it to Supabase Storage first
+    if (formData.file) {
+      const fileExt = formData.file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `transparency/${fileName}`;
+      
+      supabase.storage
+        .from('public')
+        .upload(filePath, formData.file)
+        .then(({ data, error }) => {
+          if (error) {
+            toast({
+              title: "Erro ao fazer upload do arquivo",
+              description: error.message,
+              variant: "destructive"
+            });
+            setIsUploading(false);
+            return;
+          }
+          
+          // Get public URL
+          const fileUrl = supabase.storage.from('public').getPublicUrl(filePath).data.publicUrl;
+          
+          // Create document with file URL
+          createDocumentMutation.mutate({
+            title: formData.title,
+            category: formData.category,
+            description: formData.description,
+            file_url: fileUrl,
+            icon_type: formData.icon_type
+          });
+          
+          setIsUploading(false);
+        });
+    } else {
+      // Create document with external URL
+      createDocumentMutation.mutate({
         title: formData.title,
         category: formData.category,
         description: formData.description,
-        file_url: formData.file ? URL.createObjectURL(formData.file) : formData.file_url,
-        published_date: new Date().toISOString().split('T')[0],
-        size: formData.file ? `${(formData.file.size / (1024 * 1024)).toFixed(1)} MB` : '1.0 MB',
-        type: formData.file ? formData.file.type.split('/')[1].toUpperCase() : 'PDF'
-      };
-      
-      setDocuments([newDocument, ...documents]);
-      resetFormData();
-      setIsUploading(false);
-      setIsAddDialogOpen(false);
-      
-      toast({
-        title: "Documento adicionado",
-        description: "O documento foi adicionado com sucesso."
+        file_url: formData.file_url,
+        icon_type: formData.icon_type
       });
-    }, 1500);
+      
+      setIsUploading(false);
+    }
   };
   
   // Handle document update
@@ -195,37 +353,64 @@ const TransparencyManagement = () => {
     
     setIsUploading(true);
     
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const updatedDocuments = documents.map(doc => {
-        if (doc.id === editingDocument.id) {
-          return {
-            ...doc,
+    if (!formData.title || (!formData.file && !formData.file_url)) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha o título e adicione um arquivo ou URL",
+        variant: "destructive"
+      });
+      setIsUploading(false);
+      return;
+    }
+    
+    // If a new file is uploaded, upload it to Supabase Storage first
+    if (formData.file) {
+      const fileExt = formData.file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `transparency/${fileName}`;
+      
+      supabase.storage
+        .from('public')
+        .upload(filePath, formData.file)
+        .then(({ data, error }) => {
+          if (error) {
+            toast({
+              title: "Erro ao fazer upload do arquivo",
+              description: error.message,
+              variant: "destructive"
+            });
+            setIsUploading(false);
+            return;
+          }
+          
+          // Get public URL
+          const fileUrl = supabase.storage.from('public').getPublicUrl(filePath).data.publicUrl;
+          
+          // Update document with new file URL
+          updateDocumentMutation.mutate({
+            ...editingDocument,
             title: formData.title,
             category: formData.category,
             description: formData.description,
-            file_url: formData.file ? URL.createObjectURL(formData.file) : formData.file_url,
-            // Only update these if a new file was uploaded
-            ...(formData.file && {
-              size: `${(formData.file.size / (1024 * 1024)).toFixed(1)} MB`,
-              type: formData.file.type.split('/')[1].toUpperCase()
-            })
-          };
-        }
-        return doc;
+            file_url: fileUrl,
+            icon_type: formData.icon_type
+          });
+          
+          setIsUploading(false);
+        });
+    } else {
+      // Update document with existing or external URL
+      updateDocumentMutation.mutate({
+        ...editingDocument,
+        title: formData.title,
+        category: formData.category,
+        description: formData.description,
+        file_url: formData.file_url,
+        icon_type: formData.icon_type
       });
       
-      setDocuments(updatedDocuments);
-      resetFormData();
       setIsUploading(false);
-      setIsEditDialogOpen(false);
-      setEditingDocument(null);
-      
-      toast({
-        title: "Documento atualizado",
-        description: "O documento foi atualizado com sucesso."
-      });
-    }, 1500);
+    }
   };
   
   // Format document category
@@ -261,6 +446,29 @@ const TransparencyManagement = () => {
             </DialogHeader>
             <form onSubmit={handleSubmitDocument} className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="template">Modelo de Documento</Label>
+                <Select 
+                  value={template} 
+                  onValueChange={handleTemplateChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um modelo (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Personalizado</SelectItem>
+                    {documentTypes.map(doc => (
+                      <SelectItem key={doc.id} value={doc.id}>
+                        {doc.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Selecione um modelo para preencher rapidamente com dados pré-definidos ou use "Personalizado" para criar um documento do zero.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="title">Título do Documento*</Label>
                 <Input 
                   id="title" 
@@ -276,13 +484,32 @@ const TransparencyManagement = () => {
                 <Label htmlFor="category">Categoria*</Label>
                 <Select 
                   value={formData.category} 
-                  onValueChange={handleSelectChange}
+                  onValueChange={(value) => handleSelectChange('category', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
                     {categoryOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="icon_type">Ícone*</Label>
+                <Select 
+                  value={formData.icon_type} 
+                  onValueChange={(value) => handleSelectChange('icon_type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um ícone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {iconOptions.map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -423,11 +650,16 @@ const TransparencyManagement = () => {
                 <TabsTrigger value="all">Todos</TabsTrigger>
                 <TabsTrigger value="financial">Financeiro</TabsTrigger>
                 <TabsTrigger value="legal">Jurídico</TabsTrigger>
-                <TabsTrigger value="activities">Atividades</TabsTrigger>
+                <TabsTrigger value="institutional">Institucional</TabsTrigger>
               </TabsList>
             </Tabs>
             
-            {filteredDocuments.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Carregando documentos...</p>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
               <div className="text-center py-12 border rounded-md">
                 <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum documento encontrado</h3>
@@ -447,8 +679,9 @@ const TransparencyManagement = () => {
                           <span className="text-xs text-gray-500">
                             {formatCategory(doc.category)}
                           </span>
-                          <span className="text-xs text-gray-500">
-                            Publicado em: {new Date(doc.published_date).toLocaleDateString('pt-BR')}
+                          <span className="text-xs text-gray-500 flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(doc.published_date).toLocaleDateString('pt-BR')}
                           </span>
                           {doc.size && (
                             <span className="text-xs text-gray-500">
@@ -517,13 +750,32 @@ const TransparencyManagement = () => {
               <Label htmlFor="edit-category">Categoria*</Label>
               <Select 
                 value={formData.category} 
-                onValueChange={handleSelectChange}
+                onValueChange={(value) => handleSelectChange('category', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categoryOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-icon_type">Ícone*</Label>
+              <Select 
+                value={formData.icon_type} 
+                onValueChange={(value) => handleSelectChange('icon_type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um ícone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {iconOptions.map(option => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
