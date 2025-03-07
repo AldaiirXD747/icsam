@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, User, ChevronDown } from 'lucide-react';
@@ -23,10 +24,13 @@ const Navbar = () => {
         <Link to="/" className="flex items-center">
           <img 
             src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
-            alt="Base Forte" 
+            alt="Instituto Criança Santa Maria" 
             className="h-8 mr-2 bg-white p-1 rounded" 
           />
-          <span className="text-white font-bold text-lg">Base Forte</span>
+          <div className="flex flex-col">
+            <span className="text-white font-bold text-lg leading-tight">Instituto Criança</span>
+            <span className="text-lime-primary text-xs font-medium">Santa Maria</span>
+          </div>
         </Link>
 
         {/* Mobile Menu Button */}

@@ -5,22 +5,41 @@ import { Loader2 } from 'lucide-react';
 import { Match } from '@/types';
 import { convertDbMatchToMatch } from '@/utils/typeConverters';
 import Navbar from '@/components/Navbar';
+import MatchCard from '@/components/MatchCard';
 
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teamLogos, setTeamLogos] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const fetchMatches = async () => {
       try {
         setLoading(true);
+        
+        // Primeiro, vamos buscar todos os times para ter acesso aos logos
+        const { data: teamsData, error: teamsError } = await supabase
+          .from('teams')
+          .select('id, name, logo');
+        
+        if (teamsError) throw teamsError;
+        
+        // Criar um mapa de ID do time para seu logo
+        const logoMap: {[key: string]: string} = {};
+        teamsData?.forEach(team => {
+          logoMap[team.id] = team.logo || '/placeholder.svg';
+        });
+        
+        setTeamLogos(logoMap);
+        
+        // Agora buscar as partidas
         const { data, error } = await supabase
           .from('matches')
           .select(`
             *,
-            home_team_details:teams!matches_home_team_fkey(name),
-            away_team_details:teams!matches_away_team_fkey(name)
+            home_team_details:teams!matches_home_team_fkey(id, name),
+            away_team_details:teams!matches_away_team_fkey(id, name)
           `)
           .order('date');
         
@@ -56,6 +75,13 @@ const Matches = () => {
     fetchMatches();
   }, []);
 
+  // Função para mapear o status para o tipo esperado pelo MatchCard
+  const mapStatus = (status: string): 'scheduled' | 'live' | 'finished' => {
+    if (status === 'in_progress') return 'live';
+    if (status === 'completed') return 'finished';
+    return 'scheduled';
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -82,51 +108,26 @@ const Matches = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {matches.map(match => (
-                <div key={match.id} className="bg-white rounded-lg shadow-md p-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-sm text-gray-500">{match.date} - {match.time}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      match.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      match.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {match.status === 'completed' ? 'Finalizado' :
-                       match.status === 'in_progress' ? 'Em andamento' :
-                       match.status === 'scheduled' ? 'Agendado' :
-                       match.status === 'postponed' ? 'Adiado' : 'Cancelado'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-center flex-1">
-                      <p className="font-semibold">{match.home_team_name || 'Time da Casa'}</p>
-                      {match.status === 'completed' && <p className="text-2xl font-bold">{match.home_score}</p>}
-                    </div>
-                    
-                    <div className="mx-4">
-                      <span className="text-gray-400">VS</span>
-                    </div>
-                    
-                    <div className="text-center flex-1">
-                      <p className="font-semibold">{match.away_team_name || 'Time Visitante'}</p>
-                      {match.status === 'completed' && <p className="text-2xl font-bold">{match.away_score}</p>}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 pt-3 border-t border-gray-100">
-                    <p className="text-sm text-gray-500">
-                      <span className="font-medium">Local:</span> {match.location}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      <span className="font-medium">Categoria:</span> {match.category}
-                    </p>
-                    {match.round && (
-                      <p className="text-sm text-gray-500">
-                        <span className="font-medium">Rodada:</span> {match.round}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <MatchCard
+                  key={match.id}
+                  id={Number(match.id)}
+                  homeTeam={{
+                    name: match.home_team_name || 'Time da Casa',
+                    logo: teamLogos[match.home_team] || '/placeholder.svg',
+                    score: match.home_score
+                  }}
+                  awayTeam={{
+                    name: match.away_team_name || 'Time Visitante',
+                    logo: teamLogos[match.away_team] || '/placeholder.svg',
+                    score: match.away_score
+                  }}
+                  category={match.category}
+                  date={new Date(match.date).toLocaleDateString('pt-BR')}
+                  time={match.time?.substring(0, 5) || ''}
+                  group={match.round || ''}
+                  status={mapStatus(match.status)}
+                  venue={match.location}
+                />
               ))}
             </div>
           )}
