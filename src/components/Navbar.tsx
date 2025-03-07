@@ -31,9 +31,18 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const [isCampeonatoOpen, setIsCampeonatoOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+    // Reset campeonato submenu when main menu is toggled
+    setIsCampeonatoOpen(false);
+  };
+
+  const toggleCampeonato = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsCampeonatoOpen(!isCampeonatoOpen);
   };
 
   useEffect(() => {
@@ -52,6 +61,7 @@ const Navbar = () => {
   // Close mobile menu when changing routes
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsCampeonatoOpen(false);
   }, [location]);
 
   const isActive = (path: string) => {
@@ -89,7 +99,7 @@ const Navbar = () => {
           : "bg-gradient-to-r from-blue-primary/95 to-blue-light/95 py-4"
       )}
     >
-      <div className="container mx-auto px-4 md:px-8">
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <motion.div variants={itemAnimation}>
@@ -98,12 +108,12 @@ const Navbar = () => {
                 <img 
                   src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
                   alt="Instituto Criança Santa Maria" 
-                  className="h-12 w-auto"
+                  className="h-10 w-auto"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-white font-poppins font-bold text-xl leading-tight">Instituto Criança</span>
-                <span className="text-lime-primary text-sm tracking-wider font-medium">Santa Maria</span>
+                <span className="text-white font-poppins font-bold text-lg leading-tight">Instituto Criança</span>
+                <span className="text-lime-primary text-xs tracking-wider font-medium">Santa Maria</span>
               </div>
             </Link>
           </motion.div>
@@ -218,36 +228,50 @@ const Navbar = () => {
       <div 
         className={cn(
           "md:hidden overflow-hidden transition-all duration-500 ease-in-out bg-gradient-to-b from-blue-light to-blue-primary",
-          isMenuOpen ? "max-h-[500px] shadow-xl" : "max-h-0"
+          isMenuOpen ? "max-h-screen shadow-xl" : "max-h-0"
         )}
       >
-        <div className="py-6 px-6 space-y-5">
+        <div className="py-4 px-4 space-y-3 max-h-[calc(100vh-80px)] overflow-y-auto">
           <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)} icon={<Home size={18} />}>
             Início
           </MobileNavLink>
+          
           <MobileNavLink to="/sobre" onClick={() => setIsMenuOpen(false)} icon={<Info size={18} />}>
             Sobre
           </MobileNavLink>
           
-          <div className="bg-white/10 rounded-xl p-4 space-y-3">
-            <h3 className="text-lime-primary font-semibold text-md mb-2 flex items-center gap-2">
-              <Trophy size={18} />
-              Campeonato
-            </h3>
-            <div className="space-y-2 pl-2">
-              <MobileSubLink to="/times" onClick={() => setIsMenuOpen(false)} icon={<Users size={15} />}>
+          {/* Campeonato Section with Toggle */}
+          <div className="relative">
+            <button 
+              onClick={toggleCampeonato}
+              className="text-white hover:text-lime-primary transition-colors duration-300 w-full font-semibold py-3 px-4 rounded-xl hover:bg-white/10 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Trophy size={18} />
+                <span>Campeonato</span>
+              </div>
+              <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isCampeonatoOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <div 
+              className={cn(
+                "pl-4 mt-1 space-y-1 overflow-hidden transition-all duration-300",
+                isCampeonatoOpen ? "max-h-60" : "max-h-0"
+              )}
+            >
+              <MobileSubLink to="/times" onClick={() => setIsMenuOpen(false)} icon={<Users size={16} />}>
                 Times
               </MobileSubLink>
-              <MobileSubLink to="/jogos" onClick={() => setIsMenuOpen(false)} icon={<Calendar size={15} />}>
+              <MobileSubLink to="/jogos" onClick={() => setIsMenuOpen(false)} icon={<Calendar size={16} />}>
                 Partidas
               </MobileSubLink>
-              <MobileSubLink to="/estatisticas" onClick={() => setIsMenuOpen(false)} icon={<BarChart2 size={15} />}>
+              <MobileSubLink to="/estatisticas" onClick={() => setIsMenuOpen(false)} icon={<BarChart2 size={16} />}>
                 Estatísticas
               </MobileSubLink>
-              <MobileSubLink to="/classificacao" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={15} />}>
+              <MobileSubLink to="/classificacao" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={16} />}>
                 Classificação
               </MobileSubLink>
-              <MobileSubLink to="/campeonatos" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={15} />}>
+              <MobileSubLink to="/campeonatos" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={16} />}>
                 Todos os Campeonatos
               </MobileSubLink>
             </div>
@@ -256,9 +280,11 @@ const Navbar = () => {
           <MobileNavLink to="/galeria" onClick={() => setIsMenuOpen(false)} icon={<Image size={18} />}>
             Galeria
           </MobileNavLink>
+          
           <MobileNavLink to="/transparencia" onClick={() => setIsMenuOpen(false)} icon={<FileText size={18} />}>
             Transparência
           </MobileNavLink>
+          
           <MobileNavLink to="/contato" onClick={() => setIsMenuOpen(false)} icon={<Mail size={18} />}>
             Contato
           </MobileNavLink>
@@ -313,7 +339,7 @@ const MobileNavLink = ({ to, children, onClick, icon }: { to: string; children: 
 const MobileSubLink = ({ to, children, onClick, icon }: { to: string; children: React.ReactNode; onClick?: () => void; icon: React.ReactNode }) => (
   <Link
     to={to}
-    className="text-white hover:text-lime-primary transition-colors duration-300 block text-sm py-2 px-3 rounded-lg hover:bg-white/10 flex items-center gap-2"
+    className="text-white hover:text-lime-primary transition-colors duration-300 block text-sm py-2.5 px-3 rounded-lg hover:bg-white/10 flex items-center gap-2"
     onClick={onClick}
   >
     {icon}

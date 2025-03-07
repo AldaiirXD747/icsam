@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Trophy, Users, UserPlus, Heart, Flag, Zap, ArrowRight } from 'lucide-react';
+import { Trophy, Users, Flag, Zap, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -22,7 +22,7 @@ const ProgramsSection = () => {
   };
 
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gray-50 z-0"></div>
       <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white to-gray-50 z-0"></div>
@@ -37,9 +37,9 @@ const ProgramsSection = () => {
         <div className="absolute right-1/3 bottom-1/4 w-8 h-8 rounded-full bg-blue-light/20 blur-sm"></div>
       </div>
       
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -48,15 +48,15 @@ const ProgramsSection = () => {
           <div className="inline-block bg-gradient-to-r from-lime-primary/20 to-lime-primary/10 px-5 py-2 rounded-full mb-4">
             <span className="text-blue-primary font-semibold text-sm">Nossos Programas</span>
           </div>
-          <h2 className="section-title">Conheça Nossas Atividades</h2>
-          <p className="section-subtitle">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-blue-primary">Conheça Nossas Atividades</h2>
+          <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto mb-8">
             Oferecemos diversos programas esportivos e educacionais para crianças e adolescentes,
             promovendo desenvolvimento integral através de atividades estruturadas.
           </p>
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           variants={container}
           initial="hidden"
           whileInView="show"
@@ -83,33 +83,13 @@ const ProgramsSection = () => {
           />
           
           <ProgramCard 
-            icon={<UserPlus className="text-white h-7 w-7" />}
-            iconBg="bg-gradient-to-br from-blue-light to-blue-primary"
-            title="Desenvolvimento"
-            description="Programa focado no desenvolvimento técnico e tático de atletas com potencial para seguir carreira no esporte."
-            link="/desenvolvimento"
-            linkText="Saiba Mais"
-            delay={0.2}
-          />
-          
-          <ProgramCard 
-            icon={<Heart className="text-white h-7 w-7" />}
-            iconBg="bg-gradient-to-br from-red-500 to-red-600"
-            title="Saúde e Bem-Estar"
-            description="Atividades que promovem hábitos saudáveis, nutrição adequada e saúde mental para os participantes."
-            link="/saude"
-            linkText="Ver Atividades"
-            delay={0.3}
-          />
-          
-          <ProgramCard 
             icon={<Flag className="text-white h-7 w-7" />}
             iconBg="bg-gradient-to-br from-blue-primary to-indigo-700"
             title="Competições"
             description="Calendário de competições e eventos esportivos organizados pelo Instituto ao longo do ano."
             link="/matches"
             linkText="Ver Calendário"
-            delay={0.4}
+            delay={0.2}
           />
           
           <ProgramCard 
@@ -119,12 +99,12 @@ const ProgramsSection = () => {
             description="Dados e estatísticas sobre o desempenho dos atletas, times e artilheiros nos campeonatos."
             link="/statistics"
             linkText="Ver Estatísticas"
-            delay={0.5}
+            delay={0.3}
           />
         </motion.div>
         
         <motion.div 
-          className="mt-16 text-center"
+          className="mt-12 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -132,7 +112,7 @@ const ProgramsSection = () => {
         >
           <Link to="/sobre" className="btn-outline inline-flex group">
             <span>Conheça Nossa História</span>
-            <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </motion.div>
       </div>
@@ -173,14 +153,14 @@ const ProgramCard = ({
 
   return (
     <motion.div 
-      className="gradient-card group hover:translate-y-[-8px] p-8"
+      className="gradient-card group hover:translate-y-[-8px] p-6 md:p-8"
       variants={item}
     >
-      <div className={`${iconBg} p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110`}>
+      <div className={`${iconBg} p-4 rounded-xl w-14 h-14 md:w-16 md:h-16 flex items-center justify-center mb-5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110`}>
         {icon}
       </div>
-      <h3 className="text-2xl font-bold text-blue-primary mb-4">{title}</h3>
-      <p className="text-gray-600 mb-6 leading-relaxed min-h-[100px]">
+      <h3 className="text-xl md:text-2xl font-bold text-blue-primary mb-3">{title}</h3>
+      <p className="text-gray-600 mb-5 leading-relaxed min-h-[80px] md:min-h-[100px]">
         {description}
       </p>
       <Link to={link} className="text-blue-primary font-semibold inline-flex items-center group relative overflow-hidden">
