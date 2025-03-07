@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { BarChart as BarChartIcon, Trophy } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { TopScorer, YellowCardLeader } from '@/types';
+import { normalizeTopScorer, normalizeYellowCardLeader } from '@/utils/typeConverters';
 import StatisticsFilters from './statistics/StatisticsFilters';
 import TopScorersManagement from './statistics/TopScorersManagement';
 import YellowCardManagement from './statistics/YellowCardManagement';
@@ -75,16 +75,21 @@ const StatisticsManagement = () => {
       
       if (scorersError) throw scorersError;
       
-      const transformedScorers = (scorersData || []).map(scorer => ({
-        id: scorer.id,
-        playerId: scorer.player_id,
-        name: scorer.players?.name || 'Desconhecido',
-        teamId: scorer.team_id,
-        team: scorer.teams?.name || 'Time desconhecido',
-        goals: scorer.goals,
-        category: scorer.category,
-        championshipId: scorer.championship_id
-      }));
+      const transformedScorers = (scorersData || []).map(scorer => {
+        return normalizeTopScorer({
+          id: scorer.id,
+          player_id: scorer.player_id,
+          playerId: scorer.player_id,
+          name: scorer.players?.name || 'Desconhecido',
+          team_id: scorer.team_id,
+          teamId: scorer.team_id,
+          team: scorer.teams?.name || 'Time desconhecido',
+          goals: scorer.goals,
+          category: scorer.category,
+          championship_id: scorer.championship_id,
+          championshipId: scorer.championship_id
+        });
+      });
       
       setTopScorers(transformedScorers);
       
@@ -105,16 +110,22 @@ const StatisticsManagement = () => {
       
       if (cardLeadersError) throw cardLeadersError;
       
-      const transformedCardLeaders = (cardLeadersData || []).map(leader => ({
-        id: leader.id,
-        playerId: leader.player_id,
-        name: leader.players?.name || 'Desconhecido',
-        teamId: leader.team_id,
-        team: leader.teams?.name || 'Time desconhecido',
-        yellowCards: leader.yellow_cards,
-        category: leader.category,
-        championshipId: leader.championship_id
-      }));
+      const transformedCardLeaders = (cardLeadersData || []).map(leader => {
+        return normalizeYellowCardLeader({
+          id: leader.id,
+          player_id: leader.player_id,
+          playerId: leader.player_id,
+          name: leader.players?.name || 'Desconhecido',
+          team_id: leader.team_id,
+          teamId: leader.team_id,
+          team: leader.teams?.name || 'Time desconhecido',
+          yellow_cards: leader.yellow_cards,
+          yellowCards: leader.yellow_cards,
+          category: leader.category,
+          championship_id: leader.championship_id,
+          championshipId: leader.championship_id
+        });
+      });
       
       setYellowCardLeaders(transformedCardLeaders);
     } catch (error) {

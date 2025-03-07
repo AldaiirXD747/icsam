@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -89,7 +88,6 @@ import {
 import { useUser } from "@/lib/clerk-mock";
 import { Team, User as UserType } from "@/types";
 
-// Define schemas for forms
 const teamFormSchema = z.object({
   name: z.string().min(2, {
     message: "O nome do time deve ter pelo menos 2 caracteres.",
@@ -105,6 +103,8 @@ const teamFormSchema = z.object({
   country: z.string().optional(),
   foundationDate: z.date().optional(),
   active: z.boolean().default(true).optional(),
+  category: z.string().optional(),
+  group_name: z.string().optional(),
 });
 
 type TeamFormValues = z.infer<typeof teamFormSchema>
@@ -150,9 +150,8 @@ const TeamManagement = () => {
   const [isTeamDeleting, setIsTeamDeleting] = useState(false);
   const { user } = useUser();
 
-  // Query for teams
   const {
-    data: teams = [], // Provide empty array as default
+    data: teams = [],
     isLoading: isTeamsLoading,
     isError: isTeamsError,
     error: teamsError,
@@ -161,9 +160,8 @@ const TeamManagement = () => {
     queryFn: () => getTeams(filter),
   });
 
-  // Query for users
   const {
-    data: users = [], // Provide empty array as default
+    data: users = [],
     isLoading: isUsersLoading,
     isError: isUsersError,
     error: usersError,
@@ -172,7 +170,6 @@ const TeamManagement = () => {
     queryFn: () => getUsers(),
   });
 
-  // Mutation for creating teams
   const createTeamMutation = useMutation({
     mutationFn: createTeam,
     onMutate: async (newTeam) => {
@@ -202,7 +199,6 @@ const TeamManagement = () => {
     },
   });
 
-  // Mutation for updating teams
   const updateTeamMutation = useMutation({
     mutationFn: updateTeam,
     onMutate: async (updatedTeam) => {
@@ -234,7 +230,6 @@ const TeamManagement = () => {
     },
   });
 
-  // Mutation for deleting teams
   const deleteTeamMutation = useMutation({
     mutationFn: deleteTeam,
     onMutate: async (teamId) => {
@@ -264,7 +259,6 @@ const TeamManagement = () => {
     },
   });
 
-  // Mutation for updating users
   const updateUserMutation = useMutation({
     mutationFn: updateUser,
     onMutate: async (updatedUser) => {
@@ -297,7 +291,6 @@ const TeamManagement = () => {
     },
   });
 
-  // Form setup
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
     defaultValues: {
@@ -313,6 +306,8 @@ const TeamManagement = () => {
       country: "",
       foundationDate: undefined,
       active: true,
+      category: "SUB-15",
+      group_name: "Grupo A"
     },
     mode: "onChange",
   })
@@ -326,7 +321,6 @@ const TeamManagement = () => {
     mode: "onChange",
   })
 
-  // Handlers
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFilter(prev => ({ ...prev, search: value }));
@@ -351,22 +345,21 @@ const TeamManagement = () => {
   const onSubmit = async (values: TeamFormValues) => {
     try {
       if (selectedTeam) {
-        // Update Team
         const updatedTeam = { ...selectedTeam, ...values } as Team;
         if (logoFile) {
           setIsLogoUploading(true);
-          // In a real app, you would upload to Firebase here
-          // For this example, we'll just set a fake URL
           updatedTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
         }
         await updateTeamMutation.mutateAsync(updatedTeam);
       } else {
-        // Create Team
-        const newTeam = { ...values, active: values.active ?? true } as Omit<Team, 'id'>;
+        const newTeam = { 
+          ...values, 
+          active: values.active ?? true,
+          category: values.category || "SUB-15",
+          group_name: values.group_name || "Grupo A"
+        } as Omit<Team, 'id'>;
         if (logoFile) {
           setIsLogoUploading(true);
-          // In a real app, you would upload to Firebase here
-          // For this example, we'll just set a fake URL
           newTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
         }
         await createTeamMutation.mutateAsync(newTeam);
@@ -438,7 +431,6 @@ const TeamManagement = () => {
     if (selectedTeam?.logoUrl) {
       setIsLogoDeleting(true);
       try {
-        // In a real app, you would delete from Firebase here
         const updatedTeam = { ...selectedTeam, logoUrl: undefined } as Team;
         await updateTeamMutation.mutateAsync(updatedTeam);
         toast({
@@ -473,6 +465,8 @@ const TeamManagement = () => {
       country: team.country || "",
       foundationDate: team.foundationDate ? new Date(team.foundationDate) : undefined,
       active: team.active,
+      category: team.category || "SUB-15",
+      group_name: team.group_name || "Grupo A"
     });
     setIsEditTeamDrawerOpen(true);
   };
@@ -508,13 +502,11 @@ const TeamManagement = () => {
     }
   };
 
-  // Loading and error states
   if (isTeamsLoading) return <p>Carregando times...</p>
   if (isTeamsError) return <p>Erro ao carregar times: {String(teamsError)}</p>
   if (isUsersLoading) return <p>Carregando usuários...</p>
   if (isUsersError) return <p>Erro ao carregar usuários: {String(usersError)}</p>
 
-  // Render component
   return (
     <div>
       <div className="flex justify-between items-center mb-4">

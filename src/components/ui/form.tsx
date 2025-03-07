@@ -164,6 +164,29 @@ const FormMessage = React.forwardRef<
 })
 FormMessage.displayName = "FormMessage"
 
+// Modify the teamFormSchema to include the required fields
+const teamFormSchema = z.object({
+  name: z.string().min(2, {
+    message: "O nome do time deve ter pelo menos 2 caracteres.",
+  }),
+  description: z.string().optional(),
+  logoUrl: z.string().optional(),
+  websiteUrl: z.string().url("Por favor, insira uma URL válida.").optional().or(z.string().length(0)),
+  email: z.string().email("Por favor, insira um email válido.").optional().or(z.string().length(0)),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  foundationDate: z.date().optional(),
+  active: z.boolean().default(true).optional(),
+  // Add the required fields
+  category: z.string().default("SUB-15"),
+  group_name: z.string().default("Grupo A"),
+});
+
+type TeamFormValues = z.infer<typeof teamFormSchema>
+
 export {
   useFormField,
   Form,

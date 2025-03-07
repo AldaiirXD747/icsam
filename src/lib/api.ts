@@ -77,15 +77,18 @@ export const getTeam = async (id: string): Promise<Team | undefined> => {
 // Create a new team
 export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
   try {
+    // Ensure required fields have default values
+    const teamData = {
+      name: team.name,
+      // No description field in the DB, so we don't include it
+      logo: team.logoUrl || team.logo || null,
+      category: team.category || 'SUB-15', // Default category
+      group_name: team.group_name || 'Grupo A' // Default group
+    };
+    
     const { data, error } = await supabase
       .from('teams')
-      .insert({
-        name: team.name,
-        // No description field in the DB, so we don't include it
-        logo: team.logoUrl || team.logo || null,
-        category: team.category || 'SUB-15', // Default category
-        group_name: team.group_name || 'Grupo A' // Default group
-      })
+      .insert(teamData)
       .select()
       .single();
     
