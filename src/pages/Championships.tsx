@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -11,9 +12,11 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+
 const Championships = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'ongoing' | 'upcoming' | 'finished'>('all');
   const [selectedChampionship, setSelectedChampionship] = useState<string | null>(null);
+  
   const {
     data: championships = [],
     isLoading,
@@ -22,6 +25,7 @@ const Championships = () => {
     queryKey: ['championships'],
     queryFn: getChampionships
   });
+  
   if (isLoading) {
     return <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
         <Navbar />
@@ -31,6 +35,7 @@ const Championships = () => {
         </div>
       </div>;
   }
+  
   if (error) {
     return <div className="min-h-screen pt-24 flex flex-col">
         <Navbar />
@@ -43,6 +48,7 @@ const Championships = () => {
         </div>
       </div>;
   }
+  
   const filteredChampionships = championships.filter(championship => {
     if (activeTab === 'all') return true;
     return championship.status === activeTab;
@@ -52,6 +58,7 @@ const Championships = () => {
   const sortedChampionships = [...filteredChampionships].sort((a, b) => {
     return parseInt(b.year) - parseInt(a.year);
   });
+  
   const getStatusBadgeColor = (status: Championship['status']) => {
     switch (status) {
       case 'ongoing':
@@ -64,6 +71,7 @@ const Championships = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+  
   const getStatusLabel = (status: Championship['status']) => {
     switch (status) {
       case 'ongoing':
@@ -79,7 +87,43 @@ const Championships = () => {
 
   // Create a championship selector component for the top
   const ChampionshipSelector = () => {
-    return;
+    if (championships.length === 0) return null;
+    
+    // Filter only ongoing championships
+    const ongoingChampionships = championships.filter(c => c.status === 'ongoing');
+    
+    if (ongoingChampionships.length === 0) return null;
+    
+    return (
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-3">Campeonatos em Andamento</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {ongoingChampionships.slice(0, 3).map(championship => (
+            <button
+              key={championship.id}
+              onClick={() => setSelectedChampionship(championship.id)}
+              className={`flex items-center p-3 rounded-lg border transition-all ${
+                selectedChampionship === championship.id
+                  ? 'border-[#1a237e] bg-blue-50'
+                  : 'border-gray-200 bg-white hover:bg-gray-50'
+              }`}
+            >
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden mr-3">
+                {championship.banner_image ? (
+                  <img src={championship.banner_image} alt={championship.name} className="w-full h-full object-cover" />
+                ) : (
+                  <Trophy className="w-6 h-6 text-[#1a237e]" />
+                )}
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-gray-800 line-clamp-1">{championship.name}</h3>
+                <p className="text-sm text-gray-500">{championship.year}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   // Show championship dashboard if one is selected
@@ -90,6 +134,7 @@ const Championships = () => {
   }) => {
     const championship = championships.find(c => c.id === championshipId);
     if (!championship) return null;
+    
     return <Card className="mb-8 overflow-hidden">
         <div className="h-40 relative">
           <img src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'} alt={championship.name} className="w-full h-full object-cover" />
@@ -113,17 +158,17 @@ const Championships = () => {
         
         <CardContent className="p-0">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 divide-x divide-gray-100">
-            <Link to={`/times?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+            <Link to={`/campeonatos/${championship.id}?tab=teams`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
               <Users className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
               <span className="text-sm font-medium">Times</span>
               <span className="text-xs text-gray-500">Ver todos os times</span>
             </Link>
-            <Link to={`/jogos?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+            <Link to={`/campeonatos/${championship.id}?tab=matches`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
               <ClipboardList className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
               <span className="text-sm font-medium">Partidas</span>
               <span className="text-xs text-gray-500">Calendário de jogos</span>
             </Link>
-            <Link to={`/classificacao?championshipId=${championship.id}`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
+            <Link to={`/campeonatos/${championship.id}?tab=standings`} className="flex flex-col items-center justify-center py-6 hover:bg-gray-50 transition-colors group">
               <BarChart2 className="h-8 w-8 text-blue-600 mb-2 group-hover:text-blue-800" />
               <span className="text-sm font-medium">Classificação</span>
               <span className="text-xs text-gray-500">Tabela de pontos</span>
@@ -132,6 +177,7 @@ const Championships = () => {
         </CardContent>
       </Card>;
   };
+  
   return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pt-24 pb-16">
@@ -148,7 +194,6 @@ const Championships = () => {
           {selectedChampionship && <ChampionshipDashboard championshipId={selectedChampionship} />}
           
           <div className="mb-8">
-            
             <Tabs defaultValue="all" value={activeTab} onValueChange={value => setActiveTab(value as any)}>
               <TabsList>
                 <TabsTrigger value="all">Todos</TabsTrigger>
@@ -218,4 +263,5 @@ const Championships = () => {
       </main>
     </div>;
 };
+
 export default Championships;

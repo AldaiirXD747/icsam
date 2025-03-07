@@ -1,3 +1,4 @@
+
 import { supabase } from '../integrations/supabase/client';
 import { Team, User, Championship, Player } from '../types';
 
@@ -343,7 +344,7 @@ export const savePlayer = async (player: Partial<Player>): Promise<Player | null
           number: player.number,
           position: player.position,
           photo: player.photo,
-          team_id: player.teamId || player.team_id
+          team_id: player.team_id // Use team_id instead of teamId
         })
         .eq('id', player.id)
         .select()
@@ -360,7 +361,7 @@ export const savePlayer = async (player: Partial<Player>): Promise<Player | null
           number: player.number,
           position: player.position,
           photo: player.photo,
-          team_id: player.teamId || player.team_id
+          team_id: player.team_id // Use team_id instead of teamId
         })
         .select()
         .single();
