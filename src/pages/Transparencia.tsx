@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { FileText, Download, FileBarChart, FilePieChart, Users, File, FileCheck, MapPin, Building } from 'lucide-react';
@@ -85,114 +85,125 @@ const DocumentSkeleton = () => (
 );
 
 const Transparencia = () => {
-  const { data: documents, isLoading } = useQuery({
+  const { data: documents, isLoading, error } = useQuery({
     queryKey: ['transparency-documents'],
     queryFn: async () => {
+      // Dynamically cast the response to the correct type
       const { data, error } = await supabase
         .from('transparency_documents')
         .select('*')
         .order('published_date', { ascending: false });
       
       if (error) {
+        console.error('Error fetching transparency documents:', error);
         throw error;
       }
       
       return data as TransparencyDocument[];
-    },
-    // Fallback to mock data if query fails or returns empty
-    placeholderData: [
-      {
-        id: '1',
-        title: 'DADOS DO INSTITUTO',
-        description: 'CNPJ: 43.999.350/0001-16 | Data de Abertura: 14/10/2021',
-        category: 'institutional',
-        file_url: '#',
-        icon_type: 'building',
-        published_date: '2023-01-01'
-      },
-      {
-        id: '2',
-        title: 'PROJETOS APROVADOS',
-        description: 'Lista completa de emendas parlamentares executadas pelo Instituto.',
-        category: 'projects',
-        file_url: '#',
-        icon_type: 'file-pie-chart',
-        published_date: '2023-01-02'
-      },
-      {
-        id: '3',
-        title: 'RELATÓRIO ANUAL DE GASTOS',
-        description: 'Detalhamento da aplicação de recursos financeiros.',
-        category: 'financial',
-        file_url: '#',
-        icon_type: 'file-bar-chart',
-        published_date: '2023-01-03'
-      },
-      {
-        id: '4',
-        title: 'TERMO DE FOMENTO - MINISTÉRIO DO ESPORTE',
-        description: 'Detalhamento do termo de fomento firmado com o Ministério de Esporte.',
-        category: 'partnerships',
-        file_url: '#',
-        icon_type: 'file-text',
-        published_date: '2023-01-04'
-      },
-      {
-        id: '5',
-        title: 'EDITAIS',
-        description: 'Oportunidades para empresas participarem de projetos.',
-        category: 'legal',
-        file_url: '#',
-        icon_type: 'file',
-        published_date: '2023-01-05'
-      },
-      {
-        id: '6',
-        title: 'RELAÇÃO NOMINAL DIRIGENTES',
-        description: 'Lista dos dirigentes do Instituto.',
-        category: 'institutional',
-        file_url: '#',
-        icon_type: 'users',
-        published_date: '2023-01-06'
-      },
-      {
-        id: '7',
-        title: 'TERMO DE FOMENTO - SECRETARIA DE ESPORTE E LAZER',
-        description: 'Detalhamento do termo de fomento firmado com a Secretaria de Esporte e Lazer - GDF.',
-        category: 'partnerships',
-        file_url: '#',
-        icon_type: 'file-text',
-        published_date: '2023-01-07'
-      },
-      {
-        id: '8',
-        title: 'ATESTADO DE CAPACIDADE',
-        description: 'Documento que comprova a capacidade técnica do Instituto.',
-        category: 'legal',
-        file_url: '#',
-        icon_type: 'file-check',
-        published_date: '2023-01-08'
-      },
-      {
-        id: '9',
-        title: 'ESTATUTO',
-        description: 'Documento que define missão, visão e valores do Instituto.',
-        category: 'legal',
-        file_url: '#',
-        icon_type: 'file',
-        published_date: '2023-01-09'
-      },
-      {
-        id: '10',
-        title: 'REGISTRO DE LOCALIZAÇÃO',
-        description: 'Áreas de atuação do Instituto com destaque para a QR 116.',
-        category: 'institutional',
-        file_url: '#',
-        icon_type: 'map-pin',
-        published_date: '2023-01-10'
-      }
-    ]
+    }
   });
+
+  // Handle errors gracefully
+  if (error) {
+    console.error('Error in transparency query:', error);
+  }
+
+  // Fallback data if query fails
+  const fallbackDocuments: TransparencyDocument[] = [
+    {
+      id: '1',
+      title: 'DADOS DO INSTITUTO',
+      description: 'CNPJ: 43.999.350/0001-16 | Data de Abertura: 14/10/2021',
+      category: 'institutional',
+      file_url: '#',
+      icon_type: 'building',
+      published_date: '2023-01-01'
+    },
+    {
+      id: '2',
+      title: 'PROJETOS APROVADOS',
+      description: 'Lista completa de emendas parlamentares executadas pelo Instituto.',
+      category: 'projects',
+      file_url: '#',
+      icon_type: 'file-pie-chart',
+      published_date: '2023-01-02'
+    },
+    {
+      id: '3',
+      title: 'RELATÓRIO ANUAL DE GASTOS',
+      description: 'Detalhamento da aplicação de recursos financeiros.',
+      category: 'financial',
+      file_url: '#',
+      icon_type: 'file-bar-chart',
+      published_date: '2023-01-03'
+    },
+    {
+      id: '4',
+      title: 'TERMO DE FOMENTO - MINISTÉRIO DO ESPORTE',
+      description: 'Detalhamento do termo de fomento firmado com o Ministério de Esporte.',
+      category: 'partnerships',
+      file_url: '#',
+      icon_type: 'file-text',
+      published_date: '2023-01-04'
+    },
+    {
+      id: '5',
+      title: 'EDITAIS',
+      description: 'Oportunidades para empresas participarem de projetos.',
+      category: 'legal',
+      file_url: '#',
+      icon_type: 'file',
+      published_date: '2023-01-05'
+    },
+    {
+      id: '6',
+      title: 'RELAÇÃO NOMINAL DIRIGENTES',
+      description: 'Lista dos dirigentes do Instituto.',
+      category: 'institutional',
+      file_url: '#',
+      icon_type: 'users',
+      published_date: '2023-01-06'
+    },
+    {
+      id: '7',
+      title: 'TERMO DE FOMENTO - SECRETARIA DE ESPORTE E LAZER',
+      description: 'Detalhamento do termo de fomento firmado com a Secretaria de Esporte e Lazer - GDF.',
+      category: 'partnerships',
+      file_url: '#',
+      icon_type: 'file-text',
+      published_date: '2023-01-07'
+    },
+    {
+      id: '8',
+      title: 'ATESTADO DE CAPACIDADE',
+      description: 'Documento que comprova a capacidade técnica do Instituto.',
+      category: 'legal',
+      file_url: '#',
+      icon_type: 'file-check',
+      published_date: '2023-01-08'
+    },
+    {
+      id: '9',
+      title: 'ESTATUTO',
+      description: 'Documento que define missão, visão e valores do Instituto.',
+      category: 'legal',
+      file_url: '#',
+      icon_type: 'file',
+      published_date: '2023-01-09'
+    },
+    {
+      id: '10',
+      title: 'REGISTRO DE LOCALIZAÇÃO',
+      description: 'Áreas de atuação do Instituto com destaque para a QR 116.',
+      category: 'institutional',
+      file_url: '#',
+      icon_type: 'map-pin',
+      published_date: '2023-01-10'
+    }
+  ];
+
+  // Use documents if available, otherwise use fallback data
+  const displayDocuments = documents || fallbackDocuments;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -225,7 +236,7 @@ const Transparencia = () => {
                 ))
               ) : (
                 // Show documents when loaded
-                documents.map((doc) => (
+                displayDocuments.map((doc) => (
                   <DocumentCard 
                     key={doc.id}
                     title={doc.title}
