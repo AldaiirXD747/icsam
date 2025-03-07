@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -45,105 +44,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Plus, Image, Star } from 'lucide-react';
-import { ChampionshipType } from '@/types/database';
-import { GalleryImage } from '@/types';
-
-// Mock data for championships - this would be replaced by an API call in production
-const mockChampionships: ChampionshipType[] = [
-  {
-    id: "1",
-    name: "Campeonato Base Forte 2023",
-    year: "2023",
-    description: "Campeonato anual com todas as categorias",
-    banner_image: "https://example.com/banner1.jpg",
-    start_date: "2023-03-15",
-    end_date: "2023-11-20",
-    location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
-    organizer: "Instituto Criança Santa Maria",
-    sponsors: [
-      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
-      { name: "Patrocinador 2", logo: "https://example.com/logo2.png" }
-    ],
-    status: "finished"
-  },
-  {
-    id: "2",
-    name: "Campeonato Base Forte 2024",
-    year: "2024",
-    description: "Edição 2024 do tradicional campeonato",
-    banner_image: "https://example.com/banner2.jpg",
-    start_date: "2024-03-10",
-    end_date: "2024-11-25",
-    location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
-    organizer: "Instituto Criança Santa Maria",
-    sponsors: [
-      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
-      { name: "Patrocinador 3", logo: "https://example.com/logo3.png" }
-    ],
-    status: "ongoing"
-  }
-];
-
-// Mock gallery images
-const mockGalleryImages: GalleryImage[] = [
-  {
-    id: "1",
-    title: "Final do Campeonato 2023",
-    description: "Momento da premiação dos campeões",
-    imageUrl: "/lovable-uploads/71480ca7-a47e-49be-bcbf-3fdc06bdfcde.png",
-    championshipId: "1",
-    createdAt: "2023-11-20",
-    featured: true
-  },
-  {
-    id: "2",
-    title: "Abertura do Campeonato 2024",
-    description: "Cerimônia de abertura com todos os times",
-    imageUrl: "/lovable-uploads/9ed392b8-8a39-4ee2-99c1-74b33ce2b4d5.png",
-    championshipId: "2",
-    createdAt: "2024-03-10"
-  },
-  {
-    id: "3",
-    title: "Treino preparatório",
-    description: "Treino antes do início do campeonato",
-    imageUrl: "/lovable-uploads/b57c03b4-f522-4117-86e8-8ecb86f62697.png",
-    championshipId: "2",
-    createdAt: "2024-03-05"
-  },
-  {
-    id: "4",
-    title: "Entrega de medalhas",
-    description: "Cerimônia de premiação dos destaques",
-    imageUrl: "/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png",
-    championshipId: "1",
-    createdAt: "2023-11-18"
-  }
-];
-
-// Mock API functions
-const getGalleryImages = async (): Promise<GalleryImage[]> => {
-  return mockGalleryImages;
-};
-
-const addGalleryImage = async (image: Omit<GalleryImage, 'id' | 'createdAt'>): Promise<GalleryImage> => {
-  const newImage: GalleryImage = {
-    ...image,
-    id: `${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
-  return newImage;
-};
-
-const updateGalleryImage = async (image: GalleryImage): Promise<GalleryImage> => {
-  return image;
-};
-
-const deleteGalleryImage = async (id: string): Promise<void> => {
-  return;
-};
+import { Championship, GalleryImage } from '@/types';
+import { getChampionships } from '@/lib/api';
+import { getGalleryImages, addGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/galleryApi';
 
 const GalleryManagement: React.FC = () => {
   const { toast } = useToast();
@@ -170,7 +73,7 @@ const GalleryManagement: React.FC = () => {
   
   const { data: championships = [], isLoading: isChampionshipsLoading } = useQuery({
     queryKey: ['championships'],
-    queryFn: () => mockChampionships,
+    queryFn: getChampionships,
   });
   
   // Mutations

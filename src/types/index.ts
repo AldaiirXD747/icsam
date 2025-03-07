@@ -13,6 +13,9 @@ export interface Team {
   country?: string;
   foundationDate?: string | Date;
   active: boolean;
+  category?: string;
+  group_name?: string;
+  logo?: string;
 }
 
 export interface User {
@@ -84,4 +87,19 @@ export interface Player {
   team_name?: string;
   team_logo?: string;
   team_category?: string;
+}
+
+export interface Championship {
+  id: string;
+  name: string;
+  year: string;
+  description?: string;
+  banner_image?: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  categories: string[] | null;
+  organizer?: string;
+  sponsors?: any[];
+  status: 'upcoming' | 'ongoing' | 'finished';
 }

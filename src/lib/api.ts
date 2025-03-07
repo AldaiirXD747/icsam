@@ -1,6 +1,6 @@
 
 import { supabase } from '../integrations/supabase/client';
-import { Team, User } from '../types';
+import { Team, User, Championship } from '../types';
 
 // Get teams with optional filtering
 export const getTeams = async (filter?: any): Promise<Team[]> => {
@@ -35,6 +35,9 @@ export const getTeams = async (filter?: any): Promise<Team[]> => {
       name: team.name,
       description: undefined, // This field doesn't exist in the DB
       logoUrl: team.logo || undefined,
+      logo: team.logo || undefined,
+      category: team.category,
+      group_name: team.group_name,
       active: true, // Default as active since we don't have this field in DB
     }));
   } catch (error) {
@@ -61,6 +64,9 @@ export const getTeam = async (id: string): Promise<Team | undefined> => {
       name: data.name,
       description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
+      logo: data.logo || undefined,
+      category: data.category,
+      group_name: data.group_name,
       active: true, // Default as active
     };
   } catch (error) {
@@ -77,9 +83,9 @@ export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
       .insert({
         name: team.name,
         // No description field in the DB, so we don't include it
-        logo: team.logoUrl || null,
-        category: 'SUB-15', // Default category
-        group_name: 'Grupo A' // Default group
+        logo: team.logoUrl || team.logo || null,
+        category: team.category || 'SUB-15', // Default category
+        group_name: team.group_name || 'Grupo A' // Default group
       })
       .select()
       .single();
@@ -91,6 +97,9 @@ export const createTeam = async (team: Omit<Team, 'id'>): Promise<Team> => {
       name: data.name,
       description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
+      logo: data.logo || undefined,
+      category: data.category,
+      group_name: data.group_name,
       active: true,
     };
   } catch (error) {
@@ -107,7 +116,9 @@ export const updateTeam = async (team: Team): Promise<Team> => {
       .update({
         name: team.name,
         // No description field in the DB, so we don't include it
-        logo: team.logoUrl || null
+        logo: team.logoUrl || team.logo || null,
+        category: team.category,
+        group_name: team.group_name
       })
       .eq('id', team.id)
       .select()
@@ -120,6 +131,9 @@ export const updateTeam = async (team: Team): Promise<Team> => {
       name: data.name,
       description: undefined, // This field doesn't exist in the DB
       logoUrl: data.logo || undefined,
+      logo: data.logo || undefined,
+      category: data.category,
+      group_name: data.group_name,
       active: true,
     };
   } catch (error) {
@@ -197,5 +211,35 @@ export const updateUser = async (user: User): Promise<User> => {
   } catch (error) {
     console.error('Error updating user:', error);
     throw error;
+  }
+};
+
+// Get championships
+export const getChampionships = async (): Promise<Championship[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('championships')
+      .select('*')
+      .order('year', { ascending: false });
+    
+    if (error) throw error;
+    
+    return (data || []).map(championship => ({
+      id: championship.id,
+      name: championship.name,
+      year: championship.year,
+      description: championship.description,
+      banner_image: championship.banner_image,
+      start_date: championship.start_date,
+      end_date: championship.end_date,
+      location: championship.location,
+      categories: Array.isArray(championship.categories) ? championship.categories : JSON.parse(championship.categories || '[]'),
+      organizer: championship.organizer,
+      sponsors: Array.isArray(championship.sponsors) ? championship.sponsors : JSON.parse(championship.sponsors || '[]'),
+      status: championship.status || 'upcoming'
+    }));
+  } catch (error) {
+    console.error('Error fetching championships:', error);
+    return [];
   }
 };
