@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 /**
@@ -18,8 +17,15 @@ export const fetchPublicData = async () => {
       
       if (champResponse.data?.length > 0) {
         console.log("Dados encontrados nas APIs públicas");
+        
+        // Filter out championships without name
+        const validChampionships = (champResponse.data || []).filter(c => c && c.name);
+        if (validChampionships.length < (champResponse.data || []).length) {
+          console.log(`Filtrados ${(champResponse.data || []).length - validChampionships.length} campeonatos inválidos dos dados da API`);
+        }
+        
         return {
-          championships: champResponse.data || [],
+          championships: validChampionships,
           teams: teamsResponse.data || [],
           players: playersResponse.data || [],
           matches: matchesResponse.data || [],
@@ -31,12 +37,18 @@ export const fetchPublicData = async () => {
     }
     
     // Fallback to hardcoded data in the public area
+    const hardcodedChampionships = getHardcodedChampionships();
+    const hardcodedTeams = getHardcodedTeams();
+    const hardcodedPlayers = getHardcodedPlayers();
+    const hardcodedMatches = getHardcodedMatches();
+    const hardcodedStatistics = getHardcodedStatistics();
+    
     return {
-      championships: getHardcodedChampionships(),
-      teams: getHardcodedTeams(),
-      players: getHardcodedPlayers(),
-      matches: getHardcodedMatches(),
-      statistics: getHardcodedStatistics()
+      championships: hardcodedChampionships.filter(c => c && c.name),
+      teams: hardcodedTeams.filter(t => t && t.name),
+      players: hardcodedPlayers.filter(p => p && p.name),
+      matches: hardcodedMatches,
+      statistics: hardcodedStatistics
     };
   } catch (error) {
     console.error("Erro ao buscar dados públicos:", error);
