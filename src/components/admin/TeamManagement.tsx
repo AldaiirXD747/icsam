@@ -345,7 +345,12 @@ const TeamManagement = () => {
   const onSubmit = async (values: TeamFormValues) => {
     try {
       if (selectedTeam) {
-        const updatedTeam = { ...selectedTeam, ...values } as Team;
+        const updatedTeam = { 
+          ...selectedTeam, 
+          ...values,
+          foundationDate: values.foundationDate ? values.foundationDate.toISOString().split('T')[0] : undefined
+        } as Team;
+        
         if (logoFile) {
           setIsLogoUploading(true);
           updatedTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
@@ -356,8 +361,10 @@ const TeamManagement = () => {
           ...values, 
           active: values.active ?? true,
           category: values.category || "SUB-15",
-          group_name: values.group_name || "Grupo A"
+          group_name: values.group_name || "Grupo A",
+          foundationDate: values.foundationDate ? values.foundationDate.toISOString().split('T')[0] : undefined
         } as Omit<Team, 'id'>;
+        
         if (logoFile) {
           setIsLogoUploading(true);
           newTeam.logoUrl = `https://example.com/logos/${logoFile.name}`;
