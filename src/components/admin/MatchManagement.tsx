@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Pencil, Trash2, Calendar } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
-import { Match } from '@/types';
+import { Match, MatchStatus } from '@/types';
 
 type MatchFormData = {
   date: string;
@@ -20,7 +19,7 @@ type MatchFormData = {
   awayTeam: string;
   homeScore: number | null;
   awayScore: number | null;
-  status: 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
+  status: MatchStatus;
   category: string;
   round: string | null;
   championshipId: string | null;
@@ -62,7 +61,6 @@ const MatchManagement = () => {
   const fetchMatches = async () => {
     setIsLoading(true);
     try {
-      // Updated query to specify the relationship columns explicitly
       const { data, error } = await supabase
         .from('matches')
         .select(`
@@ -317,13 +315,35 @@ const MatchManagement = () => {
       awayTeam: match.awayTeam,
       homeScore: match.homeScore,
       awayScore: match.awayScore,
-      status: match.status,
+      status: mapStatusForForm(match.status),
       category: match.category,
       round: match.round || null,
       championshipId: match.championshipId || null,
     });
 
     setActiveTab('edit');
+  };
+
+  const mapStatusForForm = (uiStatus: MatchStatus): MatchStatus => {
+    switch (uiStatus) {
+      case 'live':
+        return 'in_progress';
+      case 'finished':
+        return 'completed';
+      default:
+        return uiStatus;
+    }
+  };
+
+  const mapStatusForDisplay = (dbStatus: string): MatchStatus => {
+    switch (dbStatus) {
+      case 'in_progress':
+        return 'live';
+      case 'completed':
+        return 'finished';
+      default:
+        return dbStatus as MatchStatus;
+    }
   };
 
   const resetForm = () => {
@@ -380,13 +400,15 @@ const MatchManagement = () => {
     return matchesSearch && matchesCategory && matchesStatus && matchesChampionship;
   });
 
-  const formatStatus = (status: Match['status']) => {
+  const formatStatus = (status: MatchStatus) => {
     switch (status) {
       case 'scheduled':
         return 'Agendado';
       case 'in_progress':
+      case 'live':
         return 'Em andamento';
       case 'completed':
+      case 'finished':
         return 'Finalizado';
       case 'postponed':
         return 'Adiado';

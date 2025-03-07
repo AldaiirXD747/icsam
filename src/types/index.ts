@@ -1,3 +1,4 @@
+
 export interface Team {
   id: string;
   name: string;
@@ -31,6 +32,9 @@ export interface GalleryImage {
   featured?: boolean;
 }
 
+// Unified match status type for consistency across the application
+export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'postponed' | 'canceled' | 'in_progress' | 'completed';
+
 export interface Match {
   id: string;
   date: string;
@@ -40,7 +44,7 @@ export interface Match {
   awayTeam: string;
   homeScore?: number | null;
   awayScore?: number | null;
-  status: 'scheduled' | 'live' | 'finished' | 'postponed' | 'canceled';
+  status: MatchStatus;
   category: string;
   round?: string | null;
   championshipId?: string | null;

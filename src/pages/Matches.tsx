@@ -6,7 +6,7 @@ import MatchCard from '@/components/MatchCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, CalendarClock, CalendarCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Match } from '@/types';
+import { Match, MatchStatus } from '@/types';
 
 // Interface to represent the database response
 interface MatchResponse {
@@ -22,11 +22,11 @@ interface MatchResponse {
   home_score: number | null;
   away_score: number | null;
   round: string | null;
-  homeTeam?: {
+  homeTeam: {
     name: string;
     logo: string | null;
   } | null;
-  awayTeam?: {
+  awayTeam: {
     name: string;
     logo: string | null;
   } | null;
@@ -55,7 +55,7 @@ const Matches = () => {
         if (error) throw error;
         
         // Transform the data to match the expected Match type
-        const transformedData = (data || []).map((match: MatchResponse): Match => ({
+        const transformedData: Match[] = data ? data.map((match: any): Match => ({
           id: match.id,
           date: match.date,
           time: match.time,
@@ -70,8 +70,7 @@ const Matches = () => {
           championshipId: match.championship_id,
           homeTeamName: match.homeTeam?.name || 'Time da Casa',
           awayTeamName: match.awayTeam?.name || 'Time Visitante',
-          // Add other properties from Match type as needed
-        }));
+        })) : [];
         
         setMatches(transformedData);
       } catch (err) {
@@ -86,13 +85,15 @@ const Matches = () => {
   }, []);
 
   // Helper function to map database status to the MatchCard status
-  const mapStatus = (dbStatus: string): 'scheduled' | 'live' | 'finished' => {
+  const mapStatus = (dbStatus: string): MatchStatus => {
     switch (dbStatus) {
       case 'ongoing':
+      case 'in_progress':
       case 'live':
         return 'live';
       case 'completed':
       case 'finalizado':
+      case 'finished':
         return 'finished';
       default:
         return 'scheduled';
@@ -108,15 +109,15 @@ const Matches = () => {
     return (
       <MatchCard
         key={match.id}
-        id={parseInt(match.id)}
+        id={parseInt(match.id) || 0}
         homeTeam={{
           name: match.homeTeamName || 'Time da Casa',
-          logo: match.homeTeam ? `/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png` : '/placeholder.svg',
+          logo: `/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png`,
           score: match.homeScore || 0
         }}
         awayTeam={{
           name: match.awayTeamName || 'Time Visitante',
-          logo: match.awayTeam ? `/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png` : '/placeholder.svg',
+          logo: `/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png`,
           score: match.awayScore || 0
         }}
         category={match.category}
