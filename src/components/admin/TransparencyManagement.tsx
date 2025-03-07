@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
@@ -78,9 +77,24 @@ const TransparencyManagement = () => {
   // Mutations for CRUD operations
   const addDocumentMutation = useMutation({
     mutationFn: async (document: Partial<TransparencyDocument>) => {
+      // Verificar se todos os campos obrigatórios estão presentes
+      if (!document.title || !document.category || !document.file_url || !document.icon_type) {
+        throw new Error('Campos obrigatórios não preenchidos');
+      }
+      
+      // Criar um objeto com apenas os campos necessários
+      const documentToInsert = {
+        title: document.title,
+        description: document.description || '',
+        category: document.category,
+        file_url: document.file_url,
+        icon_type: document.icon_type,
+        published_date: document.published_date || new Date().toISOString().split('T')[0]
+      };
+      
       const { data, error } = await supabase
         .from('transparency_documents')
-        .insert(document)
+        .insert(documentToInsert)
         .select() as any;
       
       if (error) throw error;
