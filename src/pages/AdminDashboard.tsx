@@ -107,7 +107,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
-      {/* Removido um dos rodapés para corrigir a duplicação */}
       <Footer />
     </div>
   );

@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Match } from '@/types';
 import { convertDbMatchToMatch } from '@/utils/typeConverters';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -57,6 +59,7 @@ const Matches = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Navbar />
       <main className="flex-grow pt-24">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-[#1a237e] mb-6">Partidas</h1>
@@ -130,6 +133,7 @@ const Matches = () => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };
