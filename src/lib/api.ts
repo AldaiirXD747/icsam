@@ -1,4 +1,3 @@
-
 import { supabase } from '../integrations/supabase/client';
 import { Team, User, Championship } from '../types';
 
@@ -224,20 +223,48 @@ export const getChampionships = async (): Promise<Championship[]> => {
     
     if (error) throw error;
     
-    return (data || []).map(championship => ({
-      id: championship.id,
-      name: championship.name,
-      year: championship.year,
-      description: championship.description,
-      banner_image: championship.banner_image,
-      start_date: championship.start_date,
-      end_date: championship.end_date,
-      location: championship.location,
-      categories: Array.isArray(championship.categories) ? championship.categories : JSON.parse(championship.categories || '[]'),
-      organizer: championship.organizer,
-      sponsors: Array.isArray(championship.sponsors) ? championship.sponsors : JSON.parse(championship.sponsors || '[]'),
-      status: championship.status || 'upcoming'
-    }));
+    return (data || []).map(championship => {
+      // Parse categories if it's a string, otherwise use as is or default to empty array
+      let parsedCategories;
+      try {
+        parsedCategories = typeof championship.categories === 'string' 
+          ? JSON.parse(championship.categories) 
+          : championship.categories || [];
+      } catch (e) {
+        parsedCategories = [];
+      }
+      
+      // Parse sponsors if it's a string, otherwise use as is or default to empty array
+      let parsedSponsors;
+      try {
+        parsedSponsors = typeof championship.sponsors === 'string' 
+          ? JSON.parse(championship.sponsors) 
+          : championship.sponsors || [];
+      } catch (e) {
+        parsedSponsors = [];
+      }
+      
+      // Ensure status is one of the expected values
+      const validStatus = ['upcoming', 'ongoing', 'finished'];
+      const status = validStatus.includes(championship.status) 
+        ? championship.status as 'upcoming' | 'ongoing' | 'finished'
+        : 'upcoming';
+        
+      return {
+        id: championship.id,
+        name: championship.name,
+        year: championship.year,
+        description: championship.description,
+        banner_image: championship.banner_image,
+        start_date: championship.start_date,
+        end_date: championship.end_date,
+        location: championship.location,
+        categories: parsedCategories,
+        organizer: championship.organizer,
+        sponsors: parsedSponsors,
+        status: status
+      };
+    });
   } catch (error) {
     console.error('Error fetching championships:', error);
     return [];
