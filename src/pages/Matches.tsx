@@ -282,9 +282,9 @@ const Matches = () => {
                     </span>
                   </div>
                   
-                  <div className="divide-y divide-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                     {groupedMatches[date].map(match => (
-                      <div key={match.id} className="p-4">
+                      <div key={match.id} className="bg-gradient-to-br from-white to-blue-50 p-4 rounded-lg shadow-sm border border-blue-100">
                         <MatchCard
                           id={Number(match.id)}
                           homeTeam={{

@@ -39,7 +39,6 @@ const StatusBadge: React.FC<{ status: MatchStatus }> = ({ status }) => {
   );
 };
 
-// We're now receiving individual props instead of a single match object
 const MatchCard: React.FC<MatchCardProps> = ({
   id,
   homeTeam,
@@ -54,11 +53,15 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const showScore = status === 'live' || status === 'finished';
 
   return (
-    <div className="glass-card overflow-hidden transition-all duration-300 hover:shadow-lg">
+    <div className="glass-card overflow-hidden transition-all duration-300 hover:shadow-md">
       <div className="bg-blue-primary text-white px-4 py-2 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium">{category}</span>
-          <span className="text-xs px-2 py-0.5 bg-white bg-opacity-20 rounded-full">Grupo {group}</span>
+          {group && (
+            <span className="text-xs px-2 py-0.5 bg-white bg-opacity-20 rounded-full">
+              Grupo {group}
+            </span>
+          )}
         </div>
         <StatusBadge status={status} />
       </div>
@@ -72,7 +75,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
         <div className="flex items-center justify-between">
           {/* Home Team */}
           <div className="flex flex-col items-center w-2/5">
-            <div className="h-16 w-16 flex items-center justify-center mb-2">
+            <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
               <img 
                 src={homeTeam.logo} 
                 alt={homeTeam.name} 
@@ -80,7 +83,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
               />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-blue-primary">{homeTeam.name}</p>
+              <p className="font-semibold text-blue-primary line-clamp-2 text-sm">{homeTeam.name}</p>
             </div>
           </div>
           
@@ -103,7 +106,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
           
           {/* Away Team */}
           <div className="flex flex-col items-center w-2/5">
-            <div className="h-16 w-16 flex items-center justify-center mb-2">
+            <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
               <img 
                 src={awayTeam.logo} 
                 alt={awayTeam.name} 
@@ -111,26 +114,10 @@ const MatchCard: React.FC<MatchCardProps> = ({
               />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-blue-primary">{awayTeam.name}</p>
+              <p className="font-semibold text-blue-primary line-clamp-2 text-sm">{awayTeam.name}</p>
             </div>
           </div>
         </div>
-        
-        {venue && (
-          <div className="mt-4 text-center text-sm text-gray-500">
-            <a 
-              href="https://maps.app.goo.gl/aTubWnA4QMfVt3JR9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-blue-primary hover:underline flex items-center justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-              {venue}
-            </a>
-          </div>
-        )}
       </div>
     </div>
   );
