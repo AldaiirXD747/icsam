@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -43,10 +44,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Trash2, Plus, Image, Star } from 'lucide-react';
+import { Pencil, Trash2, Plus, Image, Star, Loader2 } from 'lucide-react';
 import { Championship, GalleryImage } from '@/types';
 import { getChampionships } from '@/lib/api';
-import { getGalleryImages, addGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/galleryApi';
+import { getGalleryImages, addGalleryImage, updateGalleryImage, deleteGalleryImage, addMultipleGalleryImages } from '@/lib/galleryApi';
+import { MultiFileUpload, FileWithPreview } from '@/components/ui/multi-file-upload';
+import { Tabs as TabsUI, TabsList as TabsListUI, TabsTrigger as TabsTriggerUI, TabsContent as TabsContentUI } from "@/components/ui/tabs";
 
 const GalleryManagement: React.FC = () => {
   const { toast } = useToast();
@@ -64,6 +67,8 @@ const GalleryManagement: React.FC = () => {
     featured: false
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [multipleFiles, setMultipleFiles] = useState<FileWithPreview[]>([]);
+  const [uploadMode, setUploadMode] = useState<'single' | 'multiple'>('single');
   
   // Queries
   const { data: images = [], isLoading: isImagesLoading } = useQuery({
@@ -93,6 +98,27 @@ const GalleryManagement: React.FC = () => {
         variant: "destructive",
         title: "Erro",
         description: `Erro ao adicionar imagem: ${error}`,
+      });
+    }
+  });
+  
+  const addMultipleImagesMutation = useMutation({
+    mutationFn: (data: { championshipId: string, images: FileWithPreview[] }) => 
+      addMultipleGalleryImages(data.championshipId, data.images),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['galleryImages'] });
+      toast({
+        title: "Sucesso",
+        description: `${multipleFiles.length} imagens adicionadas com sucesso.`,
+      });
+      resetForm();
+      setIsAddDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: `Erro ao adicionar imagens: ${error}`,
       });
     }
   });
@@ -165,7 +191,7 @@ const GalleryManagement: React.FC = () => {
       // For this mock, we'll just set a placeholder
       setFormData(prev => ({ 
         ...prev, 
-        imageUrl: "/lovable-uploads/placeholder.jpg" 
+        imageUrl: URL.createObjectURL(e.target.files[0])
       }));
     }
   };
@@ -188,8 +214,16 @@ const GalleryManagement: React.FC = () => {
   
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real implementation, you would handle file upload separately
-    addImageMutation.mutate(formData);
+    
+    if (uploadMode === 'multiple' && multipleFiles.length > 0) {
+      addMultipleImagesMutation.mutate({
+        championshipId: formData.championshipId,
+        images: multipleFiles
+      });
+    } else {
+      // Single image upload
+      addImageMutation.mutate(formData);
+    }
   };
   
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -216,10 +250,21 @@ const GalleryManagement: React.FC = () => {
       featured: false
     });
     setImageFile(null);
+    setMultipleFiles([]);
+    setUploadMode('single');
+  };
+
+  const handleMultipleFilesChange = (files: FileWithPreview[]) => {
+    setMultipleFiles(files);
   };
   
   if (isImagesLoading || isChampionshipsLoading) {
-    return <div className="p-4">Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-primary" />
+        <span className="ml-2 text-lg">Carregando...</span>
+      </div>
+    );
   }
   
   return (
@@ -232,7 +277,7 @@ const GalleryManagement: React.FC = () => {
               <Plus className="mr-2 h-4 w-4" /> Adicionar Imagem
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Adicionar Nova Imagem</DialogTitle>
               <DialogDescription>
@@ -241,79 +286,134 @@ const GalleryManagement: React.FC = () => {
             </DialogHeader>
             
             <form onSubmit={handleAddSubmit} className="space-y-4 mt-4">
-              <div className="grid gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="championshipId">Campeonato</Label>
-                  <Select
-                    value={formData.championshipId}
-                    onValueChange={handleChampionshipChange}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um campeonato" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {championships.map(championship => (
-                        <SelectItem key={championship.id} value={championship.id}>
-                          {championship.name} ({championship.year})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="image">Imagem</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    required
-                  />
-                  <p className="text-sm text-gray-500">
-                    {imageFile ? `Arquivo selecionado: ${imageFile.name}` : "Nenhum arquivo selecionado"}
-                  </p>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="featured">Destacada</Label>
-                  <Switch
-                    id="featured"
-                    checked={formData.featured}
-                    onCheckedChange={handleSwitchChange}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="championshipId">Campeonato</Label>
+                <Select
+                  value={formData.championshipId}
+                  onValueChange={handleChampionshipChange}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um campeonato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {championships.map(championship => (
+                      <SelectItem key={championship.id} value={championship.id}>
+                        {championship.name} ({championship.year})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <TabsUI defaultValue="single" className="w-full" onValueChange={(val) => setUploadMode(val as 'single' | 'multiple')}>
+                <TabsListUI className="grid grid-cols-2">
+                  <TabsTriggerUI value="single">Upload Único</TabsTriggerUI>
+                  <TabsTriggerUI value="multiple">Upload Múltiplo</TabsTriggerUI>
+                </TabsListUI>
+                
+                <TabsContentUI value="single" className="pt-4">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título</Label>
+                      <Input
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descrição</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="image">Imagem</Label>
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        required
+                      />
+                      {formData.imageUrl && (
+                        <div className="mt-2 border rounded overflow-hidden h-40">
+                          <img 
+                            src={formData.imageUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="featured">Destacada</Label>
+                      <Switch
+                        id="featured"
+                        checked={formData.featured}
+                        onCheckedChange={handleSwitchChange}
+                      />
+                    </div>
+                  </div>
+                </TabsContentUI>
+                
+                <TabsContentUI value="multiple" className="pt-4">
+                  <div className="space-y-4">
+                    <Label>Selecione Múltiplas Imagens</Label>
+                    <MultiFileUpload 
+                      onFilesChange={handleMultipleFilesChange}
+                      maxFiles={10}
+                    />
+                    
+                    <div className="pt-2 text-sm text-gray-500">
+                      {multipleFiles.length > 0 ? (
+                        <p>{multipleFiles.length} imagens selecionadas</p>
+                      ) : (
+                        <p>Nenhuma imagem selecionada</p>
+                      )}
+                    </div>
+                  </div>
+                </TabsContentUI>
+              </TabsUI>
+              
+              <DialogFooter className="mt-6">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsAddDialogOpen(false);
+                    resetForm();
+                  }}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={addImageMutation.isPending}>
-                  {addImageMutation.isPending ? "Adicionando..." : "Adicionar"}
+                <Button 
+                  type="submit" 
+                  disabled={
+                    (uploadMode === 'single' && addImageMutation.isPending) ||
+                    (uploadMode === 'multiple' && addMultipleImagesMutation.isPending) ||
+                    (uploadMode === 'multiple' && multipleFiles.length === 0) ||
+                    !formData.championshipId
+                  }
+                >
+                  {addImageMutation.isPending || addMultipleImagesMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adicionando...
+                    </>
+                  ) : (
+                    "Adicionar"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -365,7 +465,7 @@ const GalleryManagement: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredImages.map(image => (
-            <Card key={image.id} className="overflow-hidden">
+            <Card key={image.id} className="overflow-hidden hover:shadow-md transition-shadow">
               <div className="relative h-48">
                 <img 
                   src={image.imageUrl} 
@@ -380,7 +480,7 @@ const GalleryManagement: React.FC = () => {
               </div>
               
               <CardHeader className="pb-0">
-                <CardTitle className="text-lg">{image.title}</CardTitle>
+                <CardTitle className="text-lg line-clamp-1">{image.title}</CardTitle>
               </CardHeader>
               
               <CardContent className="pt-2">
@@ -542,7 +642,12 @@ const GalleryManagement: React.FC = () => {
                 Cancelar
               </Button>
               <Button type="submit" disabled={updateImageMutation.isPending}>
-                {updateImageMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                {updateImageMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : "Salvar Alterações"}
               </Button>
             </DialogFooter>
           </form>

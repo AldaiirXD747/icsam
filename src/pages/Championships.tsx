@@ -1,184 +1,170 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Trophy, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Championship {
-  id: string;
-  name: string;
-  year: string;
-  description: string;
-  location: string;
-  banner_image: string | null;
-  start_date: string;
-  end_date: string;
-  status: string;
-  categories: string[] | any; // Accept any for JSON
-}
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { getChampionships } from '@/lib/api';
+import { Loader2, Calendar, MapPin, Trophy, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Championship } from '@/types';
 
 const Championships = () => {
-  const [championships, setChampionships] = useState<Championship[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchChampionships = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('championships')
-          .select('*')
-          .order('year', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transform the data to ensure categories is always an array
-        const transformedData = data?.map(championship => ({
-          ...championship,
-          categories: Array.isArray(championship.categories) 
-            ? championship.categories 
-            : championship.categories ? [championship.categories] : []
-        }));
-        
-        setChampionships(transformedData || []);
-      } catch (err) {
-        console.error('Erro ao carregar campeonatos:', err);
-        setError('Não foi possível carregar os campeonatos. Por favor, tente novamente mais tarde.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchChampionships();
-  }, []);
-
-  // Function to get the appropriate status badge color
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'upcoming':
-      case 'próximo':
-        return 'bg-blue-100 text-blue-800';
+  const [activeTab, setActiveTab] = useState<'all' | 'ongoing' | 'upcoming' | 'finished'>('all');
+  
+  const { data: championships = [], isLoading, error } = useQuery({
+    queryKey: ['championships'],
+    queryFn: getChampionships,
+  });
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-primary" />
+        <span className="mt-4 text-gray-600">Carregando campeonatos...</span>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
+        <div className="bg-red-50 p-6 rounded-lg text-center max-w-md">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-red-700 mb-2">Erro ao carregar campeonatos</h2>
+          <p className="text-red-600">Não foi possível carregar a lista de campeonatos. Por favor, tente novamente mais tarde.</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const filteredChampionships = championships.filter(championship => {
+    if (activeTab === 'all') return true;
+    return championship.status === activeTab;
+  });
+  
+  // Sort championships by year, most recent first
+  const sortedChampionships = [...filteredChampionships].sort((a, b) => {
+    return parseInt(b.year) - parseInt(a.year);
+  });
+  
+  const getStatusBadgeColor = (status: Championship['status']) => {
+    switch (status) {
       case 'ongoing':
-      case 'em andamento':
-        return 'bg-green-100 text-green-800';
-      case 'completed':
-      case 'concluído':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'finished':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-
-  const getStatusText = (status: string) => {
-    switch (status.toLowerCase()) {
+  
+  const getStatusLabel = (status: Championship['status']) => {
+    switch (status) {
+      case 'ongoing':
+        return 'Em andamento';
       case 'upcoming':
         return 'Próximo';
-      case 'ongoing':
-        return 'Em Andamento';
-      case 'completed':
-        return 'Concluído';
+      case 'finished':
+        return 'Finalizado';
       default:
-        return status;
+        return 'Desconhecido';
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-primary mb-4">Nossos Campeonatos</h1>
-            <p className="text-gray-600 max-w-3xl mx-auto">
-              Conheça os campeonatos organizados pela Base Forte. Clique em cada campeonato para ver mais detalhes, times participantes e tabelas.
+    <div className="min-h-screen pt-24 pb-16">
+      <div className="container mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#1a237e] mb-2">Nossos Campeonatos</h1>
+          <p className="text-gray-600">Confira todos os campeonatos organizados pelo Instituto Criança Santa Maria</p>
+        </div>
+        
+        <div className="mb-8">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+            <TabsList>
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              <TabsTrigger value="ongoing">Em andamento</TabsTrigger>
+              <TabsTrigger value="upcoming">Próximos</TabsTrigger>
+              <TabsTrigger value="finished">Finalizados</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        
+        {sortedChampionships.length === 0 ? (
+          <div className="bg-white rounded-lg p-8 text-center shadow-md">
+            <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              Nenhum campeonato encontrado
+            </h3>
+            <p className="text-gray-500">
+              Não há campeonatos correspondentes ao filtro selecionado.
             </p>
           </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-primary"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center py-10">
-              <p className="text-red-500">{error}</p>
-            </div>
-          ) : championships.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-lg">
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum campeonato cadastrado</h3>
-              <p className="text-gray-500">
-                Novos campeonatos serão exibidos aqui quando forem cadastrados pelo Painel Administrativo.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {championships.map((championship) => (
-                <Card key={championship.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  {championship.banner_image && (
-                    <div className="w-full h-48 overflow-hidden">
-                      <img 
-                        src={championship.banner_image} 
-                        alt={championship.name} 
-                        className="w-full h-full object-cover"
-                      />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedChampionships.map((championship) => (
+              <Link
+                to={`/campeonatos/${championship.id}`}
+                key={championship.id}
+                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+              >
+                <div className="h-48 overflow-hidden relative">
+                  <img
+                    src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'}
+                    alt={championship.name}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadgeColor(championship.status)}`}>
+                      {getStatusLabel(championship.status)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-[#1a237e] mb-2 line-clamp-1">
+                    {championship.name}
+                  </h3>
+                  
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {championship.description || 'Campeonato organizado pelo Instituto Criança Santa Maria'}
+                  </p>
+                  
+                  <div className="flex flex-col space-y-2 text-sm text-gray-500">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-[#c6ff00]" />
+                      {championship.start_date && championship.end_date ? (
+                        <span>
+                          {format(new Date(championship.start_date), 'dd/MM/yyyy', { locale: ptBR })} - {format(new Date(championship.end_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      ) : (
+                        <span>Data a definir</span>
+                      )}
                     </div>
-                  )}
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl text-blue-primary">{championship.name}</CardTitle>
-                        <CardDescription>{championship.year}</CardDescription>
-                      </div>
-                      <Badge className={getStatusColor(championship.status)}>
-                        {getStatusText(championship.status)}
-                      </Badge>
+                    
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 text-[#c6ff00]" />
+                      <span>{championship.location || 'Local a definir'}</span>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {championship.description && (
-                      <p className="text-gray-600 line-clamp-2">{championship.description}</p>
-                    )}
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span>{championship.location}</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 mr-2 text-[#c6ff00]" />
                       <span>
-                        {new Date(championship.start_date).toLocaleDateString('pt-BR')} a {new Date(championship.end_date).toLocaleDateString('pt-BR')}
+                        {Array.isArray(championship.categories) && championship.categories.length > 0
+                          ? championship.categories.join(', ')
+                          : 'Todas as categorias'}
                       </span>
                     </div>
-                    {championship.categories && championship.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {Array.isArray(championship.categories) ? championship.categories.map((category: string, index: number) => (
-                          <Badge key={index} variant="outline" className="bg-gray-50">
-                            {category}
-                          </Badge>
-                        )) : (
-                          <Badge variant="outline" className="bg-gray-50">
-                            {String(championship.categories)}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter>
-                    <Button asChild className="w-full">
-                      <Link to={`/campeonatos/${championship.id}`}>Ver Detalhes</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

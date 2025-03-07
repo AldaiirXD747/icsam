@@ -1,136 +1,114 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChampionshipType } from '@/types/database';
+import { Loader2, Image, Search } from 'lucide-react';
 import GalleryGrid from '@/components/gallery/GalleryGrid';
-import { GalleryImage } from '@/types';
-
-// Mock data for championships - this would be replaced by an API call in production
-const mockChampionships: ChampionshipType[] = [
-  {
-    id: "1",
-    name: "Campeonato Base Forte 2023",
-    year: "2023",
-    description: "Campeonato anual com todas as categorias",
-    banner_image: "https://example.com/banner1.jpg",
-    start_date: "2023-03-15",
-    end_date: "2023-11-20",
-    location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
-    organizer: "Instituto Criança Santa Maria",
-    sponsors: [
-      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
-      { name: "Patrocinador 2", logo: "https://example.com/logo2.png" }
-    ],
-    status: "finished"
-  },
-  {
-    id: "2",
-    name: "Campeonato Base Forte 2024",
-    year: "2024",
-    description: "Edição 2024 do tradicional campeonato",
-    banner_image: "https://example.com/banner2.jpg",
-    start_date: "2024-03-10",
-    end_date: "2024-11-25",
-    location: "Campo do Instituto - Santa Maria, DF",
-    categories: ["SUB-11", "SUB-13", "SUB-15", "SUB-17"],
-    organizer: "Instituto Criança Santa Maria",
-    sponsors: [
-      { name: "Patrocinador 1", logo: "https://example.com/logo1.png" },
-      { name: "Patrocinador 3", logo: "https://example.com/logo3.png" }
-    ],
-    status: "ongoing"
-  }
-];
-
-// Mock gallery images
-const mockGalleryImages: GalleryImage[] = [
-  {
-    id: "1",
-    title: "Final do Campeonato 2023",
-    description: "Momento da premiação dos campeões",
-    imageUrl: "/lovable-uploads/71480ca7-a47e-49be-bcbf-3fdc06bdfcde.png",
-    championshipId: "1",
-    createdAt: "2023-11-20",
-    featured: true
-  },
-  {
-    id: "2",
-    title: "Abertura do Campeonato 2024",
-    description: "Cerimônia de abertura com todos os times",
-    imageUrl: "/lovable-uploads/9ed392b8-8a39-4ee2-99c1-74b33ce2b4d5.png",
-    championshipId: "2",
-    createdAt: "2024-03-10"
-  },
-  {
-    id: "3",
-    title: "Treino preparatório",
-    description: "Treino antes do início do campeonato",
-    imageUrl: "/lovable-uploads/b57c03b4-f522-4117-86e8-8ecb86f62697.png",
-    championshipId: "2",
-    createdAt: "2024-03-05"
-  },
-  {
-    id: "4",
-    title: "Entrega de medalhas",
-    description: "Cerimônia de premiação dos destaques",
-    imageUrl: "/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png",
-    championshipId: "1",
-    createdAt: "2023-11-18"
-  }
-];
+import { getGalleryImages } from '@/lib/galleryApi';
+import { getChampionships } from '@/lib/api';
+import { Championship } from '@/types';
 
 const Gallery = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [activeChampionship, setActiveChampionship] = useState<string>("all");
   
-  // In a real implementation, these would be actual API calls
-  const { data: championships = mockChampionships, isLoading: isChampionshipsLoading } = useQuery({
+  // Get all championships
+  const { data: championships = [], isLoading: isChampionshipsLoading } = useQuery({
     queryKey: ['championships'],
-    queryFn: () => mockChampionships,
+    queryFn: getChampionships,
   });
   
-  const { data: images = mockGalleryImages, isLoading: isImagesLoading } = useQuery({
-    queryKey: ['galleryImages', activeChampionship],
-    queryFn: () => {
-      if (activeChampionship === "all") {
-        return mockGalleryImages;
-      }
-      return mockGalleryImages.filter(img => img.championshipId === activeChampionship);
-    },
+  // Get all gallery images
+  const { data: allImages = [], isLoading: isImagesLoading } = useQuery({
+    queryKey: ['galleryImages'],
+    queryFn: getGalleryImages,
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar imagens",
+        description: "Não foi possível carregar as imagens da galeria.",
+      });
+      console.error("Error fetching gallery images:", error);
+    }
   });
   
-  const filteredImages = images.filter(
-    img => img.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (img.description && img.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter images based on active championship and search term
+  const filteredImages = allImages.filter(img => {
+    const matchesChampionship = activeChampionship === "all" || img.championshipId === activeChampionship;
+    const matchesSearch = img.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (img.description && img.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesChampionship && matchesSearch;
+  });
+
+  // Featured images for the top section
+  const featuredImages = allImages.filter(img => img.featured).slice(0, 5);
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow pt-20">
+      <main className="flex-grow pt-24">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-[#1a237e] mb-2">Galeria de Fotos</h1>
             <p className="text-gray-600">Confira os melhores momentos dos nossos campeonatos</p>
           </div>
           
+          {/* Featured Images Section */}
+          {featuredImages.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold text-[#1a237e] mb-4 flex items-center">
+                <Image className="mr-2 h-5 w-5 text-lime-primary" /> Destaques
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {featuredImages.slice(0, 1).map(image => (
+                  <div key={image.id} className="col-span-1 md:col-span-2 row-span-2 relative rounded-lg overflow-hidden shadow-md h-96">
+                    <img 
+                      src={image.imageUrl} 
+                      alt={image.title} 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent">
+                      <div className="absolute bottom-0 p-4 text-white">
+                        <h3 className="text-xl font-semibold">{image.title}</h3>
+                        {image.description && <p className="text-gray-300">{image.description}</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="grid grid-cols-1 gap-4">
+                  {featuredImages.slice(1, 3).map(image => (
+                    <div key={image.id} className="relative rounded-lg overflow-hidden shadow-md h-44">
+                      <img 
+                        src={image.imageUrl} 
+                        alt={image.title} 
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent">
+                        <div className="absolute bottom-0 p-3 text-white">
+                          <h3 className="text-sm font-medium">{image.title}</h3>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="w-full sm:max-w-md">
-              <Input
-                type="text"
-                placeholder="Buscar fotos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Buscar fotos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10"
+                />
+              </div>
             </div>
             
             <Tabs defaultValue="all" value={activeChampionship} onValueChange={setActiveChampionship} className="w-full sm:w-auto">
@@ -145,12 +123,14 @@ const Gallery = () => {
             </Tabs>
           </div>
           
-          {isImagesLoading ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Carregando imagens...</p>
+          {isImagesLoading || isChampionshipsLoading ? (
+            <div className="text-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-primary mx-auto" />
+              <p className="text-gray-500 mt-2">Carregando imagens...</p>
             </div>
           ) : filteredImages.length === 0 ? (
             <div className="bg-white rounded-lg p-8 text-center shadow-md">
+              <Image className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">Nenhuma imagem encontrada</h3>
               <p className="text-gray-500">Não há imagens correspondentes aos filtros selecionados.</p>
             </div>
@@ -159,7 +139,6 @@ const Gallery = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

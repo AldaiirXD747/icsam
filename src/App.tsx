@@ -31,16 +31,27 @@ import TeamDashboard from './pages/TeamDashboard';
 // Componentes
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import EnhancedHeader from './components/EnhancedHeader';
+import EnhancedFooter from './components/EnhancedFooter';
 
 import './App.css';
 
 // Create a client
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
+        <EnhancedHeader />
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Index />} />
@@ -98,6 +109,7 @@ function App() {
           {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <EnhancedFooter />
         <Toaster />
       </Router>
     </QueryClientProvider>
