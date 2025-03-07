@@ -1,4 +1,3 @@
-
 import { ArrowRight, Award, Calendar, Check, Download, Star, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -95,7 +94,7 @@ const HeroSection = () => {
               className="mt-10 flex items-center gap-3"
             >
               <a 
-                href="https://www.instagram.com/institutocriancasanta/" 
+                href="https://drive.google.com/uc?export=download&id=1eaqEZwGixjWOsd-fd81lnu0j9EEiEqR0" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="flex items-center gap-2 text-blue-primary hover:text-blue-light transition-colors font-medium"
