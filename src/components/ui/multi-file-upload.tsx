@@ -18,7 +18,7 @@ interface MultiFileUploadProps {
 
 export const MultiFileUpload = ({
   onFilesChange,
-  maxFiles = 10,
+  maxFiles = 100,
 }: MultiFileUploadProps) => {
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
 
@@ -85,8 +85,12 @@ export const MultiFileUpload = ({
         </label>
       </div>
       
+      <div className="flex items-center gap-2 text-sm">
+        <span className="font-medium">{selectedFiles.length}</span> de <span className="font-medium">{maxFiles}</span> imagens selecionadas
+      </div>
+      
       {selectedFiles.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
           {selectedFiles.map((file, index) => (
             <div key={index} className="relative border rounded-md p-3 bg-gray-50">
               <div className="absolute top-2 right-2 z-10">
