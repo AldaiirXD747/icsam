@@ -6,6 +6,7 @@ import AboutSection from '@/components/AboutSection';
 import ContactSection from '@/components/ContactSection';
 import ProgramsSection from '@/components/ProgramsSection';
 import PartnersSection from '@/components/PartnersSection';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +40,8 @@ const Index = () => {
         {/* Contact Section */}
         <ContactSection />
       </main>
+      
+      <Footer />
     </div>
   );
 };

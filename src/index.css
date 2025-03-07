@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -92,13 +92,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-montserrat;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-semibold;
+    @apply font-poppins font-bold;
   }
   
   /* Smooth scrolling for entire page */
@@ -108,75 +108,77 @@
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-white bg-opacity-90 backdrop-blur-md border border-white border-opacity-20 rounded-xl shadow-glass transition-all duration-300;
+  .modern-card {
+    @apply bg-white border border-gray-100 rounded-xl shadow-lg transition-all duration-300 overflow-hidden hover:translate-y-[-5px];
   }
 
-  .glass-card:hover {
-    @apply shadow-glass-hover;
+  .gradient-card {
+    @apply bg-gradient-to-br from-white to-gray-50 border border-gray-100 rounded-xl shadow-lg transition-all duration-300;
+  }
+
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-md border border-white/30 rounded-xl shadow-lg transition-all duration-300;
   }
 
   .btn-primary {
-    @apply bg-blue-primary text-white hover:bg-blue-light transition-all duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5;
+    @apply bg-blue-primary text-white hover:bg-blue-primary/90 transition-all duration-300 rounded-lg px-6 py-3 font-medium shadow-lg hover:shadow-xl hover:translate-y-[-2px] flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply bg-lime-primary text-blue-primary hover:bg-lime-dark transition-all duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5;
+    @apply bg-lime-primary text-blue-primary hover:bg-lime-dark transition-all duration-300 rounded-lg px-6 py-3 font-medium shadow-lg hover:shadow-xl hover:translate-y-[-2px] flex items-center justify-center gap-2;
+  }
+
+  .btn-outline {
+    @apply border-2 border-blue-primary text-blue-primary hover:bg-blue-primary/10 transition-all duration-300 rounded-lg px-6 py-3 font-medium flex items-center justify-center gap-2;
   }
 
   .heading-gradient {
     @apply font-bold bg-gradient-to-r from-blue-primary to-blue-light bg-clip-text text-transparent;
   }
 
-  .scoreboard {
-    @apply bg-gradient-to-b from-blue-primary to-blue-light text-white rounded-xl p-4 shadow-md;
+  .section-title {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-blue-primary;
   }
 
-  .medal-gold {
-    @apply bg-gradient-to-r from-yellow-300 to-yellow-500;
+  .section-subtitle {
+    @apply text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-10;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-24;
   }
   
-  .medal-silver {
-    @apply bg-gradient-to-r from-gray-300 to-gray-400;
+  .section-container {
+    @apply container mx-auto px-4 md:px-8;
   }
   
-  .medal-bronze {
-    @apply bg-gradient-to-r from-amber-500 to-amber-700;
+  .floating-element {
+    @apply hover:translate-y-[-5px] transition-transform duration-300;
   }
   
-  .shine-effect {
-    @apply relative overflow-hidden;
+  .hover-zoom {
+    @apply hover:scale-105 transition-transform duration-300;
   }
   
-  .shine-effect::after {
-    content: '';
-    @apply absolute top-0 left-0 w-full h-full;
-    background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: shine 2s infinite linear;
+  .link-hover {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-current after:transition-transform after:duration-300 hover:after:scale-x-100;
   }
   
-  /* Link hover effect - underline animation */
-  .hover-link {
-    @apply relative inline-block text-blue-primary;
+  .shadow-hover {
+    @apply transition-shadow duration-300 hover:shadow-xl;
   }
   
-  .hover-link::after {
-    @apply content-[''] absolute w-full h-0.5 bg-lime-primary left-0 bottom-0 scale-x-0 origin-right transition-transform duration-300;
+  /* Shape decorations */
+  .shape-circle {
+    @apply absolute rounded-full opacity-10 z-0;
   }
   
-  .hover-link:hover::after {
-    @apply scale-x-100 origin-left;
+  .shape-blob {
+    @apply absolute opacity-10 z-0 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] animate-blob;
   }
   
-  /* Card hover effect */
-  .hover-card {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
-  }
-  
-  /* Elegant input style */
-  .elegant-input {
-    @apply bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-primary/30 focus:border-blue-primary transition-all duration-300;
+  .wave-divider {
+    @apply w-full overflow-hidden leading-[0] fill-current;
   }
 }
 
@@ -185,9 +187,11 @@
   50% { transform: translateY(-10px); }
 }
 
-@keyframes pulsate {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.95); }
+@keyframes blob {
+  0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  25% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  75% { border-radius: 40% 60% 30% 70% / 60% 30% 70% 40%; }
 }
 
 @keyframes shine {
@@ -195,41 +199,36 @@
   100% { background-position: -200% 0; }
 }
 
-/* Adicionar mais keyframes para animações */
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
 
-.animate-pulsate {
-  animation: pulsate 2s ease-in-out infinite;
+.animate-blob {
+  animation: blob 10s ease-in-out infinite;
 }
 
-.animate-bounce-light {
-  animation: bounce 2s ease-in-out infinite;
+.animate-shine {
+  animation: shine 5s linear infinite;
 }
 
 /* Glassmorphism effects */
 .glassmorphism {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.glassmorphism-dark {
-  background: rgba(26, 35, 126, 0.15);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(26, 35, 126, 0.1);
+.gradient-text {
+  background: linear-gradient(90deg, #1a237e, #534bae);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #1a237e, #3949ab);
 }
 
 /* Adicionar efeito de transição global para elementos interativos */

@@ -1,7 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, ChevronDown } from 'lucide-react';
+import { 
+  Menu, 
+  X, 
+  User, 
+  ChevronDown, 
+  Home, 
+  Info, 
+  Trophy, 
+  Users, 
+  Calendar, 
+  BarChart2, 
+  Image, 
+  FileText, 
+  Mail 
+} from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,85 +57,159 @@ const Navbar = () => {
   const isActive = (path: string) => {
     return location.pathname === path;
   };
+  
+  // Animation variants
+  const navAnimation = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      } 
+    }
+  };
+  
+  const itemAnimation = {
+    hidden: { opacity: 0, y: -10 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
-    <nav className={cn(
-      "fixed top-0 left-0 w-full z-50 transition-all duration-300",
-      scrolled ? "bg-blue-primary/95 backdrop-blur-md shadow-md" : "bg-blue-primary"
-    )}>
-      <div className="container mx-auto px-4 py-3">
+    <motion.nav 
+      initial="hidden"
+      animate="visible"
+      variants={navAnimation}
+      className={cn(
+        "fixed top-0 left-0 w-full z-50 transition-all duration-500",
+        scrolled 
+          ? "bg-gradient-to-r from-blue-primary to-blue-light shadow-lg backdrop-blur-lg py-3" 
+          : "bg-gradient-to-r from-blue-primary/95 to-blue-light/95 py-4"
+      )}
+    >
+      <div className="container mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center group transition-transform duration-300 hover:scale-105">
-            <div className="bg-white p-1 rounded-lg shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:rotate-2">
-              <img 
-                src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
-                alt="Instituto Criança Santa Maria" 
-                className="h-10 w-auto"
-              />
-            </div>
-            <div className="flex flex-col ml-2">
-              <span className="text-white font-bold text-lg leading-tight">Instituto Criança</span>
-              <span className="text-lime-primary text-xs font-medium">Santa Maria</span>
-            </div>
-          </Link>
+          {/* Logo */}
+          <motion.div variants={itemAnimation}>
+            <Link to="/" className="flex items-center group">
+              <div className="bg-white p-2 rounded-xl shadow-md hover:shadow-xl transform transition-all duration-300 hover:scale-105 hover:rotate-3 mr-3">
+                <img 
+                  src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
+                  alt="Instituto Criança Santa Maria" 
+                  className="h-12 w-auto"
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-white font-poppins font-bold text-xl leading-tight">Instituto Criança</span>
+                <span className="text-lime-primary text-sm tracking-wider font-medium">Santa Maria</span>
+              </div>
+            </Link>
+          </motion.div>
 
           {/* Mobile Menu Button */}
-          <button 
-            onClick={toggleMenu} 
-            className="md:hidden text-white focus:outline-none"
+          <motion.button 
+            onClick={toggleMenu}
+            variants={itemAnimation}
+            className="md:hidden text-white focus:outline-none bg-white/10 p-2 rounded-lg hover:bg-white/20"
             aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          </motion.button>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-1">
-            <NavLink to="/" isActive={isActive('/')}>
-              Início
-            </NavLink>
-            <NavLink to="/sobre" isActive={isActive('/sobre')}>
-              Sobre
-            </NavLink>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white hover:text-lime-primary transition px-3 py-2 rounded-md font-normal">
-                  Campeonato <ChevronDown className="ml-1 h-4 w-4" />
+            <motion.div variants={itemAnimation}>
+              <NavLink to="/" isActive={isActive('/')} icon={<Home size={18} />}>
+                Início
+              </NavLink>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation}>
+              <NavLink to="/sobre" isActive={isActive('/sobre')} icon={<Info size={18} />}>
+                Sobre
+              </NavLink>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:bg-white/10 transition px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                  >
+                    <Trophy size={18} />
+                    Campeonato 
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 animate-fade-in-down bg-white/95 backdrop-blur-md border border-gray-200 rounded-xl p-2 shadow-xl">
+                  <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
+                    <Link to="/times" className="w-full flex items-center gap-2">
+                      <Users size={16} className="text-blue-primary" />
+                      <span>Times</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
+                    <Link to="/jogos" className="w-full flex items-center gap-2">
+                      <Calendar size={16} className="text-blue-primary" />
+                      <span>Partidas</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
+                    <Link to="/estatisticas" className="w-full flex items-center gap-2">
+                      <BarChart2 size={16} className="text-blue-primary" />
+                      <span>Estatísticas</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
+                    <Link to="/classificacao" className="w-full flex items-center gap-2">
+                      <Trophy size={16} className="text-blue-primary" />
+                      <span>Classificação</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
+                    <Link to="/campeonatos" className="w-full flex items-center gap-2">
+                      <Trophy size={16} className="text-blue-primary" />
+                      <span>Todos os Campeonatos</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation}>
+              <NavLink to="/galeria" isActive={isActive('/galeria')} icon={<Image size={18} />}>
+                Galeria
+              </NavLink>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation}>
+              <NavLink to="/transparencia" isActive={isActive('/transparencia')} icon={<FileText size={18} />}>
+                Transparência
+              </NavLink>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation}>
+              <NavLink to="/contato" isActive={isActive('/contato')} icon={<Mail size={18} />}>
+                Contato
+              </NavLink>
+            </motion.div>
+            
+            <motion.div variants={itemAnimation} className="ml-2">
+              <Link to="/login">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-lime-primary text-blue-primary font-semibold hover:bg-lime-dark border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-xl"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Login
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 animate-fade-in-down bg-white/95 backdrop-blur-sm border border-gray-200">
-                <DropdownMenuItem className="hover:bg-gray-100">
-                  <Link to="/times" className="w-full">Times</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-100">
-                  <Link to="/jogos" className="w-full">Partidas</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-100">
-                  <Link to="/estatisticas" className="w-full">Estatísticas</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-gray-100">
-                  <Link to="/classificacao" className="w-full">Classificação</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:bg-gray-100">
-                  <Link to="/campeonatos" className="w-full">Todos os Campeonatos</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <NavLink to="/galeria" isActive={isActive('/galeria')}>
-              Galeria
-            </NavLink>
-            <NavLink to="/transparencia" isActive={isActive('/transparencia')}>
-              Transparência
-            </NavLink>
-            <NavLink to="/contato" isActive={isActive('/contato')}>
-              Contato
-            </NavLink>
-            <Link to="/login">
-              <Button variant="outline" size="sm" className="bg-lime-primary text-blue-primary font-medium hover:bg-lime-dark border-none shadow-md hover:shadow-lg transition-all duration-300 ml-2">
-                <User className="mr-2 h-4 w-4" />
-                Login
-              </Button>
-            </Link>
+              </Link>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -128,95 +217,106 @@ const Navbar = () => {
       {/* Mobile Menu Content */}
       <div 
         className={cn(
-          "md:hidden max-h-0 overflow-hidden transition-all duration-500 ease-in-out",
-          isMenuOpen && "max-h-[500px]"
+          "md:hidden overflow-hidden transition-all duration-500 ease-in-out bg-gradient-to-b from-blue-light to-blue-primary",
+          isMenuOpen ? "max-h-[500px] shadow-xl" : "max-h-0"
         )}
       >
-        <div className="bg-blue-primary/95 backdrop-blur-md py-4 px-4 shadow-lg space-y-4">
-          <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>
+        <div className="py-6 px-6 space-y-5">
+          <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)} icon={<Home size={18} />}>
             Início
           </MobileNavLink>
-          <MobileNavLink to="/sobre" onClick={() => setIsMenuOpen(false)}>
+          <MobileNavLink to="/sobre" onClick={() => setIsMenuOpen(false)} icon={<Info size={18} />}>
             Sobre
           </MobileNavLink>
-          <div className="bg-blue-light/40 rounded-lg p-3">
-            <h3 className="text-lime-primary font-medium text-sm mb-2 text-center">Campeonato</h3>
-            <div className="space-y-2">
-              <MobileSubLink to="/times" onClick={() => setIsMenuOpen(false)}>
+          
+          <div className="bg-white/10 rounded-xl p-4 space-y-3">
+            <h3 className="text-lime-primary font-semibold text-md mb-2 flex items-center gap-2">
+              <Trophy size={18} />
+              Campeonato
+            </h3>
+            <div className="space-y-2 pl-2">
+              <MobileSubLink to="/times" onClick={() => setIsMenuOpen(false)} icon={<Users size={15} />}>
                 Times
               </MobileSubLink>
-              <MobileSubLink to="/jogos" onClick={() => setIsMenuOpen(false)}>
+              <MobileSubLink to="/jogos" onClick={() => setIsMenuOpen(false)} icon={<Calendar size={15} />}>
                 Partidas
               </MobileSubLink>
-              <MobileSubLink to="/estatisticas" onClick={() => setIsMenuOpen(false)}>
+              <MobileSubLink to="/estatisticas" onClick={() => setIsMenuOpen(false)} icon={<BarChart2 size={15} />}>
                 Estatísticas
               </MobileSubLink>
-              <MobileSubLink to="/classificacao" onClick={() => setIsMenuOpen(false)}>
+              <MobileSubLink to="/classificacao" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={15} />}>
                 Classificação
               </MobileSubLink>
-              <MobileSubLink to="/campeonatos" onClick={() => setIsMenuOpen(false)}>
+              <MobileSubLink to="/campeonatos" onClick={() => setIsMenuOpen(false)} icon={<Trophy size={15} />}>
                 Todos os Campeonatos
               </MobileSubLink>
             </div>
           </div>
-          <MobileNavLink to="/galeria" onClick={() => setIsMenuOpen(false)}>
+          
+          <MobileNavLink to="/galeria" onClick={() => setIsMenuOpen(false)} icon={<Image size={18} />}>
             Galeria
           </MobileNavLink>
-          <MobileNavLink to="/transparencia" onClick={() => setIsMenuOpen(false)}>
+          <MobileNavLink to="/transparencia" onClick={() => setIsMenuOpen(false)} icon={<FileText size={18} />}>
             Transparência
           </MobileNavLink>
-          <MobileNavLink to="/contato" onClick={() => setIsMenuOpen(false)}>
+          <MobileNavLink to="/contato" onClick={() => setIsMenuOpen(false)} icon={<Mail size={18} />}>
             Contato
           </MobileNavLink>
-          <Link to="/login" className="block" onClick={() => setIsMenuOpen(false)}>
-            <Button variant="outline" className="w-full bg-lime-primary text-blue-primary font-medium hover:bg-lime-dark border-none shadow-md hover:shadow-lg mt-2">
-              <User className="mr-2 h-4 w-4" />
+          
+          <Link to="/login" className="block mt-4" onClick={() => setIsMenuOpen(false)}>
+            <Button 
+              variant="outline" 
+              className="w-full bg-lime-primary text-blue-primary font-semibold hover:bg-lime-dark border-none shadow-md hover:shadow-xl rounded-xl py-3"
+            >
+              <User className="mr-2 h-5 w-5" />
               Login
             </Button>
           </Link>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 
 // Desktop Navigation Link component
-const NavLink = ({ to, children, isActive }: { to: string; children: React.ReactNode; isActive: boolean }) => (
+const NavLink = ({ to, children, isActive, icon }: { to: string; children: React.ReactNode; isActive: boolean; icon: React.ReactNode }) => (
   <Link
     to={to}
     className={cn(
-      "relative px-3 py-2 rounded-md transition-all duration-300 hover:text-lime-primary",
+      "relative px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-all duration-300 hover:bg-white/10",
       isActive 
-        ? "text-lime-primary font-medium" 
+        ? "text-lime-primary bg-white/10" 
         : "text-white"
     )}
   >
+    {icon}
     {children}
-    <span className={cn(
-      "absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 bg-lime-primary rounded-full transition-all duration-300",
-      isActive ? "w-2/3" : "w-0 group-hover:w-2/3"
-    )}></span>
+    {isActive && (
+      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 bg-lime-primary rounded-full"></span>
+    )}
   </Link>
 );
 
 // Mobile Navigation Link component
-const MobileNavLink = ({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) => (
+const MobileNavLink = ({ to, children, onClick, icon }: { to: string; children: React.ReactNode; onClick?: () => void; icon: React.ReactNode }) => (
   <Link
     to={to}
-    className="text-white hover:text-lime-primary transition-colors duration-300 block text-center font-medium py-2 rounded-md hover:bg-blue-light/30"
+    className="text-white hover:text-lime-primary transition-colors duration-300 block font-semibold py-3 px-4 rounded-xl hover:bg-white/10 flex items-center gap-3"
     onClick={onClick}
   >
+    {icon}
     {children}
   </Link>
 );
 
 // Mobile Sub Navigation Link component
-const MobileSubLink = ({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) => (
+const MobileSubLink = ({ to, children, onClick, icon }: { to: string; children: React.ReactNode; onClick?: () => void; icon: React.ReactNode }) => (
   <Link
     to={to}
-    className="text-white hover:text-lime-primary transition-colors duration-300 block text-sm pl-2 py-1.5 rounded hover:bg-blue-light/20"
+    className="text-white hover:text-lime-primary transition-colors duration-300 block text-sm py-2 px-3 rounded-lg hover:bg-white/10 flex items-center gap-2"
     onClick={onClick}
   >
+    {icon}
     {children}
   </Link>
 );
