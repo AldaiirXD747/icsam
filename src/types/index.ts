@@ -54,6 +54,18 @@ export interface Championship {
   status: 'upcoming' | 'ongoing' | 'finished';
 }
 
+// Types for players
+export interface Player {
+  id: string;
+  name: string;
+  number?: number | null;
+  position: string;
+  photo?: string | null;
+  category?: string | null;
+  team_id?: string;
+  teamId?: string;
+}
+
 // Types for matches
 export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
 
