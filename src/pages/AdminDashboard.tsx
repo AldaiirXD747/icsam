@@ -107,7 +107,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
-      {/* We only need to include the Footer once */}
+      {/* Removido um dos rodapés para corrigir a duplicação */}
       <Footer />
     </div>
   );

@@ -41,6 +41,7 @@ const Index = () => {
         <ContactSection />
       </main>
       
+      {/* Só um rodapé */}
       <Footer />
     </div>
   );
