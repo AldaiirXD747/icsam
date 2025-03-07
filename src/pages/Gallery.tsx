@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Loader2, Image, Search } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 import GalleryGrid from '@/components/gallery/GalleryGrid';
 import { getGalleryImages } from '@/lib/galleryApi';
 import { getChampionships } from '@/lib/api';
@@ -51,6 +52,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Navbar />
       <main className="flex-grow pt-24">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
