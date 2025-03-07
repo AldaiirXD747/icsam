@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,17 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { getTeamPlayers, uploadPlayerPhoto, savePlayer, deletePlayer } from '@/lib/api';
-import { PlusCircle, Pencil, Trash2, User, Upload } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, User } from 'lucide-react';
 import { MultiFileUpload, FileWithPreview } from '@/components/ui/multi-file-upload';
-
-type Player = {
-  id: string;
-  name: string;
-  number: number | null;
-  position: string;
-  photo: string | null;
-  team_id: string;
-};
+import { Player } from '@/types';
 
 type PlayerFormData = {
   name: string;
@@ -115,10 +106,8 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     }
     
     try {
-      // Handle photo upload
       const photoUrl = await processPhotoUpload();
       
-      // Save player data
       const playerData = {
         name: formData.name,
         number: formData.number ? parseInt(formData.number) : null,
@@ -161,10 +150,8 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     }
     
     try {
-      // Handle photo upload
       const photoUrl = await processPhotoUpload();
       
-      // Update player data
       const playerData = {
         id: selectedPlayer.id,
         name: formData.name,
