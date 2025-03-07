@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -97,6 +96,7 @@ function App() {
               <Route path="/admin/statistics/top-scorers" element={<AdminDashboard />} />
               <Route path="/admin/statistics/yellow-cards" element={<AdminDashboard />} />
               <Route path="/admin/gallery" element={<AdminDashboard />} />
+              <Route path="/admin/transparency" element={<AdminDashboard />} />
               <Route path="/admin/sync" element={<AdminDashboard />} />
 
               {/* Rotas de Times */}
