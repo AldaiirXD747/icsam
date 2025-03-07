@@ -1,4 +1,3 @@
-
 // Types for gallery
 export interface GalleryImage {
   id: string;
@@ -55,16 +54,15 @@ export interface Championship {
 }
 
 // Types for players
-export interface Player {
+export type Player = {
   id: string;
   name: string;
-  number?: number | null;
+  number: number | null;
   position: string;
-  photo?: string | null;
+  photo: string | null;
+  team_id: string;
   category?: string | null;
-  team_id?: string;
-  teamId?: string;
-}
+};
 
 // Types for matches
 export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
@@ -115,39 +113,57 @@ export interface Match {
 }
 
 // Types for statistics
-export interface TopScorer {
+export type TopScorer = {
   id: string;
-  // Snake case properties (from database)
-  player_id: string;
-  team_id: string;
-  championship_id: string | null;
-  // Camel case properties (used in components)
+  player_id?: string;
   playerId?: string;
+  team_id?: string;
   teamId?: string;
-  championshipId?: string;
+  name?: string;
+  team?: string;
   goals: number;
   category: string;
-  created_at?: string;
-  // Additional properties for UI
+  championship_id?: string | null;
+  championshipId?: string | null;
+};
+
+export type YellowCardLeader = {
+  id: string;
+  player_id?: string;
+  playerId?: string;
+  team_id?: string;
+  teamId?: string;
   name?: string;
   team?: string;
-}
+  yellow_cards?: number;
+  yellowCards?: number;
+  category: string;
+  championship_id?: string | null;
+  championshipId?: string | null;
+};
 
-export interface YellowCardLeader {
+export type RedCardLeader = {
   id: string;
-  // Snake case properties (from database)
+  player_id?: string;
+  playerId?: string;
+  team_id?: string;
+  teamId?: string;
+  name?: string;
+  team?: string;
+  red_cards: number;
+  category: string;
+  championship_id?: string | null;
+  championshipId?: string | null;
+};
+
+export type MatchStatistic = {
+  id: string;
+  match_id: string;
   player_id: string;
   team_id: string;
-  yellow_cards: number;
-  championship_id: string | null;
-  // Camel case properties (used in components)
-  playerId?: string;
-  teamId?: string;
-  yellowCards?: number;
-  championshipId?: string;
-  category: string;
+  statistic_type: 'goal' | 'yellow_card' | 'red_card';
+  quantity: number;
+  minute?: number;
+  half?: 'first' | 'second' | 'extra_time' | 'penalties';
   created_at?: string;
-  // Additional properties for UI
-  name?: string;
-  team?: string;
-}
+};

@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { BarChart as BarChartIcon, Trophy } from 'lucide-react';
+import { BarChart as BarChartIcon, Trophy, ListPlus } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { TopScorer, YellowCardLeader } from '@/types';
 import { normalizeTopScorer, normalizeYellowCardLeader } from '@/utils/typeConverters';
 import StatisticsFilters from './statistics/StatisticsFilters';
 import TopScorersManagement from './statistics/TopScorersManagement';
 import YellowCardManagement from './statistics/YellowCardManagement';
+import MatchStatisticsManagement from './statistics/MatchStatisticsManagement';
 
 const StatisticsManagement = () => {
   const { toast } = useToast();
@@ -251,8 +253,12 @@ const StatisticsManagement = () => {
         />
       </div>
       
-      <Tabs defaultValue="topscorers">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="matches">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="matches" className="flex items-center gap-2">
+            <ListPlus className="h-4 w-4" />
+            Estatísticas por Partida
+          </TabsTrigger>
           <TabsTrigger value="topscorers" className="flex items-center gap-2">
             <Trophy className="h-4 w-4" />
             Artilheiros
@@ -262,6 +268,10 @@ const StatisticsManagement = () => {
             Cartões
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="matches">
+          <MatchStatisticsManagement />
+        </TabsContent>
         
         <TabsContent value="topscorers">
           <TopScorersManagement

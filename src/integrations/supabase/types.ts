@@ -202,6 +202,64 @@ export type Database = {
           },
         ]
       }
+      match_statistics: {
+        Row: {
+          created_at: string
+          half: string | null
+          id: string
+          match_id: string
+          minute: number | null
+          player_id: string
+          quantity: number
+          statistic_type: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          half?: string | null
+          id?: string
+          match_id: string
+          minute?: number | null
+          player_id: string
+          quantity?: number
+          statistic_type: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          half?: string | null
+          id?: string
+          match_id?: string
+          minute?: number | null
+          player_id?: string
+          quantity?: number
+          statistic_type?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_statistics_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_statistics_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_statistics_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           away_score: number | null
@@ -543,6 +601,26 @@ export type Database = {
       create_standings_table: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_matches_with_teams_and_players: {
+        Args: {
+          p_match_status?: string[]
+        }
+        Returns: {
+          match_id: string
+          match_date: string
+          match_time: string
+          match_location: string
+          match_category: string
+          match_status: string
+          match_round: string
+          home_team_id: string
+          home_team_name: string
+          away_team_id: string
+          away_team_name: string
+          home_players: Json
+          away_players: Json
+        }[]
       }
       get_standing: {
         Args: {
