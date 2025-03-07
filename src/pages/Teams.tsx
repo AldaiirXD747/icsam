@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import TeamCard from '@/components/TeamCard';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -82,7 +81,6 @@ const Teams = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import StandingsTable from '../components/StandingsTable';
 import { supabase } from '@/integrations/supabase/client';
 import { RefreshCw } from 'lucide-react';
@@ -239,7 +238,6 @@ const Standings = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };
