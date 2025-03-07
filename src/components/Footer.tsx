@@ -6,7 +6,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gradient-to-r from-blue-dark via-blue-primary to-blue-light text-white w-full">
+    <footer className="bg-gradient-to-r from-blue-dark via-blue-primary to-blue-light text-white">
       {/* Ondas decorativas no topo do footer */}
       <div className="w-full overflow-hidden">
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-8 text-background fill-current">
