@@ -71,7 +71,7 @@ const Footer = () => {
             <div className="flex flex-wrap gap-4 mt-8">
               <SocialLink href="https://www.facebook.com/share/1AAG7QWqqo/" icon={<Facebook />} label="Facebook" />
               <SocialLink href="https://www.instagram.com/institutocriancasanta/" icon={<Instagram />} label="Instagram" />
-              <SocialLink href="https://twitter.com" icon={<Twitter />} label="Twitter" />
+              <SocialLink href="https://x.com/ICSM_DF" icon={<Twitter />} label="Twitter" />
               <SocialLink href="https://institutocriancasantamaria.com.br" icon={<Globe />} label="Website" />
             </div>
           </motion.div>
