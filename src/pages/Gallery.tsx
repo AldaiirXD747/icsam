@@ -21,17 +21,20 @@ const Gallery = () => {
     queryFn: getChampionships,
   });
   
-  // Get all gallery images
+  // Get all gallery images - fixing the useQuery syntax for the latest version
   const { data: allImages = [], isLoading: isImagesLoading } = useQuery({
     queryKey: ['galleryImages'],
     queryFn: getGalleryImages,
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar imagens",
-        description: "Não foi possível carregar as imagens da galeria.",
-      });
-      console.error("Error fetching gallery images:", error);
+    // Remove onError and handle errors with meta
+    meta: {
+      onError: (error: Error) => {
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar imagens",
+          description: "Não foi possível carregar as imagens da galeria.",
+        });
+        console.error("Error fetching gallery images:", error);
+      }
     }
   });
   
