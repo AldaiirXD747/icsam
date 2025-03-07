@@ -1,3 +1,4 @@
+
 import { ArrowRight, Award, Calendar, Check, Download, Star, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -137,7 +138,7 @@ const HeroSection = () => {
                 </div>
                 <div>
                   <span className="text-gray-500 text-xs">Campeonatos</span>
-                  <p className="text-blue-primary font-bold text-lg">15+</p>
+                  <p className="text-blue-primary font-bold text-lg">3+</p>
                 </div>
               </motion.div>
               
@@ -183,7 +184,7 @@ const HeroSection = () => {
           />
           
           <StatCard 
-            number="15+" 
+            number="3+" 
             title="Projetos" 
             description="Diversos projetos esportivos e educacionais realizados com sucesso."
             icon={<Award />}
