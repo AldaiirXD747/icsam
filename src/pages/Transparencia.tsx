@@ -13,8 +13,10 @@ const Transparencia = () => {
       
       <main className="flex-1 pt-16">
         <HeroSection />
-        <DocumentsSection />
-        <InfoSection />
+        <div className="container mx-auto px-4">
+          <DocumentsSection />
+          <InfoSection />
+        </div>
       </main>
       
       <Footer />
