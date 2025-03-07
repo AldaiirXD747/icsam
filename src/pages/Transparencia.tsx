@@ -88,11 +88,11 @@ const Transparencia = () => {
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ['transparency-documents'],
     queryFn: async () => {
-      // Dynamically cast the response to the correct type
+      // Using type assertion to handle types correctly
       const { data, error } = await supabase
         .from('transparency_documents')
         .select('*')
-        .order('published_date', { ascending: false });
+        .order('published_date', { ascending: false }) as any;
       
       if (error) {
         console.error('Error fetching transparency documents:', error);

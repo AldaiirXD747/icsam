@@ -564,6 +564,39 @@ export type Database = {
           },
         ]
       }
+      transparency_documents: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          file_url: string
+          icon_type: string
+          id: string
+          published_date: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          file_url: string
+          icon_type: string
+          id?: string
+          published_date?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_url?: string
+          icon_type?: string
+          id?: string
+          published_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       user_team_associations: {
         Row: {
           created_at: string
