@@ -140,7 +140,6 @@ const TopScorersManagement: React.FC<TopScorersManagementProps> = ({ championshi
         return [];
       }
 
-      // Fetch additional data for each top scorer
       const enrichedTopScorers = await Promise.all(
         data.map(async (scorer) => {
           const player = players.find((p) => p.id === scorer.player_id);
@@ -230,7 +229,7 @@ const TopScorersManagement: React.FC<TopScorersManagementProps> = ({ championshi
         <h2 className="text-2xl font-bold">Artilheiros</h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="primary">Adicionar artilheiro</Button>
+            <Button>Adicionar artilheiro</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -339,7 +338,6 @@ const TopScorersManagement: React.FC<TopScorersManagementProps> = ({ championshi
           team: scorer.team || 'Time desconhecido',
           goals: scorer.goals,
           category: scorer.category,
-          // Include both camelCase and snake_case properties
           playerId: scorer.playerId || scorer.player_id || '',
           teamId: scorer.teamId || scorer.team_id || '',
           championshipId: scorer.championshipId || scorer.championship_id || null,

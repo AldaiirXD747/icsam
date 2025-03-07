@@ -150,6 +150,93 @@ const StatisticsManagement = () => {
     .filter(leader => selectedChampionship === 'all' || leader.championshipId === selectedChampionship)
     .sort((a, b) => b.yellowCards - a.yellowCards);
 
+  const handleCreateYellowCard = async (yellowCard: Omit<YellowCardLeader, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('yellow_card_leaders')
+        .insert({
+          player_id: yellowCard.player_id,
+          team_id: yellowCard.team_id,
+          yellow_cards: yellowCard.yellow_cards,
+          category: yellowCard.category,
+          championship_id: yellowCard.championship_id,
+        })
+        .select();
+
+      if (error) throw error;
+      
+      await fetchData();
+      toast({
+        title: "Sucesso",
+        description: "Cartão amarelo adicionado com sucesso!",
+      });
+      
+    } catch (error) {
+      console.error('Error creating yellow card:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar cartão amarelo",
+        description: "Não foi possível adicionar o cartão amarelo.",
+      });
+    }
+  };
+
+  const handleUpdateYellowCard = async (yellowCard: YellowCardLeader) => {
+    try {
+      const { error } = await supabase
+        .from('yellow_card_leaders')
+        .update({
+          player_id: yellowCard.player_id,
+          team_id: yellowCard.team_id,
+          yellow_cards: yellowCard.yellow_cards,
+          category: yellowCard.category,
+          championship_id: yellowCard.championship_id,
+        })
+        .eq('id', yellowCard.id);
+
+      if (error) throw error;
+      
+      await fetchData();
+      toast({
+        title: "Sucesso",
+        description: "Cartão amarelo atualizado com sucesso!",
+      });
+      
+    } catch (error) {
+      console.error('Error updating yellow card:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar cartão amarelo",
+        description: "Não foi possível atualizar o cartão amarelo.",
+      });
+    }
+  };
+
+  const handleDeleteYellowCard = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('yellow_card_leaders')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await fetchData();
+      toast({
+        title: "Sucesso",
+        description: "Cartão amarelo removido com sucesso!",
+      });
+      
+    } catch (error) {
+      console.error('Error deleting yellow card:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover cartão amarelo",
+        description: "Não foi possível remover o cartão amarelo.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -178,27 +265,29 @@ const StatisticsManagement = () => {
         
         <TabsContent value="topscorers">
           <TopScorersManagement
-            isLoading={isLoading}
-            topScorers={topScorers}
-            setTopScorers={setTopScorers}
-            filteredTopScorers={filteredTopScorers}
-            selectedCategory={selectedCategory}
-            teams={teams}
-            players={players}
-            championships={championships}
+            championshipId={selectedChampionship !== 'all' ? selectedChampionship : undefined}
           />
         </TabsContent>
         
         <TabsContent value="cards">
           <YellowCardManagement
-            isLoading={isLoading}
-            yellowCardLeaders={yellowCardLeaders}
-            setYellowCardLeaders={setYellowCardLeaders}
-            filteredYellowCardLeaders={filteredYellowCardLeaders}
-            selectedCategory={selectedCategory}
+            yellowCards={filteredYellowCardLeaders.map(leader => ({
+              id: leader.id,
+              player_id: leader.player_id || leader.playerId || '',
+              team_id: leader.team_id || leader.teamId || '',
+              yellow_cards: leader.yellow_cards || leader.yellowCards || 0,
+              championship_id: leader.championship_id || leader.championshipId || null,
+              name: leader.name || 'Desconhecido',
+              team: leader.team || 'Time desconhecido',
+              category: leader.category
+            }))}
             teams={teams}
             players={players}
-            championships={championships}
+            categories={Array.from(new Set(yellowCardLeaders.map(leader => leader.category)))}
+            onCreate={handleCreateYellowCard}
+            onUpdate={handleUpdateYellowCard}
+            onDelete={handleDeleteYellowCard}
+            isLoading={isLoading}
           />
         </TabsContent>
       </Tabs>

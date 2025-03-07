@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -11,8 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Edit, Trash2 } from 'lucide-react';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 
 interface YellowCard {
   id: string;
@@ -27,9 +27,11 @@ interface YellowCard {
 
 interface DataTableProps {
   items: YellowCard[];
+  onEdit: (item: YellowCard) => void;
+  onDelete: (id: string) => void;
 }
 
-function DataTable({ items }: DataTableProps) {
+function DataTable({ items, onEdit, onDelete }: DataTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -49,10 +51,10 @@ function DataTable({ items }: DataTableProps) {
               <TableCell>{item.yellow_cards}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" onClick={() => onEdit(item)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="destructive" size="icon">
+                  <Button variant="destructive" size="icon" onClick={() => onDelete(item.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -73,9 +75,19 @@ interface YellowCardManagementProps {
   onUpdate: (yellowCard: YellowCard) => void;
   onDelete: (id: string) => void;
   categories: string[];
+  isLoading?: boolean;
 }
 
-const YellowCardManagement: React.FC<YellowCardManagementProps> = ({ yellowCards, teams, players, onCreate, onUpdate, onDelete, categories }) => {
+const YellowCardManagement: React.FC<YellowCardManagementProps> = ({ 
+  yellowCards, 
+  teams, 
+  players, 
+  onCreate, 
+  onUpdate, 
+  onDelete, 
+  categories,
+  isLoading = false
+}) => {
   const [playerId, setPlayerId] = useState('');
   const [teamId, setTeamId] = useState('');
   const [yellowCardsCount, setYellowCardsCount] = useState(0);
@@ -113,6 +125,16 @@ const YellowCardManagement: React.FC<YellowCardManagementProps> = ({ yellowCards
       setTeamId('');
       setYellowCardsCount(0);
     }
+  };
+
+  const handleEdit = (yellowCard: YellowCard) => {
+    // Implement edit functionality
+    onUpdate(yellowCard);
+  };
+
+  const handleDelete = (id: string) => {
+    // Implement delete functionality
+    onDelete(id);
   };
 
   return (
@@ -180,22 +202,17 @@ const YellowCardManagement: React.FC<YellowCardManagementProps> = ({ yellowCards
       </Button>
 
       <div className="mt-8">
-        <DataTable
-          items={yellowCards.map((card) => ({
-            id: card.id,
-            player_id: card.playerId || card.player_id || '',
-            team_id: card.teamId || card.team_id || '',
-            yellow_cards: card.yellowCards || card.yellow_cards || 0,
-            championship_id: card.championshipId || card.championship_id || null,
-            name: card.name || 'Desconhecido',
-            team: card.team || 'Time desconhecido',
-            category: card.category,
-            playerId: card.playerId || card.player_id || '',
-            teamId: card.teamId || card.team_id || '',
-            yellowCards: card.yellowCards || card.yellow_cards || 0,
-            championshipId: card.championshipId || card.championship_id || null,
-          }))}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-primary"></div>
+          </div>
+        ) : (
+          <DataTable
+            items={yellowCards}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
     </div>
   );
