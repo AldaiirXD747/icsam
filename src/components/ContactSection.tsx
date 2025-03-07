@@ -1,215 +1,207 @@
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { sendEmail } from '@/services/emailService';
+import { Loader2 } from 'lucide-react';
+
+// Form schema with validation
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres' }),
+  email: z.string().email({ message: 'Informe um email válido' }),
+  subject: z.string().min(5, { message: 'O assunto deve ter pelo menos 5 caracteres' }),
+  message: z.string().min(10, { message: 'A mensagem deve ter pelo menos 10 caracteres' }),
+});
+
+type ContactFormValues = z.infer<typeof formSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Initialize form with react-hook-form and zod validation
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  // Form submission handler
+  const onSubmit = async (values: ContactFormValues) => {
+    setSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Define admin email that will receive contact form submissions
+      const adminEmail = 'admin@example.com'; // Replace with your actual admin email
+      
+      const { success, error } = await sendEmail({
+        to: adminEmail,
+        subject: `Formulário de Contato: ${values.subject}`,
+        name: values.name,
+        email: values.email,
+        message: values.message,
+        type: 'contact',
+      });
+      
+      if (success) {
+        toast({
+          title: "Mensagem enviada!",
+          description: "Agradecemos seu contato. Responderemos em breve.",
+          variant: "default",
+        });
+        
+        // Reset form after successful submission
+        form.reset();
+      } else {
+        throw new Error(error || 'Falha ao enviar mensagem');
+      }
+    } catch (error: any) {
+      console.error('Error submitting contact form:', error);
+      
       toast({
-        title: "Mensagem enviada",
-        description: "Agradecemos seu contato. Responderemos em breve!",
-        duration: 5000,
+        title: "Erro ao enviar mensagem",
+        description: error.message || "Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente.",
+        variant: "destructive",
       });
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    }, 1500);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <div className="inline-block bg-lime-primary bg-opacity-20 px-4 py-1.5 rounded-full mb-2">
-            <span className="text-blue-primary font-medium text-sm">Entre em Contato</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-blue-primary">Fale Conosco</h2>
+    <section className="py-12 px-4 bg-gradient-to-b from-gray-50 to-white">
+      <div className="container mx-auto max-w-4xl">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-blue-primary mb-4">Entre em Contato</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Tem alguma dúvida, sugestão ou gostaria de conhecer mais sobre nossos projetos? 
-            Envie-nos uma mensagem e entraremos em contato.
+            Tem alguma dúvida, sugestão ou quer saber mais sobre a Copa Sesc? 
+            Preencha o formulário abaixo e entraremos em contato o mais breve possível.
           </p>
         </div>
-
-        <div className="flex flex-col lg:flex-row gap-12">
-          <div className="lg:w-2/5">
-            <div className="glass-card p-8 h-full">
-              <h3 className="text-2xl font-bold text-blue-primary mb-6">Informações de Contato</h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <div className="mr-4 p-3 rounded-full bg-blue-primary text-white">
-                    <Mail size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-primary">Email</p>
-                    <a href="mailto:contato@institutocriancasantamaria.com.br" className="text-gray-600 hover:text-blue-primary transition-colors">
-                      contato@institutocriancasantamaria.com.br
-                    </a>
-                  </div>
-                </div>
+        
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Seu nome" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <div className="flex items-start">
-                  <div className="mr-4 p-3 rounded-full bg-blue-primary text-white">
-                    <Phone size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-primary">Telefone</p>
-                    <a href="tel:+5561993128187" className="text-gray-600 hover:text-blue-primary transition-colors">
-                      (61) 99312-8187
-                    </a>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="mr-4 p-3 rounded-full bg-blue-primary text-white">
-                    <MapPin size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-primary">Endereço</p>
-                    <address className="text-gray-600 not-italic">
-                      Quadra 309 Conjunto A - lote 12<br />
-                      Santa Maria, Brasília - DF<br />
-                      <a 
-                        href="https://maps.app.goo.gl/DCN2rJ3GmN2CwmXL7" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-blue-primary hover:underline mt-1 inline-block"
-                      >
-                        Ver no Google Maps
-                      </a>
-                    </address>
-                  </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="seu-email@exemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               
-              <div className="mt-8">
-                <div className="bg-gray-100 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-primary mb-2">Horário de Funcionamento</h4>
-                  <ul className="space-y-2 text-gray-600">
-                    <li className="flex justify-between">
-                      <span>Segunda a Sexta:</span>
-                      <span>8h às 18h</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span>Sábado:</span>
-                      <span>8h às 12h</span>
-                    </li>
-                    <li className="flex justify-between">
-                      <span>Domingo:</span>
-                      <span>Fechado</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              <FormField
+                control={form.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assunto</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Assunto da mensagem" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mensagem</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Digite sua mensagem aqui..." 
+                        className="min-h-[150px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                type="submit" 
+                className="w-full md:w-auto btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar Mensagem'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </div>
+        
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="w-12 h-12 bg-blue-100 text-blue-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
+            <h3 className="text-lg font-semibold mb-2">Email</h3>
+            <p className="text-gray-600">contato@copasesc.com.br</p>
           </div>
           
-          <div className="lg:w-3/5">
-            <div className="glass-card p-8">
-              <h3 className="text-2xl font-bold text-blue-primary mb-6">Envie uma Mensagem</h3>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Nome Completo
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Seu nome"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="seu.email@exemplo.com"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
-                    Assunto
-                  </label>
-                  <Input
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="Assunto da mensagem"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                    Mensagem
-                  </label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Digite sua mensagem aqui..."
-                    rows={5}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Button 
-                    type="submit" 
-                    className="bg-blue-primary hover:bg-blue-light text-white w-full flex items-center justify-center"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
-                    <Send size={16} className="ml-2" />
-                  </Button>
-                </div>
-              </form>
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="w-12 h-12 bg-blue-100 text-blue-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
             </div>
+            <h3 className="text-lg font-semibold mb-2">Telefone</h3>
+            <p className="text-gray-600">(00) 0000-0000</p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="w-12 h-12 bg-blue-100 text-blue-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Endereço</h3>
+            <p className="text-gray-600">Av. Exemplo, 1000 - Centro</p>
           </div>
         </div>
       </div>
