@@ -5,7 +5,7 @@ import { migrateChampionships } from "./migrateChampionships";
 import { migrateTeams } from "./migrateTeams";
 import { migratePlayers } from "./migratePlayers";
 import { migrateMatches } from "./migrateMatches";
-import { migrateStatistics } from "./migrateStatistics";
+import { migrateStatistics, createStandingsTable } from "./migrateStatistics";
 
 /**
  * This utility script migrates existing data to Supabase
@@ -14,6 +14,9 @@ import { migrateStatistics } from "./migrateStatistics";
 export const migrateDataToSupabase = async () => {
   try {
     console.log("Iniciando migração de dados para o Supabase...");
+    
+    // Verificar se a tabela standings existe, se não, criar
+    await createStandingsTable();
     
     // Fetch data from public endpoints
     const publicDataSources = await fetchPublicData();

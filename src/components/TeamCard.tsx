@@ -5,7 +5,7 @@ interface TeamCardProps {
   id: number;
   name: string;
   logo: string;
-  categories: string[];
+  categories: string[] | string;
   group: string;
 }
 
@@ -13,7 +13,7 @@ const TeamCard: React.FC<TeamCardProps> = ({ id, name, logo, categories, group }
   // Garantir que as categorias sejam sempre um array, mesmo que venham como string
   const categoriesArray = Array.isArray(categories) 
     ? categories 
-    : categories?.toString().split(',') || [];
+    : typeof categories === 'string' ? categories.split(',') : [];
   
   return (
     <Link to={`/teams/${id}`} className="block">

@@ -8,11 +8,12 @@ import TeamManagement from '@/components/admin/TeamManagement';
 import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
 import StatisticsManagement from '@/components/admin/StatisticsManagement';
+import StandingsManagement from '@/components/admin/StandingsManagement';
 import PlayerManagement from '@/components/admin/PlayerManagement';
 import GalleryManagement from '@/components/admin/GalleryManagement';
 import DataSyncManager from '@/components/admin/DataSyncManager';
 import { useUser } from '@/lib/clerk-mock';
-import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon, Database } from 'lucide-react';
+import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon, Database, Table } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("championships");
@@ -43,7 +44,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
                   <TabsTrigger value="championships" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
                     <Trophy className="h-4 w-4 mr-2" />
                     Campeonatos
@@ -59,6 +60,10 @@ const AdminDashboard = () => {
                   <TabsTrigger value="matches" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
                     <CalendarDays className="h-4 w-4 mr-2" />
                     Partidas
+                  </TabsTrigger>
+                  <TabsTrigger value="standings" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <Table className="h-4 w-4 mr-2" />
+                    Classificação
                   </TabsTrigger>
                   <TabsTrigger value="statistics" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
                     <BarChart4 className="h-4 w-4 mr-2" />
@@ -84,6 +89,10 @@ const AdminDashboard = () => {
                 
                 <TabsContent value="matches" className="p-4 border rounded-md min-h-[500px]">
                   <MatchManagement />
+                </TabsContent>
+                
+                <TabsContent value="standings" className="p-4 border rounded-md min-h-[500px]">
+                  <StandingsManagement />
                 </TabsContent>
                 
                 <TabsContent value="statistics" className="p-4 border rounded-md min-h-[500px]">
