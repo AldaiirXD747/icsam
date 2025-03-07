@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { MapPin, Mail, Phone, Facebook, Instagram, Twitter, ExternalLink } from 'lucide-react';
 
@@ -28,7 +27,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               <a 
-                href="https://facebook.com" 
+                href="https://www.facebook.com/share/1AAG7QWqqo/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-white hover:text-lime-primary transition-colors bg-blue-light p-2 rounded-full"
@@ -37,7 +36,7 @@ const Footer = () => {
                 <Facebook size={18} />
               </a>
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/institutocriancasanta/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-white hover:text-lime-primary transition-colors bg-blue-light p-2 rounded-full"
