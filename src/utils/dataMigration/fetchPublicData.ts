@@ -1,3 +1,4 @@
+
 import axios from "axios";
 
 /**
@@ -104,37 +105,91 @@ export const getHardcodedTeams = () => {
   return [
     {
       id: "time-1",
-      name: "Leões da Base",
-      description: "Equipe de formação de atletas",
-      logo: "/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png",
-      category: "SUB-15",
+      name: "Federal",
+      description: "Time do Plano Piloto",
+      logo: "/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png",
+      category: "SUB-11,SUB-13",
       groupName: "Grupo A",
       active: true
     },
     {
       id: "time-2",
-      name: "Águias FC",
+      name: "Furacão",
       description: "Time tradicional da região",
       logo: "/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png",
-      category: "SUB-15",
+      category: "SUB-11,SUB-13",
       groupName: "Grupo A",
       active: true
     },
     {
       id: "time-3",
-      name: "Gama Jovem",
-      description: "Base do Gama",
-      logo: "/lovable-uploads/f6948c38-54be-49e9-9699-59f65b3d9ad6.png",
-      category: "SUB-15",
-      groupName: "Grupo B",
+      name: "Alvinegro",
+      description: "Time tradicional",
+      logo: "/lovable-uploads/f1f2ae6a-22d0-4a9b-89ac-d11a3e1db81b.png",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo A",
       active: true
     },
     {
       id: "time-4",
-      name: "Formação Brasília",
-      description: "Instituto de formação de atletas",
+      name: "Estrela",
+      description: "Time em ascensão",
       logo: "/lovable-uploads/0b71f7dd-5e7e-46d7-a9c6-7c4d93e26e31.png", 
-      category: "SUB-15",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo A",
+      active: true
+    },
+    {
+      id: "time-5",
+      name: "Grêmio Ocidental",
+      description: "Time tradicional",
+      logo: "/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png", 
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo A",
+      active: true
+    },
+    {
+      id: "time-6",
+      name: "Atlético City",
+      description: "Time de Taguatinga",
+      logo: "/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo B",
+      active: true
+    },
+    {
+      id: "time-7",
+      name: "BSA",
+      description: "Time competitivo",
+      logo: "/lovable-uploads/b57c03b4-f522-4117-86e8-8ecb86f62697.png",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo B",
+      active: true
+    },
+    {
+      id: "time-8",
+      name: "Lyon",
+      description: "Time de Samambaia",
+      logo: "/lovable-uploads/9ed392b8-8a39-4ee2-99c1-74b33ce2b4d5.png",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo B",
+      active: true
+    },
+    {
+      id: "time-9",
+      name: "Monte",
+      description: "Time de Planaltina",
+      logo: "/lovable-uploads/71480ca7-a47e-49be-bcbf-3fdc06bdfcde.png",
+      category: "SUB-11,SUB-13",
+      groupName: "Grupo B",
+      active: true
+    },
+    {
+      id: "time-10",
+      name: "Guerreiros",
+      description: "Time de Santa Maria",
+      logo: "/lovable-uploads/66e24167-a33f-4db3-826c-ee360c64652d.png",
+      category: "SUB-11,SUB-13",
       groupName: "Grupo B",
       active: true
     }

@@ -10,7 +10,17 @@ export const migrateTeams = async (teams: any[]) => {
     console.log(`Migrando ${teams.length} times...`);
     const teamsMap = new Map();
     
+    let migratedCount = 0;
+    let skippedCount = 0;
+    
     for (const team of teams) {
+      // Skip if team is undefined or doesn't have required fields
+      if (!team || !team.name) {
+        console.log(`Pulando time indefinido ou sem nome`);
+        skippedCount++;
+        continue;
+      }
+      
       // Map public data fields to admin panel fields
       const teamData = {
         name: team.name,
@@ -37,16 +47,19 @@ export const migrateTeams = async (teams: any[]) => {
           console.error(`Erro ao inserir time ${teamData.name}:`, error);
         } else {
           console.log(`Time ${teamData.name} migrado com sucesso`);
+          migratedCount++;
           // Store mapping between old ID and new ID
           teamsMap.set(team.id, data[0].id);
         }
       } else {
         console.log(`Time ${teamData.name} já existe no Supabase (id: ${existingTeam.id})`);
+        skippedCount++;
         // Store mapping between old ID and existing ID
         teamsMap.set(team.id, existingTeam.id);
       }
     }
     
+    console.log(`Migração de times concluída: ${migratedCount} migrados, ${skippedCount} pulados`);
     return teamsMap;
   } catch (error) {
     console.error("Erro ao migrar times:", error);
