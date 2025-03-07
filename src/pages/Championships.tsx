@@ -19,7 +19,7 @@ interface Championship {
   start_date: string;
   end_date: string;
   status: string;
-  categories: string[];
+  categories: string[] | any; // Accept any for JSON
 }
 
 const Championships = () => {
@@ -38,7 +38,15 @@ const Championships = () => {
         
         if (error) throw error;
         
-        setChampionships(data || []);
+        // Transform the data to ensure categories is always an array
+        const transformedData = data?.map(championship => ({
+          ...championship,
+          categories: Array.isArray(championship.categories) 
+            ? championship.categories 
+            : championship.categories ? [championship.categories] : []
+        }));
+        
+        setChampionships(transformedData || []);
       } catch (err) {
         console.error('Erro ao carregar campeonatos:', err);
         setError('Não foi possível carregar os campeonatos. Por favor, tente novamente mais tarde.');
@@ -147,13 +155,13 @@ const Championships = () => {
                     </div>
                     {championship.categories && championship.categories.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {Array.isArray(championship.categories) ? championship.categories.map((category, index) => (
+                        {Array.isArray(championship.categories) ? championship.categories.map((category: string, index: number) => (
                           <Badge key={index} variant="outline" className="bg-gray-50">
                             {category}
                           </Badge>
                         )) : (
                           <Badge variant="outline" className="bg-gray-50">
-                            {championship.categories.toString()}
+                            {String(championship.categories)}
                           </Badge>
                         )}
                       </div>

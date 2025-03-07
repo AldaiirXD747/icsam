@@ -26,7 +26,10 @@ export const cleanAllData = async () => {
     
     for (const table of tables) {
       console.log(`Removendo registros da tabela ${table}...`);
-      const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error } = await supabase
+        .from(table as any)
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
       
       if (error) {
         console.error(`Erro ao limpar tabela ${table}:`, error);
