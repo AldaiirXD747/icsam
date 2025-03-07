@@ -101,9 +101,20 @@ export const getChampionshipMatches = async (
     let query = supabase
       .from('matches')
       .select(`
-        *,
-        home:home_team(id, name, logo),
-        away:away_team(id, name, logo)
+        id,
+        date,
+        time,
+        location,
+        category,
+        home_team,
+        away_team,
+        home_score,
+        away_score,
+        status,
+        round,
+        championship_id,
+        home_team:home_team(id, name, logo),
+        away_team:away_team(id, name, logo)
       `)
       .eq('championship_id', championshipId)
       .order('date', { ascending: true })
@@ -121,23 +132,29 @@ export const getChampionshipMatches = async (
     
     if (error) throw error;
     
-    return (data || []).map(match => ({
-      id: match.id,
-      date: match.date,
-      time: match.time,
-      location: match.location,
-      category: match.category,
-      home_team: match.home_team,
-      away_team: match.away_team,
-      home_score: match.home_score,
-      away_score: match.away_score,
-      status: match.status,
-      round: match.round,
-      home_team_name: match.home?.name,
-      away_team_name: match.away?.name,
-      home_team_logo: match.home?.logo,
-      away_team_logo: match.away?.logo
-    }));
+    return (data || []).map(match => {
+      // Safely access nested data
+      const homeTeam = match.home_team as any;
+      const awayTeam = match.away_team as any;
+      
+      return {
+        id: match.id,
+        date: match.date,
+        time: match.time,
+        location: match.location,
+        category: match.category,
+        home_team: match.home_team,
+        away_team: match.away_team,
+        home_score: match.home_score,
+        away_score: match.away_score,
+        status: match.status,
+        round: match.round,
+        home_team_name: homeTeam ? homeTeam.name : 'Unknown',
+        away_team_name: awayTeam ? awayTeam.name : 'Unknown',
+        home_team_logo: homeTeam ? homeTeam.logo : null,
+        away_team_logo: awayTeam ? awayTeam.logo : null
+      };
+    });
   } catch (error) {
     console.error('Error fetching championship matches:', error);
     return [];

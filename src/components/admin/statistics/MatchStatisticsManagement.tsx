@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -38,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from 'lucide-react';
+import { MatchWithPlayers } from '@/types/championship';
 
 interface Player {
   id: string;
@@ -90,7 +90,23 @@ const MatchStatisticsManagement = () => {
         throw error;
       }
       
-      return data as Match[];
+      // Convert the JSON strings to actual arrays of Player objects
+      return (data as MatchWithPlayers[]).map(match => {
+        // Parse the JSON home_players and away_players
+        const homePlayers = Array.isArray(match.home_players) 
+          ? match.home_players 
+          : [];
+        
+        const awayPlayers = Array.isArray(match.away_players) 
+          ? match.away_players 
+          : [];
+        
+        return {
+          ...match,
+          home_players: homePlayers as Player[],
+          away_players: awayPlayers as Player[]
+        } as Match;
+      });
     }
   });
 

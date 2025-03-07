@@ -59,3 +59,20 @@ export interface ChampionshipStanding {
   goals_against: number;
   goal_difference: number;
 }
+
+// New interface for the RPC function result
+export interface MatchWithPlayers {
+  match_id: string;
+  match_date: string;
+  match_time: string;
+  match_location: string;
+  match_category: string;
+  match_status: string;
+  match_round: string | null;
+  home_team_id: string;
+  home_team_name: string;
+  away_team_id: string;
+  away_team_name: string;
+  home_players: Json;
+  away_players: Json;
+}
