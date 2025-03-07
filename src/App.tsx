@@ -31,9 +31,6 @@ import TeamDashboard from './pages/TeamDashboard';
 // Componentes
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Footer from './components/Footer';
-
-import './App.css';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -110,7 +107,6 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
-          <Footer />
           <Toaster />
         </div>
       </Router>

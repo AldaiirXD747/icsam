@@ -100,11 +100,16 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-semibold;
   }
+  
+  /* Smooth scrolling for entire page */
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white bg-opacity-70 backdrop-blur-md border border-white border-opacity-20 rounded-xl shadow-glass transition-all duration-300;
+    @apply bg-white bg-opacity-90 backdrop-blur-md border border-white border-opacity-20 rounded-xl shadow-glass transition-all duration-300;
   }
 
   .glass-card:hover {
@@ -112,11 +117,11 @@
   }
 
   .btn-primary {
-    @apply bg-blue-primary text-white hover:bg-blue-light transition-colors duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm;
+    @apply bg-blue-primary text-white hover:bg-blue-light transition-all duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5;
   }
 
   .btn-secondary {
-    @apply bg-lime-primary text-blue-primary hover:bg-lime-dark transition-colors duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm;
+    @apply bg-lime-primary text-blue-primary hover:bg-lime-dark transition-all duration-300 rounded-lg px-6 py-2.5 font-medium shadow-sm hover:shadow-md hover:-translate-y-0.5;
   }
 
   .heading-gradient {
@@ -150,4 +155,84 @@
     background-size: 200% 100%;
     animation: shine 2s infinite linear;
   }
+  
+  /* Link hover effect - underline animation */
+  .hover-link {
+    @apply relative inline-block text-blue-primary;
+  }
+  
+  .hover-link::after {
+    @apply content-[''] absolute w-full h-0.5 bg-lime-primary left-0 bottom-0 scale-x-0 origin-right transition-transform duration-300;
+  }
+  
+  .hover-link:hover::after {
+    @apply scale-x-100 origin-left;
+  }
+  
+  /* Card hover effect */
+  .hover-card {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  /* Elegant input style */
+  .elegant-input {
+    @apply bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-primary/30 focus:border-blue-primary transition-all duration-300;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulsate {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.95); }
+}
+
+@keyframes shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Adicionar mais keyframes para animações */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulsate {
+  animation: pulsate 2s ease-in-out infinite;
+}
+
+.animate-bounce-light {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* Glassmorphism effects */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glassmorphism-dark {
+  background: rgba(26, 35, 126, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(26, 35, 126, 0.1);
+}
+
+/* Adicionar efeito de transição global para elementos interativos */
+a, button, input, select, textarea {
+  @apply transition-all duration-300;
 }

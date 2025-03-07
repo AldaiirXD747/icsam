@@ -1,12 +1,29 @@
 
 import { Link } from 'react-router-dom';
 import { MapPin, Mail, Phone, Facebook, Instagram, Twitter, ExternalLink, Heart, ChevronRight, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      }
+    }
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 50 } }
+  };
+  
   return (
-    <footer className="bg-gradient-to-r from-blue-dark via-blue-primary to-blue-light text-white">
+    <footer className="bg-gradient-to-r from-blue-dark via-blue-primary to-blue-light text-white relative">
       {/* Ondas decorativas no topo do footer */}
       <div className="w-full overflow-hidden">
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-8 text-background fill-current">
@@ -16,12 +33,18 @@ const Footer = () => {
         </svg>
       </div>
       
-      <div className="container mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="container mx-auto px-4 py-12">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={container}
+        >
           {/* Primeira coluna - Logo e informações */}
-          <div className="col-span-1 lg:col-span-1">
-            <Link to="/" className="flex items-center mb-4 group">
-              <div className="bg-white p-1.5 rounded-lg mr-3 transition-transform duration-300 group-hover:rotate-2 group-hover:shadow-lg">
+          <motion.div variants={item} className="col-span-1 lg:col-span-1">
+            <Link to="/" className="flex items-center mb-6 group">
+              <div className="bg-white p-1.5 rounded-lg mr-3 transition-all duration-300 group-hover:rotate-2 group-hover:shadow-lg">
                 <img 
                   src="/lovable-uploads/a77367ed-485d-4364-b35e-3003be91a7cd.png" 
                   alt="Instituto Criança Santa Maria" 
@@ -36,121 +59,38 @@ const Footer = () => {
             <p className="text-gray-200 mb-4 text-sm">
               Transformando vidas através do esporte e educação, promovendo inclusão social e desenvolvimento humano.
             </p>
-            <div className="flex space-x-2 mt-6">
-              <a 
-                href="https://www.facebook.com/share/1AAG7QWqqo/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-blue-light/30 hover:bg-blue-light hover:scale-105 transition-all duration-300 p-2.5 rounded-full"
-                aria-label="Facebook"
-              >
-                <Facebook size={18} />
-              </a>
-              <a 
-                href="https://www.instagram.com/institutocriancasanta/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-blue-light/30 hover:bg-blue-light hover:scale-105 transition-all duration-300 p-2.5 rounded-full"
-                aria-label="Instagram"
-              >
-                <Instagram size={18} />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-blue-light/30 hover:bg-blue-light hover:scale-105 transition-all duration-300 p-2.5 rounded-full"
-                aria-label="Twitter"
-              >
-                <Twitter size={18} />
-              </a>
-              <a 
-                href="https://institutocriancasantamaria.com.br" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="bg-blue-light/30 hover:bg-blue-light hover:scale-105 transition-all duration-300 p-2.5 rounded-full"
-                aria-label="Website"
-              >
-                <Globe size={18} />
-              </a>
+            <div className="flex space-x-3 mt-6">
+              <SocialLink href="https://www.facebook.com/share/1AAG7QWqqo/" icon={<Facebook size={18} />} label="Facebook" />
+              <SocialLink href="https://www.instagram.com/institutocriancasanta/" icon={<Instagram size={18} />} label="Instagram" />
+              <SocialLink href="https://twitter.com" icon={<Twitter size={18} />} label="Twitter" />
+              <SocialLink href="https://institutocriancasantamaria.com.br" icon={<Globe size={18} />} label="Website" />
             </div>
-          </div>
+          </motion.div>
           
           {/* Segunda coluna - Links rápidos */}
-          <div className="col-span-1">
-            <h3 className="text-lg font-bold mb-4 flex items-center text-white">
-              <span className="bg-lime-primary w-2 h-6 rounded-sm mr-2"></span>
-              Links Rápidos
-            </h3>
+          <motion.div variants={item} className="col-span-1">
+            <FooterHeading>Links Rápidos</FooterHeading>
             <ul className="space-y-3">
-              <li>
-                <Link to="/" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/sobre" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Sobre
-                </Link>
-              </li>
-              <li>
-                <Link to="/campeonatos" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Campeonatos
-                </Link>
-              </li>
-              <li>
-                <Link to="/times" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Times
-                </Link>
-              </li>
-              <li>
-                <Link to="/estatisticas" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Estatísticas
-                </Link>
-              </li>
-              <li>
-                <Link to="/galeria" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Galeria
-                </Link>
-              </li>
+              <FooterLink to="/">Home</FooterLink>
+              <FooterLink to="/sobre">Sobre</FooterLink>
+              <FooterLink to="/campeonatos">Campeonatos</FooterLink>
+              <FooterLink to="/times">Times</FooterLink>
+              <FooterLink to="/estatisticas">Estatísticas</FooterLink>
+              <FooterLink to="/galeria">Galeria</FooterLink>
             </ul>
-          </div>
+          </motion.div>
           
           {/* Terceira coluna - Links administrativos */}
-          <div className="col-span-1">
-            <h3 className="text-lg font-bold mb-4 flex items-center text-white">
-              <span className="bg-lime-primary w-2 h-6 rounded-sm mr-2"></span>
-              Institucional
-            </h3>
+          <motion.div variants={item} className="col-span-1">
+            <FooterHeading>Institucional</FooterHeading>
             <ul className="space-y-3">
-              <li>
-                <Link to="/transparencia" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Transparência
-                </Link>
-              </li>
-              <li>
-                <Link to="/contato" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Contato
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
-                  <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
-                  Área Administrativa
-                </Link>
-              </li>
+              <FooterLink to="/transparencia">Transparência</FooterLink>
+              <FooterLink to="/contato">Contato</FooterLink>
+              <FooterLink to="/login">Área Administrativa</FooterLink>
               <li>
                 <a 
                   href="https://www.instagram.com/institutocriancasanta/" 
-                  className="bg-lime-primary text-blue-primary hover:bg-lime-dark flex items-center mt-6 py-2 px-4 rounded-md w-fit transition-all duration-300 group"
+                  className="bg-lime-primary text-blue-primary hover:bg-lime-dark flex items-center mt-6 py-2 px-4 rounded-md w-fit transition-all duration-300 group shadow-md hover:shadow-lg"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -159,29 +99,21 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
+          </motion.div>
           
           {/* Quarta coluna - Contato */}
-          <div className="col-span-1">
-            <h3 className="text-lg font-bold mb-4 flex items-center text-white">
-              <span className="bg-lime-primary w-2 h-6 rounded-sm mr-2"></span>
-              Contato
-            </h3>
+          <motion.div variants={item} className="col-span-1">
+            <FooterHeading>Contato</FooterHeading>
             <ul className="space-y-4">
-              <li className="flex">
-                <Mail className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />
+              <ContactItem icon={<Mail className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />}>
                 <a href="mailto:contato@institutocriancasantamaria.com.br" className="text-gray-200 hover:text-lime-primary transition-colors">
                   contato@institutocriancasantamaria.com.br
                 </a>
-              </li>
-              <li className="flex">
-                <Phone className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />
-                <span className="text-gray-200">
-                  (61) 99312-8187
-                </span>
-              </li>
-              <li className="flex">
-                <MapPin className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />
+              </ContactItem>
+              <ContactItem icon={<Phone className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />}>
+                <span className="text-gray-200">(61) 99312-8187</span>
+              </ContactItem>
+              <ContactItem icon={<MapPin className="text-lime-primary mr-3 h-5 w-5 shrink-0 mt-0.5" />}>
                 <span className="text-gray-200">
                   Quadra 309 Conjunto A - lote 12<br />
                   Santa Maria, Brasília - DF
@@ -195,18 +127,18 @@ const Footer = () => {
                     <ExternalLink className="ml-1 h-3 w-3" />
                   </a>
                 </span>
-              </li>
+              </ContactItem>
             </ul>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
         
         {/* Rodapé com copyright e logotipo do GDF */}
-        <div className="mt-10 pt-8 border-t border-blue-light/30 flex flex-col md:flex-row items-center justify-between">
+        <div className="mt-12 pt-8 border-t border-blue-light/30 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-6 md:mb-0 flex items-center">
             <img 
               src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
               alt="GDF - Governo do Distrito Federal" 
-              className="h-12 bg-white rounded p-1"
+              className="h-12 bg-white rounded p-1 shadow-sm"
             />
             <span className="ml-3 text-xs text-gray-300 hidden md:block">
               Apoio: Governo do Distrito Federal
@@ -221,5 +153,44 @@ const Footer = () => {
     </footer>
   );
 };
+
+// Footer heading component
+const FooterHeading = ({ children }: { children: React.ReactNode }) => (
+  <h3 className="text-lg font-bold mb-5 flex items-center text-white">
+    <span className="bg-lime-primary w-2 h-6 rounded-sm mr-2"></span>
+    {children}
+  </h3>
+);
+
+// Footer link component
+const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
+  <li>
+    <Link to={to} className="text-gray-200 hover:text-lime-primary transition-colors flex items-center group">
+      <ChevronRight className="h-4 w-4 text-lime-primary opacity-0 group-hover:opacity-100 transition-all duration-300 -ml-5 group-hover:ml-0 mr-1" />
+      {children}
+    </Link>
+  </li>
+);
+
+// Social media link component
+const SocialLink = ({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) => (
+  <a 
+    href={href} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="bg-blue-light/30 hover:bg-blue-light hover:scale-105 transition-all duration-300 p-2.5 rounded-full shadow-sm hover:shadow-md"
+    aria-label={label}
+  >
+    {icon}
+  </a>
+);
+
+// Contact item component
+const ContactItem = ({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) => (
+  <li className="flex">
+    {icon}
+    {children}
+  </li>
+);
 
 export default Footer;
