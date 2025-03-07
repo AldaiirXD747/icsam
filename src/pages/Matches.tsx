@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { Match, MatchStatus } from '@/types';
+import { Match } from '@/types';
 import { convertDbMatchToMatch } from '@/utils/typeConverters';
 
 const Matches = () => {
@@ -32,10 +32,12 @@ const Matches = () => {
           // Add team names if available
           if (match.home_team_details) {
             appMatch.home_team_name = match.home_team_details.name;
+            appMatch.homeTeamName = match.home_team_details.name;
           }
           
           if (match.away_team_details) {
             appMatch.away_team_name = match.away_team_details.name;
+            appMatch.awayTeamName = match.away_team_details.name;
           }
           
           return appMatch;
@@ -77,7 +79,6 @@ const Matches = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Match cards will be rendered here */}
               {matches.map(match => (
                 <div key={match.id} className="bg-white rounded-lg shadow-md p-4">
                   <div className="flex justify-between items-center mb-3">

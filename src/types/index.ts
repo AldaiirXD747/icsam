@@ -62,36 +62,74 @@ export interface Match {
   date: string;
   time: string;
   location: string;
+  // Snake case properties (from database)
   home_team: string;
   away_team: string;
   home_score: number | null;
   away_score: number | null;
+  championship_id: string | null;
+  // Camel case properties (used in components)
+  homeTeam?: string;
+  awayTeam?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  championshipId?: string | null;
   status: MatchStatus;
   category: string;
   round: string | null;
-  championship_id: string | null;
   created_at?: string;
+  // Team names
   home_team_name?: string;
   away_team_name?: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
 }
 
 // Types for statistics
 export interface TopScorer {
   id: string;
+  // Snake case properties (from database)
   player_id: string;
   team_id: string;
+  championship_id: string | null;
+  // Camel case properties (used in components)
+  playerId?: string;
+  teamId?: string;
+  championshipId?: string;
   goals: number;
   category: string;
-  championship_id: string | null;
   created_at?: string;
+  // Additional properties for UI
+  name?: string;
+  team?: string;
 }
 
 export interface YellowCardLeader {
   id: string;
+  // Snake case properties (from database)
   player_id: string;
   team_id: string;
   yellow_cards: number;
-  category: string;
   championship_id: string | null;
+  // Camel case properties (used in components)
+  playerId?: string;
+  teamId?: string;
+  yellowCards?: number;
+  championshipId?: string;
+  category: string;
   created_at?: string;
+  // Additional properties for UI
+  name?: string;
+  team?: string;
+}
+
+// Type for extending match with additional admin properties
+export interface AdminMatch extends Match {
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  championshipId: string | null;
+  homeTeamName: string;
+  awayTeamName: string;
 }
