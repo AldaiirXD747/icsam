@@ -1,7 +1,6 @@
 
 import React from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import ContactSection from '@/components/ContactSection';
 
 const Contact = () => {
@@ -11,7 +10,6 @@ const Contact = () => {
       <main className="flex-1 mt-16">
         <ContactSection />
       </main>
-      <Footer />
     </div>
   );
 };

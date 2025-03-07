@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -150,8 +149,6 @@ const Login = () => {
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };

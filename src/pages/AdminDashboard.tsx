@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import TeamManagement from '@/components/admin/TeamManagement';
@@ -107,7 +106,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

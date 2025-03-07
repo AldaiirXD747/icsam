@@ -5,7 +5,6 @@ import { Loader2 } from 'lucide-react';
 import { Match } from '@/types';
 import { convertDbMatchToMatch } from '@/utils/typeConverters';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -133,7 +132,6 @@ const Matches = () => {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
