@@ -76,3 +76,17 @@ export interface MatchWithPlayers {
   home_players: Json;
   away_players: Json;
 }
+
+// User roles
+export type UserRole = 'admin' | 'team_manager';
+
+// User management interfaces
+export interface UserAccount {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  team_id?: string | null;
+  team_name?: string | null;
+  created_at?: string;
+}

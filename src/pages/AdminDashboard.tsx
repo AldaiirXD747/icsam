@@ -11,9 +11,10 @@ import StandingsManagement from '@/components/admin/StandingsManagement';
 import PlayerManagement from '@/components/admin/PlayerManagement';
 import GalleryManagement from '@/components/admin/GalleryManagement';
 import TransparencyManagement from '@/components/admin/TransparencyManagement';
+import UserManagement from '@/components/admin/UserManagement';
 import DataSyncManager from '@/components/admin/DataSyncManager';
 import { useUser } from '@/lib/clerk-mock';
-import { BarChart4, Trophy, Users, CalendarDays, Medal, ImageIcon, Database, Table, FileText } from 'lucide-react';
+import { BarChart4, Trophy, Users, UserCog, CalendarDays, Medal, ImageIcon, Database, Table, FileText } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("championships");
@@ -44,7 +45,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-2">
+                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-2">
                   <TabsTrigger value="championships" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
                     <Trophy className="h-4 w-4 mr-2" />
                     Campeonatos
@@ -76,6 +77,10 @@ const AdminDashboard = () => {
                   <TabsTrigger value="transparency" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
                     <FileText className="h-4 w-4 mr-2" />
                     Transparência
+                  </TabsTrigger>
+                  <TabsTrigger value="users" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                    <UserCog className="h-4 w-4 mr-2" />
+                    Usuários
                   </TabsTrigger>
                 </TabsList>
                 
@@ -109,6 +114,10 @@ const AdminDashboard = () => {
                 
                 <TabsContent value="transparency" className="p-4 border rounded-md min-h-[500px]">
                   <TransparencyManagement />
+                </TabsContent>
+                
+                <TabsContent value="users" className="p-4 border rounded-md min-h-[500px]">
+                  <UserManagement />
                 </TabsContent>
               </Tabs>
             </CardContent>
