@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { ChampionshipType } from '@/types/database';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -17,7 +15,6 @@ import TeamCard from '@/components/TeamCard';
 import MatchCard from '@/components/MatchCard';
 import StandingsTable from '@/components/StandingsTable';
 
-// Mock data for the championship detail
 const mockChampionships: ChampionshipType[] = [
   {
     id: "1",
@@ -85,7 +82,6 @@ const Championship = () => {
     const fetchChampionship = async () => {
       setLoading(true);
       try {
-        // In a real implementation, this would be an API call
         const found = mockChampionships.find(c => c.id === championshipId);
         
         if (found) {
@@ -137,7 +133,6 @@ const Championship = () => {
         <div className="pt-20 flex-grow flex items-center justify-center">
           <p className="text-gray-500">Carregando detalhes do campeonato...</p>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -157,7 +152,6 @@ const Championship = () => {
             </Button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -333,7 +327,6 @@ const Championship = () => {
                 <TabsContent value="teams" className="py-6">
                   <h3 className="text-xl font-semibold text-[#1a237e] mb-4">Times Participantes</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* This would show actual team cards in a real implementation */}
                     <div className="bg-gray-100 p-8 rounded-lg text-center text-gray-500">
                       <Users className="h-10 w-10 mx-auto mb-2 text-gray-400" />
                       Nenhum time cadastrado neste campeonato ainda.
@@ -344,7 +337,6 @@ const Championship = () => {
                 <TabsContent value="matches" className="py-6">
                   <h3 className="text-xl font-semibold text-[#1a237e] mb-4">Partidas</h3>
                   <div className="space-y-4">
-                    {/* This would show actual match cards in a real implementation */}
                     <div className="bg-gray-100 p-8 rounded-lg text-center text-gray-500">
                       <ClipboardList className="h-10 w-10 mx-auto mb-2 text-gray-400" />
                       Nenhuma partida cadastrada neste campeonato ainda.
@@ -355,7 +347,6 @@ const Championship = () => {
                 <TabsContent value="standings" className="py-6">
                   <h3 className="text-xl font-semibold text-[#1a237e] mb-4">Classificação</h3>
                   <div className="space-y-4">
-                    {/* This would show actual standings in a real implementation */}
                     <div className="bg-gray-100 p-8 rounded-lg text-center text-gray-500">
                       <BarChart className="h-10 w-10 mx-auto mb-2 text-gray-400" />
                       Classificação não disponível neste momento.
@@ -367,7 +358,6 @@ const Championship = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };
