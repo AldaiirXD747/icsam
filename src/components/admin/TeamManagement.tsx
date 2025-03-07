@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -47,7 +48,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Plus, Pencil, Trash2, User } from 'lucide-react';
+import { Plus, Pencil, Trash2, User, Filter, Search, UsersRound } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -75,13 +76,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { generateRandomString } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTeam,
   updateTeam,
   deleteTeam,
   getTeams,
+  getTeam,
   getUsers,
   updateUser,
 } from "@/lib/api";
@@ -112,6 +116,7 @@ type TeamFormValues = z.infer<typeof teamFormSchema>
 const filterSchema = z.object({
   search: z.string().optional(),
   active: z.boolean().optional(),
+  category: z.string().optional(),
 });
 
 type FilterValues = z.infer<typeof filterSchema>
@@ -123,32 +128,47 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>
 
+const categories = [
+  "SUB-9",
+  "SUB-11", 
+  "SUB-13",
+  "SUB-15", 
+  "SUB-17", 
+  "SUB-20", 
+  "Adulto",
+  "Master",
+  "Veterano"
+];
+
 const TeamManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast()
-  const [open, setOpen] = React.useState(false)
+  const [activeTab, setActiveTab] = useState("teams");
   const [isNewTeamDialogOpen, setIsNewTeamDialogOpen] = useState(false);
   const [isEditTeamDrawerOpen, setIsEditTeamDrawerOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [currentCategory, setCurrentCategory] = useState<string>(searchParams.get('category') || "Todas");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isLogoUploading, setIsLogoUploading] = useState(false);
   const [isLogoDeleting, setIsLogoDeleting] = useState(false);
   const [filter, setFilter] = useState<FilterValues>({
     search: searchParams.get('search') || '',
     active: searchParams.get('active') === 'true' ? true : searchParams.get('active') === 'false' ? false : undefined,
+    category: searchParams.get('category') || '',
   });
   const [isUserAssignmentDialogOpen, setIsUserAssignmentDialogOpen] = useState(false);
   const [selectedTeamForUserAssignment, setSelectedTeamForUserAssignment] = useState<Team | null>(null);
-  const [isTeamActive, setIsTeamActive] = useState<boolean>(true);
-  const [isTeamInactive, setIsTeamInactive] = useState<boolean>(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isUserUpdating, setIsUserUpdating] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [isTeamCreating, setIsTeamCreating] = useState(false);
   const [isTeamUpdating, setIsTeamUpdating] = useState(false);
   const [isTeamDeleting, setIsTeamDeleting] = useState(false);
+  const [isTeamDetailOpen, setIsTeamDetailOpen] = useState(false);
+  const [activeTeamDetailTab, setActiveTeamDetailTab] = useState("profile");
   const { user } = useUser();
+  const isMobile = window.innerWidth < 768;
 
   const {
     data: teams = [],
@@ -169,6 +189,10 @@ const TeamManagement = () => {
     queryKey: ['users'],
     queryFn: () => getUsers(),
   });
+
+  const filteredTeams = currentCategory === "Todas" 
+    ? teams 
+    : teams.filter(team => team.category === currentCategory);
 
   const createTeamMutation = useMutation({
     mutationFn: createTeam,
@@ -320,6 +344,23 @@ const TeamManagement = () => {
     },
     mode: "onChange",
   })
+
+  const handleCategoryChange = (category: string) => {
+    setCurrentCategory(category);
+    if (category === "Todas") {
+      setFilter(prev => ({ ...prev, category: '' }));
+      setSearchParams(prev => {
+        prev.delete('category');
+        return prev;
+      });
+    } else {
+      setFilter(prev => ({ ...prev, category }));
+      setSearchParams(prev => {
+        prev.set('category', category);
+        return prev;
+      });
+    }
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -478,6 +519,11 @@ const TeamManagement = () => {
     setIsEditTeamDrawerOpen(true);
   };
 
+  const handleViewTeamDetails = (team: Team) => {
+    setSelectedTeam(team);
+    setIsTeamDetailOpen(true);
+  };
+
   const handleDeleteTeam = async (teamId: string) => {
     try {
       await deleteTeamMutation.mutateAsync(teamId);
@@ -511,12 +557,10 @@ const TeamManagement = () => {
 
   if (isTeamsLoading) return <p>Carregando times...</p>
   if (isTeamsError) return <p>Erro ao carregar times: {String(teamsError)}</p>
-  if (isUsersLoading) return <p>Carregando usuários...</p>
-  if (isUsersError) return <p>Erro ao carregar usuários: {String(usersError)}</p>
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Times</h2>
         <Button onClick={() => setIsNewTeamDialogOpen(true)} className="flex items-center gap-2">
           <Plus size={16} />
@@ -524,122 +568,431 @@ const TeamManagement = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Input
-          type="text"
-          placeholder="Buscar time..."
-          value={filter.search || ''}
-          onChange={handleSearchChange}
-        />
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="active-teams">Mostrar times ativos:</Label>
-          <Switch
-            id="active-teams"
-            checked={filter.active === true || filter.active === undefined}
-            onCheckedChange={(checked) => handleActiveFilterChange(checked ? undefined : false)}
-          />
-          <Label htmlFor="inactive-teams">Mostrar times inativos:</Label>
-          <Switch
-            id="inactive-teams"
-            checked={filter.active === false || filter.active === undefined}
-            onCheckedChange={(checked) => handleActiveFilterChange(checked ? undefined : true)}
-          />
+      <div className="grid grid-cols-1 gap-4 mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto p-2 border rounded-md bg-white">
+          <Badge 
+            variant={currentCategory === "Todas" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap"
+            onClick={() => handleCategoryChange("Todas")}
+          >
+            Todas
+          </Badge>
+          {categories.map((category) => (
+            <Badge 
+              key={category}
+              variant={currentCategory === category ? "default" : "outline"}
+              className="cursor-pointer whitespace-nowrap"
+              onClick={() => handleCategoryChange(category)}
+            >
+              {category}
+            </Badge>
+          ))}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative w-full">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              type="text"
+              placeholder="Buscar time..."
+              value={filter.search || ''}
+              onChange={handleSearchChange}
+              className="pl-8"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Filter size={16} />
+                  Filtros
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <h4 className="font-medium">Filtrar por status</h4>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="active-teams">Times ativos</Label>
+                      <Switch
+                        id="active-teams"
+                        checked={filter.active === true || filter.active === undefined}
+                        onCheckedChange={(checked) => handleActiveFilterChange(checked ? undefined : false)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="inactive-teams">Times inativos</Label>
+                      <Switch
+                        id="inactive-teams"
+                        checked={filter.active === false || filter.active === undefined}
+                        onCheckedChange={(checked) => handleActiveFilterChange(checked ? undefined : true)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Logo</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Ativo</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.id}>
-                <TableCell>
+      {filteredTeams.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <div className="p-4 rounded-full bg-gray-100 mb-4">
+              <UsersRound className="h-10 w-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-medium">Nenhum time encontrado</h3>
+            <p className="text-gray-500 mt-2 text-center">
+              Não há times para exibir com os filtros atuais. Tente alterar os filtros ou adicione um novo time.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setIsNewTeamDialogOpen(true)}
+            >
+              <Plus size={16} className="mr-2" />
+              Adicionar novo time
+            </Button>
+          </CardContent>
+        </Card>
+      ) : isMobile ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {filteredTeams.map((team) => (
+            <Card key={team.id} className="overflow-hidden">
+              <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+                <div className="flex items-center gap-3">
                   {team.logoUrl ? (
-                    <Avatar>
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={team.logoUrl} alt={team.name} />
                       <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
                     </Avatar>
                   ) : (
-                    <Avatar>
+                    <Avatar className="h-10 w-10">
                       <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
                     </Avatar>
                   )}
-                </TableCell>
-                <TableCell>{team.name}</TableCell>
-                <TableCell>
-                  <Switch
-                    checked={team.active}
-                    onCheckedChange={(checked) => handleTeamActiveChange(team, checked)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Editar time</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={() => handleAssignUser(team)}>
-                            <User className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Atribuir usuário</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação irá deletar o time permanentemente. Tem certeza que deseja continuar?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteTeam(team.id)}>Deletar</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Deletar time</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                  <div>
+                    <CardTitle className="text-base">{team.name}</CardTitle>
+                    <CardDescription className="text-xs">{team.category}</CardDescription>
                   </div>
-                </TableCell>
+                </div>
+                <Switch
+                  checked={team.active}
+                  onCheckedChange={(checked) => handleTeamActiveChange(team, checked)}
+                  className="ml-2"
+                />
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="text-sm text-gray-600">
+                  <p><span className="font-medium">Grupo:</span> {team.group_name}</p>
+                </div>
+              </CardContent>
+              <CardFooter className="p-4 pt-2 flex justify-between border-t">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleViewTeamDetails(team)}
+                >
+                  Detalhes
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação irá deletar o time permanentemente. Tem certeza que deseja continuar?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteTeam(team.id)}>Deletar</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[70px]">Logo</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Grupo</TableHead>
+                <TableHead>Ativo</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredTeams.map((team) => (
+                <TableRow key={team.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewTeamDetails(team)}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {team.logoUrl ? (
+                      <Avatar>
+                        <AvatarImage src={team.logoUrl} alt={team.name} />
+                        <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <Avatar>
+                        <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{team.name}</TableCell>
+                  <TableCell>{team.category}</TableCell>
+                  <TableCell>{team.group_name}</TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Switch
+                      checked={team.active}
+                      onCheckedChange={(checked) => handleTeamActiveChange(team, checked)}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end space-x-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Editar time</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleAssignUser(team)}>
+                              <User className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Atribuir usuário</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação irá deletar o time permanentemente. Tem certeza que deseja continuar?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteTeam(team.id)}>Deletar</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Deletar time</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Team Detail Drawer */}
+      <Drawer open={isTeamDetailOpen} onOpenChange={setIsTeamDetailOpen}>
+        <DrawerContent className="p-0 max-h-[90vh]">
+          <DrawerHeader className="px-4 py-3 border-b">
+            <DrawerTitle className="flex items-center gap-3">
+              {selectedTeam?.logoUrl ? (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={selectedTeam.logoUrl} alt={selectedTeam.name} />
+                  <AvatarFallback>{selectedTeam?.name.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>{selectedTeam?.name?.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+              )}
+              {selectedTeam?.name}
+            </DrawerTitle>
+            <DrawerDescription>
+              {selectedTeam?.category} - {selectedTeam?.group_name}
+            </DrawerDescription>
+          </DrawerHeader>
+          
+          <div className="px-4 py-2 border-b">
+            <Tabs value={activeTeamDetailTab} onValueChange={setActiveTeamDetailTab} className="w-full">
+              <TabsList className="grid grid-cols-3 mb-2">
+                <TabsTrigger value="profile">Perfil</TabsTrigger>
+                <TabsTrigger value="players">Jogadores</TabsTrigger>
+                <TabsTrigger value="statistics">Estatísticas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          
+          <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 140px)' }}>
+            <TabsContent value="profile" className="mt-0">
+              {selectedTeam && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-gray-500">Nome</Label>
+                      <p className="font-medium">{selectedTeam.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">Categoria</Label>
+                      <p className="font-medium">{selectedTeam.category}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">Grupo</Label>
+                      <p className="font-medium">{selectedTeam.group_name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">Status</Label>
+                      <p className="font-medium">
+                        <Badge variant={selectedTeam.active ? "default" : "destructive"}>
+                          {selectedTeam.active ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </p>
+                    </div>
+                    {selectedTeam.foundationDate && (
+                      <div>
+                        <Label className="text-xs text-gray-500">Data de Fundação</Label>
+                        <p className="font-medium">{format(new Date(selectedTeam.foundationDate), "dd/MM/yyyy")}</p>
+                      </div>
+                    )}
+                    {selectedTeam.description && (
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-500">Descrição</Label>
+                        <p>{selectedTeam.description}</p>
+                      </div>
+                    )}
+                    {selectedTeam.email && (
+                      <div>
+                        <Label className="text-xs text-gray-500">Email</Label>
+                        <p className="font-medium">{selectedTeam.email}</p>
+                      </div>
+                    )}
+                    {selectedTeam.phone && (
+                      <div>
+                        <Label className="text-xs text-gray-500">Telefone</Label>
+                        <p className="font-medium">{selectedTeam.phone}</p>
+                      </div>
+                    )}
+                    {selectedTeam.websiteUrl && (
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-500">Website</Label>
+                        <p className="font-medium text-blue-600 hover:underline">
+                          <a href={selectedTeam.websiteUrl} target="_blank" rel="noopener noreferrer">
+                            {selectedTeam.websiteUrl}
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    {(selectedTeam.address || selectedTeam.city || selectedTeam.state || selectedTeam.country) && (
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-500">Endereço</Label>
+                        <p>
+                          {[
+                            selectedTeam.address,
+                            selectedTeam.city,
+                            selectedTeam.state,
+                            selectedTeam.country
+                          ].filter(Boolean).join(", ")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button variant="outline" onClick={() => setIsTeamDetailOpen(false)}>
+                      Fechar
+                    </Button>
+                    <Button onClick={() => {
+                      setIsTeamDetailOpen(false);
+                      handleEditTeam(selectedTeam);
+                    }}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="players" className="mt-0">
+              <div className="text-center py-8">
+                {selectedTeam && (
+                  <div className="flex flex-col items-center">
+                    <UsersRound className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Gerenciar Jogadores</h3>
+                    <p className="text-gray-500 mb-4">Visualize e gerencie os jogadores do time {selectedTeam.name}</p>
+                    <Button onClick={() => {
+                      setIsTeamDetailOpen(false);
+                      // Navigate to the player management page for this team
+                      window.location.href = `/admin/teams/${selectedTeam.id}/players`;
+                    }}>
+                      Ir para Gerenciamento de Jogadores
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="statistics" className="mt-0">
+              <div className="text-center py-8">
+                {selectedTeam && (
+                  <div className="flex flex-col items-center">
+                    <BarChart4 className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Estatísticas do Time</h3>
+                    <p className="text-gray-500 mb-4">Visualize estatísticas detalhadas do time {selectedTeam.name}</p>
+                    <Button onClick={() => {
+                      setIsTeamDetailOpen(false);
+                      // Navigate to the team statistics page
+                      window.location.href = `/admin/teams/${selectedTeam.id}/statistics`;
+                    }}>
+                      Ir para Estatísticas
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </div>
+          
+          <DrawerFooter className="pt-2">
+            <DrawerClose asChild>
+              <Button variant="outline">Fechar</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog open={isNewTeamDialogOpen} onOpenChange={setIsNewTeamDialogOpen}>
         <DialogTrigger asChild>
@@ -663,6 +1016,51 @@ const TeamManagement = () => {
                     <FormControl>
                       <Input placeholder="Nome do time" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="group_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grupo</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um grupo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Grupo A">Grupo A</SelectItem>
+                        <SelectItem value="Grupo B">Grupo B</SelectItem>
+                        <SelectItem value="Grupo C">Grupo C</SelectItem>
+                        <SelectItem value="Grupo D">Grupo D</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -716,6 +1114,34 @@ const TeamManagement = () => {
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Email do time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Telefone do time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="websiteUrl"
@@ -724,84 +1150,6 @@ const TeamManagement = () => {
                     <FormLabel>Website</FormLabel>
                     <FormControl>
                       <Input placeholder="URL do website" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Email do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Telefone do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Endereço do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cidade</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Cidade do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Estado do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>País</FormLabel>
-                    <FormControl>
-                      <Input placeholder="País do time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -819,7 +1167,7 @@ const TeamManagement = () => {
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "w-[240px] pl-3 text-left font-normal",
+                              "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -868,7 +1216,7 @@ const TeamManagement = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">
+              <Button type="submit" className="w-full">
                 {isTeamCreating ? (
                   <>
                     Criando...
@@ -906,6 +1254,51 @@ const TeamManagement = () => {
                     <FormControl>
                       <Input placeholder="Nome do time" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="group_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Grupo</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um grupo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Grupo A">Grupo A</SelectItem>
+                        <SelectItem value="Grupo B">Grupo B</SelectItem>
+                        <SelectItem value="Grupo C">Grupo C</SelectItem>
+                        <SelectItem value="Grupo D">Grupo D</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -963,6 +1356,34 @@ const TeamManagement = () => {
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Email do time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Telefone do time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="websiteUrl"
@@ -978,26 +1399,41 @@ const TeamManagement = () => {
               />
               <FormField
                 control={form.control}
-                name="email"
+                name="foundationDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Email do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Telefone do time" {...field} />
-                    </FormControl>
+                    <FormLabel>Data de Fundação</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP", { locale: ptBR })
+                            ) : (
+                              <span>Selecione a data</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                        <Calendar
+                          mode="single"
+                          locale={ptBR}
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date()
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1022,7 +1458,7 @@ const TeamManagement = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">
+              <Button type="submit" className="w-full">
                 {isTeamUpdating ? (
                   <>
                     Atualizando...
@@ -1072,7 +1508,7 @@ const TeamManagement = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isUserLoading}>
+              <Button type="submit" disabled={isUserLoading} className="w-full">
                 {isUserLoading ? (
                   <>
                     Atribuindo...
