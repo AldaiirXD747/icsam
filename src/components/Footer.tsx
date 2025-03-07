@@ -16,8 +16,8 @@ const Footer = () => {
         </svg>
       </div>
       
-      <div className="w-full mx-auto px-4 py-10">
-        <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="container mx-auto px-4 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Primeira coluna - Logo e informações */}
           <div className="col-span-1 lg:col-span-1">
             <Link to="/" className="flex items-center mb-4 group">
@@ -201,7 +201,7 @@ const Footer = () => {
         </div>
         
         {/* Rodapé com copyright e logotipo do GDF */}
-        <div className="container mx-auto mt-10 pt-8 border-t border-blue-light/30 flex flex-col md:flex-row items-center justify-between">
+        <div className="mt-10 pt-8 border-t border-blue-light/30 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-6 md:mb-0 flex items-center">
             <img 
               src="/lovable-uploads/f5090a5c-026d-4986-add2-b226f94961ed.png" 
