@@ -52,7 +52,7 @@ const DataSyncManager = () => {
       // Update summary counts based on log messages
       if (message.includes('Championship') && message.includes('migrated successfully')) {
         setMigrationSummary(prev => ({ ...prev, championships: prev.championships + 1 }));
-      } else if (message.includes('Team') && message.includes('migrated successfully')) {
+      } else if (message.includes('Time') && message.includes('migrado com sucesso')) {
         setMigrationSummary(prev => ({ ...prev, teams: prev.teams + 1 }));
       } else if (message.includes('Player') && message.includes('migrated successfully')) {
         setMigrationSummary(prev => ({ ...prev, players: prev.players + 1 }));

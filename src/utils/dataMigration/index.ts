@@ -15,20 +15,20 @@ export const migrateDataToSupabase = async () => {
   try {
     console.log("Iniciando migração de dados para o Supabase...");
     
-    // Verificar se a coluna category existe na tabela players, se não, criar
-    const { data: playersCategoryExists } = await supabase
-      .from('information_schema.columns')
-      .select('column_name')
-      .eq('table_name', 'players')
-      .eq('column_name', 'category')
-      .eq('table_schema', 'public');
-    
-    if (!playersCategoryExists || playersCategoryExists.length === 0) {
-      console.log("Adicionando coluna 'category' à tabela players...");
-      await supabase.rpc('add_category_to_players');
+    // Adicionar coluna category à tabela players usando a RPC function
+    try {
+      console.log("Verificando e adicionando coluna 'category' à tabela players...");
+      const { error } = await supabase.rpc("add_category_to_players");
+      if (error) {
+        console.error("Erro ao adicionar coluna category:", error);
+      } else {
+        console.log("Coluna 'category' verificada/adicionada com sucesso.");
+      }
+    } catch (error) {
+      console.error("Erro ao executar add_category_to_players:", error);
     }
     
-    // Verificar se a tabela standings existe, se não, criar
+    // Criar tabela de classificação se não existir
     await createStandingsTable();
     
     // Fetch data from public endpoints
