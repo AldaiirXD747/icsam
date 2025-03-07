@@ -1,8 +1,10 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -27,21 +31,52 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // For demo purposes, if email is admin@example.com, show success
-      if (formData.email === 'contato@institutocriancasantamaria.com.br') {
-        window.location.href = '/admin';
+    try {
+      // Verificar credenciais contra a tabela app_users
+      const { data, error } = await supabase
+        .rpc('verify_user_credentials', {
+          p_email: formData.email,
+          p_password: formData.password
+        });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const user = data[0];
+        
+        // Salvar dados do usuário na sessão
+        localStorage.setItem('user', JSON.stringify({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        }));
+        
+        // Redirecionar com base na função
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else if (user.role === 'team_manager') {
+          navigate('/team/dashboard');
+        }
+        
+        toast({
+          title: "Login realizado com sucesso",
+          description: `Bem-vindo(a), ${user.name}!`
+        });
       } else {
         setError('Credenciais inválidas. Tente novamente.');
-        setLoading(false);
       }
-    }, 1500);
+    } catch (error: any) {
+      console.error('Erro de login:', error);
+      setError(error.message || 'Ocorreu um erro durante o login. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -135,10 +170,7 @@ const Login = () => {
               >
                 {loading ? (
                   <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                     Entrando...
                   </span>
                 ) : (
