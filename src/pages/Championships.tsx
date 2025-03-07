@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -12,31 +11,28 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-
 const Championships = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'ongoing' | 'upcoming' | 'finished'>('all');
   const [selectedChampionship, setSelectedChampionship] = useState<string | null>(null);
-  
-  const { data: championships = [], isLoading, error } = useQuery({
+  const {
+    data: championships = [],
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ['championships'],
-    queryFn: getChampionships,
+    queryFn: getChampionships
   });
-  
   if (isLoading) {
-    return (
-      <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
+    return <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
         <Navbar />
         <div className="flex-grow flex flex-col items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-blue-primary" />
           <span className="mt-4 text-gray-600">Carregando campeonatos...</span>
         </div>
-      </div>
-    );
+      </div>;
   }
-  
   if (error) {
-    return (
-      <div className="min-h-screen pt-24 flex flex-col">
+    return <div className="min-h-screen pt-24 flex flex-col">
         <Navbar />
         <div className="flex-grow flex flex-col items-center justify-center">
           <div className="bg-red-50 p-6 rounded-lg text-center max-w-md">
@@ -45,20 +41,17 @@ const Championships = () => {
             <p className="text-red-600">Não foi possível carregar a lista de campeonatos. Por favor, tente novamente mais tarde.</p>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-  
   const filteredChampionships = championships.filter(championship => {
     if (activeTab === 'all') return true;
     return championship.status === activeTab;
   });
-  
+
   // Sort championships by year, most recent first
   const sortedChampionships = [...filteredChampionships].sort((a, b) => {
     return parseInt(b.year) - parseInt(a.year);
   });
-  
   const getStatusBadgeColor = (status: Championship['status']) => {
     switch (status) {
       case 'ongoing':
@@ -71,7 +64,6 @@ const Championships = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-  
   const getStatusLabel = (status: Championship['status']) => {
     switch (status) {
       case 'ongoing':
@@ -87,58 +79,20 @@ const Championships = () => {
 
   // Create a championship selector component for the top
   const ChampionshipSelector = () => {
-    return (
-      <div className="bg-gradient-to-r from-blue-900 to-blue-700 py-8 px-4 mb-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Selecione um Campeonato</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {sortedChampionships.map((championship) => (
-            <Card 
-              key={championship.id}
-              className={`cursor-pointer transition-all duration-300 overflow-hidden ${
-                selectedChampionship === championship.id 
-                  ? 'ring-2 ring-blue-500 shadow-lg scale-105' 
-                  : 'hover:shadow-md hover:scale-105'
-              }`}
-              onClick={() => setSelectedChampionship(championship.id)}
-            >
-              <div className="h-20 bg-gradient-to-br from-blue-800 to-blue-600 relative overflow-hidden">
-                {championship.banner_image && (
-                  <img
-                    src={championship.banner_image}
-                    alt={championship.name}
-                    className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
-                  />
-                )}
-                <div className="absolute inset-0 flex items-center justify-center p-2">
-                  <span className="text-white font-bold text-center text-sm">{championship.name}</span>
-                </div>
-                <div className="absolute bottom-1 right-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadgeColor(championship.status)}`}>
-                    {championship.year}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return;
   };
 
   // Show championship dashboard if one is selected
-  const ChampionshipDashboard = ({ championshipId }: { championshipId: string }) => {
+  const ChampionshipDashboard = ({
+    championshipId
+  }: {
+    championshipId: string;
+  }) => {
     const championship = championships.find(c => c.id === championshipId);
-    
     if (!championship) return null;
-    
-    return (
-      <Card className="mb-8 overflow-hidden">
+    return <Card className="mb-8 overflow-hidden">
         <div className="h-40 relative">
-          <img
-            src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'}
-            alt={championship.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'} alt={championship.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
             <div className="flex justify-between items-end">
               <div>
@@ -176,12 +130,9 @@ const Championships = () => {
             </Link>
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   };
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4">
@@ -194,13 +145,11 @@ const Championships = () => {
           <ChampionshipSelector />
           
           {/* Championship dashboard if one is selected */}
-          {selectedChampionship && (
-            <ChampionshipDashboard championshipId={selectedChampionship} />
-          )}
+          {selectedChampionship && <ChampionshipDashboard championshipId={selectedChampionship} />}
           
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Explorar Campeonatos</h2>
-            <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+            
+            <Tabs defaultValue="all" value={activeTab} onValueChange={value => setActiveTab(value as any)}>
               <TabsList>
                 <TabsTrigger value="all">Todos</TabsTrigger>
                 <TabsTrigger value="ongoing">Em andamento</TabsTrigger>
@@ -210,8 +159,7 @@ const Championships = () => {
             </Tabs>
           </div>
           
-          {sortedChampionships.length === 0 ? (
-            <div className="bg-white rounded-lg p-8 text-center shadow-md">
+          {sortedChampionships.length === 0 ? <div className="bg-white rounded-lg p-8 text-center shadow-md">
               <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">
                 Nenhum campeonato encontrado
@@ -219,21 +167,10 @@ const Championships = () => {
               <p className="text-gray-500">
                 Não há campeonatos correspondentes ao filtro selecionado.
               </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedChampionships.map((championship) => (
-                <Link
-                  to={`/campeonatos/${championship.id}`}
-                  key={championship.id}
-                  className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                >
+            </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sortedChampionships.map(championship => <Link to={`/campeonatos/${championship.id}`} key={championship.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                   <div className="h-48 overflow-hidden relative">
-                    <img
-                      src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'}
-                      alt={championship.name}
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
+                    <img src={championship.banner_image || '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'} alt={championship.name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
                     <div className="absolute top-2 right-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadgeColor(championship.status)}`}>
                         {getStatusLabel(championship.status)}
@@ -253,13 +190,13 @@ const Championships = () => {
                     <div className="flex flex-col space-y-2 text-sm text-gray-500">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2 text-[#c6ff00]" />
-                        {championship.start_date && championship.end_date ? (
-                          <span>
-                            {format(new Date(championship.start_date), 'dd/MM/yyyy', { locale: ptBR })} - {format(new Date(championship.end_date), 'dd/MM/yyyy', { locale: ptBR })}
-                          </span>
-                        ) : (
-                          <span>Data a definir</span>
-                        )}
+                        {championship.start_date && championship.end_date ? <span>
+                            {format(new Date(championship.start_date), 'dd/MM/yyyy', {
+                      locale: ptBR
+                    })} - {format(new Date(championship.end_date), 'dd/MM/yyyy', {
+                      locale: ptBR
+                    })}
+                          </span> : <span>Data a definir</span>}
                       </div>
                       
                       <div className="flex items-center">
@@ -270,21 +207,15 @@ const Championships = () => {
                       <div className="flex items-center">
                         <Trophy className="h-4 w-4 mr-2 text-[#c6ff00]" />
                         <span>
-                          {Array.isArray(championship.categories) && championship.categories.length > 0
-                            ? championship.categories.join(', ')
-                            : 'Todas as categorias'}
+                          {Array.isArray(championship.categories) && championship.categories.length > 0 ? championship.categories.join(', ') : 'Todas as categorias'}
                         </span>
                       </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                </Link>)}
+            </div>}
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Championships;
