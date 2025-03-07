@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, User, ChevronDown } from 'lucide-react';
@@ -51,20 +50,20 @@ const Navbar = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
               <DropdownMenuItem>
-                <Link to="/teams" className="w-full">Times</Link>
+                <Link to="/times" className="w-full">Times</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link to="/matches" className="w-full">Partidas</Link>
+                <Link to="/jogos" className="w-full">Partidas</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link to="/statistics" className="w-full">Estatísticas</Link>
+                <Link to="/estatisticas" className="w-full">Estatísticas</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link to="/standings" className="w-full">Classificação</Link>
+                <Link to="/classificacao" className="w-full">Classificação</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link to="/championships" className="w-full">Todos os Campeonatos</Link>
+                <Link to="/campeonatos" className="w-full">Todos os Campeonatos</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -99,19 +98,19 @@ const Navbar = () => {
             <div className="bg-blue-light rounded p-2">
               <h3 className="text-lime-primary font-medium text-sm mb-2 text-center">Campeonato</h3>
               <div className="space-y-2">
-                <Link to="/teams" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                <Link to="/times" className="text-white hover:text-lime-primary transition block text-sm pl-2">
                   Times
                 </Link>
-                <Link to="/matches" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                <Link to="/jogos" className="text-white hover:text-lime-primary transition block text-sm pl-2">
                   Partidas
                 </Link>
-                <Link to="/statistics" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                <Link to="/estatisticas" className="text-white hover:text-lime-primary transition block text-sm pl-2">
                   Estatísticas
                 </Link>
-                <Link to="/standings" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                <Link to="/classificacao" className="text-white hover:text-lime-primary transition block text-sm pl-2">
                   Classificação
                 </Link>
-                <Link to="/championships" className="text-white hover:text-lime-primary transition block text-sm pl-2">
+                <Link to="/campeonatos" className="text-white hover:text-lime-primary transition block text-sm pl-2">
                   Todos os Campeonatos
                 </Link>
               </div>
