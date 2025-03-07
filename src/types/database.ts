@@ -1,5 +1,4 @@
 
-
 export type ChampionshipType = {
   id: string;
   name: string;
@@ -61,5 +60,26 @@ export type YellowCardLeaderType = {
   yellow_cards: number;
   category: string;
   championship_id: string | null;
+  created_at?: string;
+};
+
+export type RedCardLeaderType = {
+  id: string;
+  player_id: string;
+  team_id: string;
+  red_cards: number;
+  category: string;
+  championship_id: string | null;
+  created_at?: string;
+};
+
+export type PlayerType = {
+  id: string;
+  name: string;
+  number: number | null;
+  position: string;
+  photo: string | null;
+  team_id: string;
+  category?: string | null;
   created_at?: string;
 };

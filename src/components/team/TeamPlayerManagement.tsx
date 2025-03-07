@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getTeamPlayers, uploadPlayerPhoto, savePlayer, deletePlayer } from '@/lib/api';
 import { PlusCircle, Pencil, Trash2, User, Upload } from 'lucide-react';
 import { MultiFileUpload, FileWithPreview } from '@/components/ui/multi-file-upload';
 
@@ -49,15 +49,8 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
   const fetchPlayers = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('team_id', teamId)
-        .order('name');
-        
-      if (error) throw error;
-      
-      setPlayers(data || []);
+      const data = await getTeamPlayers(teamId);
+      setPlayers(data);
     } catch (error) {
       console.error('Error fetching players:', error);
       toast({
@@ -89,24 +82,15 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     setUploadedFiles(files);
   };
 
-  const uploadPhoto = async (file: File): Promise<string | null> => {
+  const processPhotoUpload = async (): Promise<string | null> => {
+    if (uploadedFiles.length === 0) {
+      return formData.photo || null;
+    }
+    
+    setIsUploading(true);
     try {
-      setIsUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `player-photos/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('player-photos')
-        .upload(filePath, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage
-        .from('player-photos')
-        .getPublicUrl(filePath);
-      
-      return data.publicUrl;
+      const photoUrl = await uploadPlayerPhoto(uploadedFiles[0].file);
+      return photoUrl;
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast({
@@ -114,7 +98,7 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
         title: "Erro ao enviar foto",
         description: "Não foi possível fazer o upload da foto."
       });
-      return null;
+      return formData.photo || null;
     } finally {
       setIsUploading(false);
     }
@@ -131,30 +115,22 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     }
     
     try {
-      let photoUrl = formData.photo;
+      // Handle photo upload
+      const photoUrl = await processPhotoUpload();
       
-      if (uploadedFiles.length > 0) {
-        const uploadedUrl = await uploadPhoto(uploadedFiles[0].file);
-        if (uploadedUrl) {
-          photoUrl = uploadedUrl;
-        }
-      }
+      // Save player data
+      const playerData = {
+        name: formData.name,
+        number: formData.number ? parseInt(formData.number) : null,
+        position: formData.position,
+        photo: photoUrl,
+        team_id: teamId
+      };
       
-      const { data, error } = await supabase
-        .from('players')
-        .insert({
-          name: formData.name,
-          number: formData.number ? parseInt(formData.number) : null,
-          position: formData.position,
-          photo: photoUrl || null,
-          team_id: teamId
-        })
-        .select();
-        
-      if (error) throw error;
+      const savedPlayer = await savePlayer(playerData);
       
-      if (data) {
-        setPlayers([...players, data[0]]);
+      if (savedPlayer) {
+        setPlayers([...players, savedPlayer]);
         toast({
           title: "Jogador adicionado",
           description: "O jogador foi adicionado com sucesso."
@@ -185,31 +161,24 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     }
     
     try {
-      let photoUrl = formData.photo;
+      // Handle photo upload
+      const photoUrl = await processPhotoUpload();
       
-      if (uploadedFiles.length > 0) {
-        const uploadedUrl = await uploadPhoto(uploadedFiles[0].file);
-        if (uploadedUrl) {
-          photoUrl = uploadedUrl;
-        }
-      }
+      // Update player data
+      const playerData = {
+        id: selectedPlayer.id,
+        name: formData.name,
+        number: formData.number ? parseInt(formData.number) : null,
+        position: formData.position,
+        photo: photoUrl,
+        team_id: teamId
+      };
       
-      const { data, error } = await supabase
-        .from('players')
-        .update({
-          name: formData.name,
-          number: formData.number ? parseInt(formData.number) : null,
-          position: formData.position,
-          photo: photoUrl || null
-        })
-        .eq('id', selectedPlayer.id)
-        .select();
-        
-      if (error) throw error;
+      const updatedPlayer = await savePlayer(playerData);
       
-      if (data) {
+      if (updatedPlayer) {
         setPlayers(players.map(player => 
-          player.id === selectedPlayer.id ? data[0] : player  
+          player.id === selectedPlayer.id ? updatedPlayer : player  
         ));
         toast({
           title: "Jogador atualizado",
@@ -233,18 +202,17 @@ const TeamPlayerManagement = ({ teamId }: { teamId: string }) => {
     if (!confirm("Tem certeza que deseja excluir este jogador?")) return;
     
     try {
-      const { error } = await supabase
-        .from('players')
-        .delete()
-        .eq('id', playerId);
-        
-      if (error) throw error;
+      const success = await deletePlayer(playerId);
       
-      setPlayers(players.filter(player => player.id !== playerId));
-      toast({
-        title: "Jogador removido",
-        description: "O jogador foi removido com sucesso."
-      });
+      if (success) {
+        setPlayers(players.filter(player => player.id !== playerId));
+        toast({
+          title: "Jogador removido",
+          description: "O jogador foi removido com sucesso."
+        });
+      } else {
+        throw new Error("Falha ao excluir jogador");
+      }
     } catch (error) {
       console.error('Error deleting player:', error);
       toast({
