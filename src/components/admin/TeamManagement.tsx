@@ -48,7 +48,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Plus, Pencil, Trash2, User, Filter, Search, UsersRound } from 'lucide-react';
+import { Plus, Pencil, Trash2, User, Filter, Search, UsersRound, BarChart4 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast"
 import { Switch } from "@/components/ui/switch"
 import {
