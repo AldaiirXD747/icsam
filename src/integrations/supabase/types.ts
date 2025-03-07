@@ -222,6 +222,7 @@ export type Database = {
       }
       players: {
         Row: {
+          category: string | null
           created_at: string
           id: string
           name: string
@@ -231,6 +232,7 @@ export type Database = {
           team_id: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
           name: string
@@ -240,6 +242,7 @@ export type Database = {
           team_id?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -426,7 +429,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_standings_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_standings_table_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      recalculate_standings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

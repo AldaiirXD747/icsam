@@ -1,459 +1,487 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, Save, Trophy, RefreshCw } from 'lucide-react';
+import { RefreshCw, Save, Edit2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const StandingsManagement = () => {
-  const { toast } = useToast();
-  const [categories, setCategories] = useState<string[]>([]);
-  const [groups, setGroups] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(false);
+  const [category, setCategory] = useState("SUB-11");
+  const [groupName, setGroupName] = useState("Grupo A");
   const [standings, setStandings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingRefresh, setLoadingRefresh] = useState(false);
-  const [savingStanding, setSavingStanding] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(["SUB-11", "SUB-13"]);
+  const [groups, setGroups] = useState<string[]>(["Grupo A", "Grupo B"]);
+  const [editMode, setEditMode] = useState(false);
+  const [editedStandings, setEditedStandings] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  // Carregar dados iniciais
+  // Carregar dados ao montar o componente
   useEffect(() => {
-    fetchData();
+    fetchCategories();
+    fetchGroups();
   }, []);
 
-  // Atualizar dados quando mudar filtros
+  // Carregar dados quando categoria ou grupo mudar
   useEffect(() => {
     fetchStandings();
-  }, [selectedCategory, selectedGroup]);
+  }, [category, groupName]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  // Buscar categorias disponíveis
+  const fetchCategories = async () => {
     try {
-      // Primeiro, verificar se a tabela existe
-      const { error: tableError } = await supabase.rpc('get_standings_table_exists');
+      const { data } = await supabase
+        .from("teams")
+        .select("category")
+        .order("category");
       
-      if (tableError) {
-        // A tabela não existe, tentar criá-la
-        await createStandingsTable();
+      if (data) {
+        const uniqueCategories = Array.from(new Set(data.map(item => item.category)));
+        setCategories(uniqueCategories);
+        if (uniqueCategories.length > 0) {
+          setCategory(uniqueCategories[0]);
+        }
       }
-      
-      // Buscar categorias e grupos
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('teams')
-        .select('category, group_name')
-        .order('category');
-      
-      if (teamsError) throw teamsError;
-      
-      // Extrair categorias e grupos únicos
-      const uniqueCategories = new Set();
-      const uniqueGroups = new Set();
-      
-      (teamsData || []).forEach(team => {
-        if (team.category) uniqueCategories.add(team.category);
-        if (team.group_name) uniqueGroups.add(team.group_name);
-      });
-      
-      setCategories(Array.from(uniqueCategories) as string[]);
-      setGroups(Array.from(uniqueGroups) as string[]);
-      
-      // Buscar classificação
-      await fetchStandings();
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar dados",
-        description: "Não foi possível carregar as categorias e grupos."
-      });
-    } finally {
-      setIsLoading(false);
+      console.error("Erro ao buscar categorias:", error);
     }
   };
 
+  // Buscar grupos disponíveis
+  const fetchGroups = async () => {
+    try {
+      const { data } = await supabase
+        .from("teams")
+        .select("group_name")
+        .order("group_name");
+      
+      if (data) {
+        const uniqueGroups = Array.from(new Set(data.map(item => item.group_name)));
+        setGroups(uniqueGroups);
+        if (uniqueGroups.length > 0) {
+          setGroupName(uniqueGroups[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar grupos:", error);
+    }
+  };
+
+  // Buscar dados da classificação
   const fetchStandings = async () => {
     setIsLoading(true);
     try {
-      // Construir a consulta base
-      let query = supabase
-        .from('standings')
-        .select(`
-          id, 
-          team_id, 
-          category, 
-          group_name, 
-          position, 
-          points, 
-          played, 
-          won, 
-          drawn, 
-          lost, 
-          goals_for, 
-          goals_against, 
-          goal_difference,
-          teams:team_id (name, logo)
-        `)
-        .order('position');
+      const { data: standingsData, error } = await supabase.rpc("get_standings", {
+        p_category: category,
+        p_group_name: groupName
+      });
       
-      // Aplicar filtros
-      if (selectedCategory !== 'all') {
-        query = query.eq('category', selectedCategory);
+      if (error) {
+        // Caso a função RPC não exista, tentar buscar diretamente da tabela
+        const { data: tableData, error: tableError } = await supabase
+          .from("standings")
+          .select(`
+            id,
+            position,
+            points,
+            played,
+            won,
+            drawn,
+            lost,
+            goals_for,
+            goals_against,
+            goal_difference,
+            team_id,
+            teams (
+              id,
+              name,
+              logo
+            )
+          `)
+          .eq("category", category)
+          .eq("group_name", groupName)
+          .order("position");
+        
+        if (tableError) {
+          console.error("Erro ao buscar dados da classificação:", tableError);
+          toast({
+            variant: "destructive",
+            title: "Erro ao carregar classificação",
+            description: "Não foi possível carregar os dados. Tente novamente mais tarde."
+          });
+          setStandings([]);
+        } else {
+          setStandings(tableData || []);
+          setEditedStandings(tableData || []);
+        }
+      } else {
+        setStandings(standingsData || []);
+        setEditedStandings(standingsData || []);
       }
-      
-      if (selectedGroup !== 'all') {
-        query = query.eq('group_name', selectedGroup);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      setStandings(data || []);
     } catch (error) {
-      console.error('Erro ao carregar classificação:', error);
+      console.error("Erro ao buscar classificação:", error);
       toast({
         variant: "destructive",
         title: "Erro ao carregar classificação",
-        description: "Não foi possível carregar os dados de classificação."
+        description: "Ocorreu um erro ao buscar os dados. Verifique o console para mais detalhes."
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createStandingsTable = async () => {
-    try {
-      // Criar a tabela standings
-      await supabase.rpc('create_standings_table');
-      toast({
-        title: "Tabela criada com sucesso",
-        description: "A tabela de classificação foi criada com sucesso."
-      });
-      return true;
-    } catch (error) {
-      console.error("Erro ao criar tabela standings:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao criar tabela",
-        description: "Não foi possível criar a tabela de classificação."
-      });
-      return false;
-    }
-  };
-
-  const handleStandingChange = (id: string, field: string, value: any) => {
-    const newValue = field === 'position' ? parseInt(value) : parseInt(value);
-    
-    // Atualizar o estado local
-    setStandings(standings.map(standing => {
-      if (standing.id === id) {
-        const updatedStanding = { ...standing, [field]: newValue };
-        
-        // Recalcular saldo de gols se necessário
-        if (field === 'goals_for' || field === 'goals_against') {
-          updatedStanding.goal_difference = updatedStanding.goals_for - updatedStanding.goals_against;
-        }
-        
-        return updatedStanding;
-      }
-      return standing;
-    }));
-  };
-
-  const saveStanding = async (standingId: string) => {
-    setSavingStanding(standingId);
-    
-    try {
-      const standingToUpdate = standings.find(s => s.id === standingId);
-      
-      if (!standingToUpdate) {
-        throw new Error('Classificação não encontrada');
-      }
-      
-      // Extrair apenas os campos necessários
-      const { id, team_id, category, group_name, position, points, played, won, drawn, lost, goals_for, goals_against, goal_difference } = standingToUpdate;
-      
-      const { error } = await supabase
-        .from('standings')
-        .update({
-          position,
-          points,
-          played,
-          won,
-          drawn,
-          lost,
-          goals_for,
-          goals_against,
-          goal_difference,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Classificação salva",
-        description: "Dados atualizados com sucesso."
-      });
-    } catch (error) {
-      console.error('Erro ao salvar classificação:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: "Não foi possível atualizar a classificação."
-      });
-    } finally {
-      setSavingStanding(null);
-    }
-  };
-
+  // Recalcular classificação
   const recalculateStandings = async () => {
-    setLoadingRefresh(true);
-    
+    setIsLoading(true);
     try {
-      // Chamar a função para recalcular a classificação no backend
-      const { error } = await supabase.rpc('recalculate_standings');
+      // Chamar a função RPC para recalcular a classificação
+      const { error } = await supabase.rpc("recalculate_standings");
       
-      if (error) throw error;
-      
-      toast({
-        title: "Classificação recalculada",
-        description: "Dados atualizados com base nas partidas."
-      });
-      
-      // Recarregar a classificação
-      await fetchStandings();
+      if (error) {
+        console.error("Erro ao recalcular classificação:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao recalcular",
+          description: "Não foi possível recalcular a classificação. Tente novamente mais tarde."
+        });
+      } else {
+        toast({
+          title: "Classificação recalculada",
+          description: "A tabela de classificação foi recalculada com sucesso."
+        });
+        // Atualizar dados após recalcular
+        fetchStandings();
+      }
     } catch (error) {
-      console.error('Erro ao recalcular classificação:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao recalcular",
-        description: "Não foi possível recalcular a classificação."
-      });
+      console.error("Erro ao recalcular classificação:", error);
     } finally {
-      setLoadingRefresh(false);
+      setIsLoading(false);
     }
+  };
+
+  // Salvar alterações manuais
+  const saveChanges = async () => {
+    setIsLoading(true);
+    try {
+      let errorCount = 0;
+      let successCount = 0;
+      
+      for (const standing of editedStandings) {
+        // Extrair apenas os campos que precisam ser atualizados
+        const updateData = {
+          position: standing.position,
+          points: standing.points,
+          played: standing.played,
+          won: standing.won,
+          drawn: standing.drawn,
+          lost: standing.lost,
+          goals_for: standing.goals_for,
+          goals_against: standing.goals_against,
+          goal_difference: standing.goal_difference
+        };
+        
+        // Atualizar no banco de dados
+        const { error } = await supabase
+          .from("standings")
+          .update(updateData)
+          .eq("id", standing.id);
+        
+        if (error) {
+          console.error(`Erro ao atualizar classificação para o time ID ${standing.team_id}:`, error);
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      }
+      
+      if (errorCount === 0) {
+        toast({
+          title: "Alterações salvas",
+          description: `${successCount} itens atualizados com sucesso.`
+        });
+        setEditMode(false);
+        fetchStandings();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao salvar alterações",
+          description: `${errorCount} erros ocorreram. ${successCount} itens foram atualizados.`
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao salvar alterações:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Manipular alterações nos campos editáveis
+  const handleFieldChange = (index: number, field: string, value: number) => {
+    const newStandings = [...editedStandings];
+    
+    // Atualizar o campo específico
+    newStandings[index][field] = value;
+    
+    // Recalcular o saldo de gols automaticamente
+    if (field === 'goals_for' || field === 'goals_against') {
+      newStandings[index].goal_difference = 
+        newStandings[index].goals_for - newStandings[index].goals_against;
+    }
+    
+    setEditedStandings(newStandings);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Classificação</h2>
-        
-        <Button 
-          onClick={recalculateStandings} 
-          disabled={loadingRefresh}
-          className="bg-[#1a237e] text-white hover:bg-blue-800"
-        >
-          {loadingRefresh ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Recalculando...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Recalcular Classificação
-            </>
-          )}
-        </Button>
-      </div>
+    <Card>
+      <CardHeader className="bg-blue-50">
+        <CardTitle className="text-2xl text-[#1a237e]">Gerenciamento de Classificação</CardTitle>
+        <CardDescription>
+          Visualize e edite manualmente a tabela de classificação
+        </CardDescription>
+      </CardHeader>
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Tabela de Classificação</CardTitle>
-          <CardDescription>
-            Visualize e edite a classificação dos times por categoria e grupo
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium mb-1">
-                Categoria
-              </label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Selecione uma categoria" />
+      <CardContent className="pt-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex flex-wrap gap-4 mb-4">
+            {/* Seletor de Categoria */}
+            <div className="w-full md:w-auto">
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             
-            <div>
-              <label htmlFor="group" className="block text-sm font-medium mb-1">
-                Grupo
-              </label>
-              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                <SelectTrigger id="group">
-                  <SelectValue placeholder="Selecione um grupo" />
+            {/* Seletor de Grupo */}
+            <div className="w-full md:w-auto">
+              <Select value={groupName} onValueChange={setGroupName}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Grupo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os grupos</SelectItem>
-                  {groups.map(group => (
-                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group} value={group}>
+                      {group}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Botões de ação */}
+            <div className="flex gap-2 ml-auto">
+              {!editMode ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setEditMode(true)}
+                    disabled={isLoading || standings.length === 0}
+                  >
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={recalculateStandings} 
+                    disabled={isLoading}
+                    className="bg-[#1a237e] hover:bg-blue-800"
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    Recalcular
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setEditMode(false);
+                      setEditedStandings([...standings]);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={saveChanges} 
+                    disabled={isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-8 w-8 animate-spin text-[#1a237e]" />
+            <div className="flex justify-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin text-[#1a237e]" />
             </div>
           ) : standings.length === 0 ? (
-            <div className="text-center p-8 border border-dashed rounded-md">
-              <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-2" />
-              <p className="text-gray-500">Nenhuma classificação encontrada para os filtros selecionados.</p>
+            <div className="text-center py-8 text-gray-500">
+              Nenhum dado de classificação encontrado para esta categoria e grupo.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableCaption>
-                  Classificação atualizada. Você pode editar os valores e salvar manualmente.
-                </TableCaption>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Pos.</TableHead>
+                  <TableRow className="bg-gray-100">
+                    <TableHead className="w-12">Pos</TableHead>
                     <TableHead>Time</TableHead>
-                    {selectedCategory === 'all' && <TableHead>Categoria</TableHead>}
-                    {selectedGroup === 'all' && <TableHead>Grupo</TableHead>}
-                    <TableHead>P</TableHead>
-                    <TableHead>J</TableHead>
-                    <TableHead>V</TableHead>
-                    <TableHead>E</TableHead>
-                    <TableHead>D</TableHead>
-                    <TableHead>GP</TableHead>
-                    <TableHead>GC</TableHead>
-                    <TableHead>SG</TableHead>
-                    <TableHead>Ações</TableHead>
+                    <TableHead className="text-center">P</TableHead>
+                    <TableHead className="text-center">J</TableHead>
+                    <TableHead className="text-center">V</TableHead>
+                    <TableHead className="text-center">E</TableHead>
+                    <TableHead className="text-center">D</TableHead>
+                    <TableHead className="text-center">GP</TableHead>
+                    <TableHead className="text-center">GC</TableHead>
+                    <TableHead className="text-center">SG</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {standings.map(standing => (
+                  {(editMode ? editedStandings : standings).map((standing, index) => (
                     <TableRow key={standing.id}>
                       <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.position} 
-                          onChange={e => handleStandingChange(standing.id, 'position', e.target.value)}
-                          className="w-14 text-center"
-                          min={1}
-                        />
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.position} 
+                            onChange={(e) => handleFieldChange(index, 'position', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="1"
+                          />
+                        ) : (
+                          <span className="font-semibold">{standing.position}</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           {standing.teams?.logo && (
                             <img 
                               src={standing.teams.logo} 
-                              alt={standing.teams?.name || 'Time'} 
-                              className="w-6 h-6 object-contain"
+                              alt={standing.teams?.name} 
+                              className="h-6 w-6 object-contain"
                             />
                           )}
-                          <span>{standing.teams?.name || 'Time desconhecido'}</span>
+                          <span className="font-medium">{standing.teams?.name}</span>
                         </div>
                       </TableCell>
-                      {selectedCategory === 'all' && <TableCell>{standing.category}</TableCell>}
-                      {selectedGroup === 'all' && <TableCell>{standing.group_name}</TableCell>}
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.points} 
-                          onChange={e => handleStandingChange(standing.id, 'points', e.target.value)}
-                          className="w-14 text-center font-bold"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.points} 
+                            onChange={(e) => handleFieldChange(index, 'points', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          <span className="font-bold">{standing.points}</span>
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.played} 
-                          onChange={e => handleStandingChange(standing.id, 'played', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.played} 
+                            onChange={(e) => handleFieldChange(index, 'played', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.played
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.won} 
-                          onChange={e => handleStandingChange(standing.id, 'won', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.won} 
+                            onChange={(e) => handleFieldChange(index, 'won', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.won
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.drawn} 
-                          onChange={e => handleStandingChange(standing.id, 'drawn', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.drawn} 
+                            onChange={(e) => handleFieldChange(index, 'drawn', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.drawn
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.lost} 
-                          onChange={e => handleStandingChange(standing.id, 'lost', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.lost} 
+                            onChange={(e) => handleFieldChange(index, 'lost', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.lost
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.goals_for} 
-                          onChange={e => handleStandingChange(standing.id, 'goals_for', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.goals_for} 
+                            onChange={(e) => handleFieldChange(index, 'goals_for', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.goals_for
+                        )}
                       </TableCell>
-                      <TableCell>
-                        <Input 
-                          type="number" 
-                          value={standing.goals_against} 
-                          onChange={e => handleStandingChange(standing.id, 'goals_against', e.target.value)}
-                          className="w-14 text-center"
-                          min={0}
-                        />
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <Input 
+                            type="number" 
+                            value={standing.goals_against} 
+                            onChange={(e) => handleFieldChange(index, 'goals_against', parseInt(e.target.value))}
+                            className="w-12 text-center"
+                            min="0"
+                          />
+                        ) : (
+                          standing.goals_against
+                        )}
                       </TableCell>
-                      <TableCell>{standing.goal_difference}</TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => saveStanding(standing.id)}
-                          disabled={savingStanding === standing.id}
-                          className="flex items-center"
-                        >
-                          {savingStanding === standing.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Save className="h-4 w-4 mr-1" />
-                              Salvar
-                            </>
-                          )}
-                        </Button>
+                      <TableCell className="text-center">
+                        {editMode ? (
+                          <span>{standing.goal_difference}</span>
+                        ) : (
+                          <span className={
+                            standing.goal_difference > 0 ? "text-green-600" : 
+                            standing.goal_difference < 0 ? "text-red-600" : ""
+                          }>
+                            {standing.goal_difference > 0 ? `+${standing.goal_difference}` : standing.goal_difference}
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -461,9 +489,18 @@ const StandingsManagement = () => {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+          
+          {/* Legenda */}
+          <div className="mt-4 text-sm text-gray-500">
+            <p>P = Pontos, J = Jogos, V = Vitórias, E = Empates, D = Derrotas, GP = Gols Pró, GC = Gols Contra, SG = Saldo de Gols</p>
+            <p className="mt-2 flex items-center">
+              <CheckCircle className="h-4 w-4 mr-1 text-green-600" /> 
+              A classificação é recalculada automaticamente após cada partida, mas também pode ser editada manualmente.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
