@@ -1,10 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import TeamCard from '@/components/TeamCard';
 import { getTeams } from '@/lib/api';
 import { Team } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const Teams = () => {
   const { data: teams, isLoading, error } = useQuery({
@@ -12,15 +13,21 @@ const Teams = () => {
     queryFn: () => getTeams(),
   });
 
-  // Group teams by name to avoid duplication
+  // Group teams by name to avoid duplication and collect all categories
   const uniqueTeams = React.useMemo(() => {
     if (!teams) return [];
     
-    const teamMap = new Map<string, Team>();
+    const teamMap = new Map<string, Team & { categories: string[] }>();
     
     teams.forEach(team => {
       if (!teamMap.has(team.name)) {
-        teamMap.set(team.name, team);
+        teamMap.set(team.name, { ...team, categories: [team.category] });
+      } else {
+        // If the team already exists, add the category to the list if it's not already there
+        const existingTeam = teamMap.get(team.name)!;
+        if (!existingTeam.categories.includes(team.category)) {
+          existingTeam.categories.push(team.category);
+        }
       }
     });
     
@@ -62,7 +69,7 @@ const Teams = () => {
                   id={team.id}
                   name={team.name} 
                   logo={team.logo || team.logoUrl || ''} 
-                  category={team.category}
+                  categories={team.categories}
                 />
               ))}
             </div>

@@ -1,12 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Save, Trash2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -15,390 +8,505 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-import StatisticsChart from './StatisticsChart';
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { TopScorer } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface TopScorersManagementProps {
-  isLoading?: boolean;
-  topScorers?: TopScorer[];
-  setTopScorers?: React.Dispatch<React.SetStateAction<TopScorer[]>>;
-  filteredTopScorers?: TopScorer[];
-  selectedCategory?: string;
-  teams?: { id: string, name: string }[];
-  players?: { id: string, name: string, team_id: string }[];
-  championships?: { id: string, name: string }[];
+interface DataTableRowProps<T> {
+  item: T;
 }
 
-const TopScorersManagement: React.FC<TopScorersManagementProps> = ({
-  isLoading,
-  topScorers,
-  setTopScorers,
-  filteredTopScorers,
-  selectedCategory,
-  teams,
-  players,
-  championships
-}) => {
-  const { toast } = useToast();
-  const [category, setCategory] = useState<string>(selectedCategory || 'Sub-15');
-  const [search, setSearch] = useState<string>('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingScorers, setEditingScorers] = useState<TopScorer[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<string>('');
-  const [selectedPlayer, setSelectedPlayer] = useState<string>('');
-  const [goalsCount, setGoalsCount] = useState<number>(1);
-  const [isSaving, setIsSaving] = useState(false);
+function DataTableRow<T extends TopScorer>({ item }: DataTableRowProps<T>) {
+  return (
+    <TableRow key={item.id}>
+      <TableCell className="font-medium">{item.name}</TableCell>
+      <TableCell>{item.team}</TableCell>
+      <TableCell>{item.goals}</TableCell>
+      <TableCell>{item.category}</TableCell>
+      <TableCell className="text-right">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="w-8 h-8 p-0">
+              <span className="sr-only">Editar</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.082.285a.75.75 0 00.693.943h.281a5.25 5.25 0 002.214-1.32L19.513 8.199z" />
+              </svg>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Editar artilheiro</DialogTitle>
+              <DialogDescription>
+                Atualize os dados do artilheiro. Clique em salvar quando estiver satisfeito.
+              </DialogDescription>
+            </DialogHeader>
+            <EditTopScorerForm topScorer={item} />
+          </DialogContent>
+        </Dialog>
+      </TableCell>
+    </TableRow>
+  )
+}
 
-  // Use the filtered top scorers or create an empty array if nothing is available
-  const scorersList = filteredTopScorers || [];
+interface DataTableProps<T> {
+  items: T[];
+}
 
-  useEffect(() => {
-    if (filteredTopScorers) {
-      setEditingScorers([...filteredTopScorers]);
-    }
-  }, [filteredTopScorers]);
+function DataTable<T extends TopScorer>({ items }: DataTableProps<T>) {
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Time</TableHead>
+            <TableHead>Gols</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <DataTableRow key={item.id} item={item} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
 
-  // Filter players by selected team
-  const filteredPlayers = players?.filter(player => 
-    !selectedTeam || player.team_id === selectedTeam
-  ) || [];
+const formSchema = z.object({
+  playerId: z.string().min(2, {
+    message: 'PlayerId deve ter pelo menos 2 caracteres.',
+  }),
+  teamId: z.string().min(2, {
+    message: 'TeamId deve ter pelo menos 2 caracteres.',
+  }),
+  goals: z.number().min(0, {
+    message: 'Gols deve ser maior ou igual a zero.',
+  }),
+  category: z.string().min(2, {
+    message: 'Categoria deve ter pelo menos 2 caracteres.',
+  }),
+  championshipId: z.string().optional(),
+})
 
-  const handleAddGoals = async () => {
-    if (!selectedPlayer || !selectedTeam || goalsCount <= 0) {
-      toast({
-        variant: "destructive",
-        title: "Dados incompletos",
-        description: "Selecione um jogador, um time e informe a quantidade de gols."
-      });
-      return;
-    }
+interface TopScorersManagementProps {
+  championshipId: string | undefined;
+}
 
-    const player = players?.find(p => p.id === selectedPlayer);
-    const team = teams?.find(t => t.id === selectedTeam);
-    
-    if (!player || !team) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Jogador ou time não encontrado."
-      });
-      return;
-    }
+const TopScorersManagement: React.FC<TopScorersManagementProps> = ({ championshipId }) => {
+  const [open, setOpen] = useState(false);
+  const [topScorers, setTopScorers] = useState<TopScorer[]>([]);
+  const [players, setPlayers] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
 
-    // First, check if this player already exists in the scorer list
-    const existingScorer = editingScorers.find(scorer => 
-      scorer.playerId === selectedPlayer && 
-      scorer.category === category
-    );
+  const { data, refetch } = useQuery({
+    queryKey: ['topScorers', championshipId],
+    queryFn: async () => {
+      if (!championshipId) return [];
+      const { data, error } = await supabase
+        .from('top_scorers')
+        .select('*')
+        .eq('championship_id', championshipId);
 
-    setIsSaving(true);
-    try {
-      if (existingScorer) {
-        // Update existing record
-        const updatedGoals = existingScorer.goals + goalsCount;
-        const { error } = await supabase
-          .from('top_scorers')
-          .update({ goals: updatedGoals })
-          .eq('id', existingScorer.id);
-
-        if (error) throw error;
-
-        // Update local state
-        setEditingScorers(prev => prev.map(scorer => 
-          scorer.id === existingScorer.id 
-            ? { ...scorer, goals: updatedGoals } 
-            : scorer
-        ));
-
-        toast({
-          title: "Gols atualizados",
-          description: `${goalsCount} gols adicionados para ${player.name}.`
-        });
-      } else {
-        // Create a new record
-        const { data, error } = await supabase
-          .from('top_scorers')
-          .insert({
-            player_id: player.id,
-            team_id: team.id,
-            goals: goalsCount,
-            category: category,
-            championship_id: null // Can be updated to selected championship if needed
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        // Add to local state
-        const newScorer: TopScorer = {
-          id: data.id,
-          playerId: player.id,
-          teamId: team.id,
-          name: player.name,
-          team: team.name,
-          goals: goalsCount,
-          category: category,
-          championshipId: null
-        };
-
-        setEditingScorers(prev => [...prev, newScorer]);
-
-        toast({
-          title: "Artilheiro adicionado",
-          description: `${player.name} adicionado com ${goalsCount} gols.`
-        });
+      if (error) {
+        console.error('Error fetching top scorers:', error);
+        return [];
       }
 
-      // Reset form
-      setSelectedPlayer('');
-      setGoalsCount(1);
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: error.message
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+      // Fetch additional data for each top scorer
+      const enrichedTopScorers = await Promise.all(
+        data.map(async (scorer) => {
+          const player = players.find((p) => p.id === scorer.player_id);
+          const team = teams.find((t) => t.id === scorer.team_id);
 
-  const handleUpdateGoals = async (scorer: TopScorer, newGoals: number) => {
-    if (newGoals < 0) {
-      toast({
-        variant: "destructive",
-        title: "Valor inválido",
-        description: "A quantidade de gols não pode ser negativa."
-      });
-      return;
-    }
+          return {
+            ...scorer,
+            name: player ? player.name : 'Desconhecido',
+            team: team ? team.name : 'Time desconhecido',
+          };
+        })
+      );
 
-    setIsSaving(true);
+      setTopScorers(enrichedTopScorers);
+      return enrichedTopScorers;
+    },
+    enabled: !!championshipId && players.length > 0 && teams.length > 0,
+  });
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase.from('players').select('*');
+      if (error) {
+        console.error('Error fetching players:', error);
+        return;
+      }
+      setPlayers(data || []);
+    };
+
+    const fetchTeams = async () => {
+      const { data, error } = await supabase.from('teams').select('*');
+      if (error) {
+        console.error('Error fetching teams:', error);
+        return;
+      }
+      setTeams(data || []);
+    };
+
+    fetchPlayers();
+    fetchTeams();
+  }, []);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      playerId: '',
+      teamId: '',
+      goals: 0,
+      category: 'SUB-15',
+      championshipId: championshipId,
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('top_scorers')
-        .update({ goals: newGoals })
-        .eq('id', scorer.id);
+        .insert([
+          {
+            player_id: values.playerId,
+            team_id: values.teamId,
+            goals: values.goals,
+            category: values.category,
+            championship_id: championshipId,
+          },
+        ])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating top scorer:', error);
+        toast.error('Erro ao criar artilheiro.');
+        return;
+      }
 
-      // Update local state
-      setEditingScorers(prev => prev.map(s => 
-        s.id === scorer.id ? { ...s, goals: newGoals } : s
-      ));
-
-      toast({
-        title: "Gols atualizados",
-        description: `Gols de ${scorer.name} atualizados para ${newGoals}.`
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar",
-        description: error.message
-      });
-    } finally {
-      setIsSaving(false);
+      refetch();
+      toast.success('Artilheiro criado com sucesso!');
+      setOpen(false);
+    } catch (error) {
+      console.error('Error creating top scorer:', error);
+      toast.error('Erro ao criar artilheiro.');
     }
-  };
-
-  const handleDeleteScorer = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este artilheiro?")) return;
-
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from('top_scorers')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state
-      setEditingScorers(prev => prev.filter(scorer => scorer.id !== id));
-
-      toast({
-        title: "Artilheiro removido",
-        description: "O artilheiro foi removido com sucesso."
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao excluir",
-        description: error.message
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Fix the chart data format to properly match the StatisticsChart component requirements
-  const chartData = editingScorers
-    .filter(scorer => 
-      scorer.name.toLowerCase().includes(search.toLowerCase()) &&
-      (!selectedCategory || scorer.category === selectedCategory)
-    )
-    .map(scorer => ({
-      name: scorer.name,
-      value: scorer.goals,
-      team: scorer.team
-    }));
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl text-[#1a237e]">Artilheiros</CardTitle>
-        <CardDescription>Gerencie os artilheiros por categoria e visualize estatísticas.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="category">Categoria</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione a categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Sub-11">Sub-11</SelectItem>
-                <SelectItem value="Sub-13">Sub-13</SelectItem>
-                <SelectItem value="Sub-15">Sub-15</SelectItem>
-                <SelectItem value="Sub-17">Sub-17</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="search">Pesquisar</Label>
-            <Input
-              type="search"
-              id="search"
-              placeholder="Pesquisar por nome"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <Card className="p-4 border border-gray-200">
-          <CardTitle className="text-lg mb-4">Adicionar/Atualizar Gols</CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="team">Time</Label>
-              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os times</SelectItem>
-                  {teams?.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="player">Jogador</Label>
-              <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione o jogador" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredPlayers.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="goals">Quantidade de Gols</Label>
-              <Input 
-                type="number" 
-                id="goals" 
-                min={1} 
-                value={goalsCount}
-                onChange={(e) => setGoalsCount(parseInt(e.target.value) || 0)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={handleAddGoals} 
-                disabled={isSaving}
-                className="w-full bg-[#1a237e] hover:bg-[#303f9f]"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                {isSaving ? "Salvando..." : "Adicionar Gols"}
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {chartData.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Estatísticas de Gols</h3>
-            <div className="h-[400px]">
-              <StatisticsChart 
-                data={chartData.slice(0, 10)} // Show top 10 scorers
-                dataKey="value" 
-                name="Gols" 
-                fill="#4CAF50" 
-              />
-            </div>
-          </div>
-        )}
-
-        <Table>
-          <TableCaption>Lista de artilheiros</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Gols</TableHead>
-              <TableHead>Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {editingScorers
-              .filter(scorer => 
-                scorer.name.toLowerCase().includes(search.toLowerCase()) &&
-                (!selectedCategory || scorer.category === selectedCategory)
-              )
-              .sort((a, b) => b.goals - a.goals)
-              .map((scorer) => (
-                <TableRow key={scorer.id}>
-                  <TableCell className="font-medium">{scorer.name}</TableCell>
-                  <TableCell>{scorer.team}</TableCell>
-                  <TableCell>
-                    <Input 
-                      type="number" 
-                      value={scorer.goals} 
-                      min={0}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value)) {
-                          handleUpdateGoals(scorer, value);
-                        }
-                      }}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDeleteScorer(scorer.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Artilheiros</h2>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="primary">Adicionar artilheiro</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Adicionar artilheiro</DialogTitle>
+              <DialogDescription>
+                Crie um novo artilheiro para o campeonato. Clique em salvar quando estiver satisfeito.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="playerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Jogador</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um jogador" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {players.map((player) => (
+                            <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Selecione o jogador que será o artilheiro.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="teamId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Selecione o time do jogador.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="goals"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gols</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Gols" type="number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Número de gols marcados pelo jogador.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Categoria" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Categoria do jogador.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">Salvar</Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <DataTable
+        items={topScorers.map((scorer) => ({
+          id: scorer.id,
+          player_id: scorer.playerId || scorer.player_id || '',
+          team_id: scorer.teamId || scorer.team_id || '',
+          championship_id: scorer.championshipId || scorer.championship_id || null,
+          name: scorer.name || 'Desconhecido',
+          team: scorer.team || 'Time desconhecido',
+          goals: scorer.goals,
+          category: scorer.category,
+          // Include both camelCase and snake_case properties
+          playerId: scorer.playerId || scorer.player_id || '',
+          teamId: scorer.teamId || scorer.team_id || '',
+          championshipId: scorer.championshipId || scorer.championship_id || null,
+        }))}
+      />
+    </div>
   );
 };
 
 export default TopScorersManagement;
+
+interface EditTopScorerFormProps {
+  topScorer: TopScorer;
+}
+
+const EditTopScorerForm: React.FC<EditTopScorerFormProps> = ({ topScorer }) => {
+  const [players, setPlayers] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase.from('players').select('*');
+      if (error) {
+        console.error('Error fetching players:', error);
+        return;
+      }
+      setPlayers(data || []);
+    };
+
+    const fetchTeams = async () => {
+      const { data, error } = await supabase.from('teams').select('*');
+      if (error) {
+        console.error('Error fetching teams:', error);
+        return;
+      }
+      setTeams(data || []);
+    };
+
+    fetchPlayers();
+    fetchTeams();
+  }, []);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      playerId: topScorer.playerId || '',
+      teamId: topScorer.teamId || '',
+      goals: topScorer.goals,
+      category: topScorer.category,
+      championshipId: topScorer.championshipId,
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const { data, error } = await supabase
+        .from('top_scorers')
+        .update({
+          player_id: values.playerId,
+          team_id: values.teamId,
+          goals: values.goals,
+          category: values.category,
+          championship_id: values.championshipId,
+        })
+        .eq('id', topScorer.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating top scorer:', error);
+        toast.error('Erro ao atualizar artilheiro.');
+        return;
+      }
+
+      toast.success('Artilheiro atualizado com sucesso!');
+    } catch (error) {
+      console.error('Error updating top scorer:', error);
+      toast.error('Erro ao atualizar artilheiro.');
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="playerId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Jogador</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um jogador" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {players.map((player) => (
+                    <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Selecione o jogador que será o artilheiro.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="teamId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Time</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um time" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Selecione o time do jogador.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="goals"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gols</FormLabel>
+              <FormControl>
+                <Input placeholder="Gols" type="number" {...field} />
+              </FormControl>
+              <FormDescription>
+                Número de gols marcados pelo jogador.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Categoria</FormLabel>
+              <FormControl>
+                <Input placeholder="Categoria" {...field} />
+              </FormControl>
+              <FormDescription>
+                Categoria do jogador.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Salvar</Button>
+      </form>
+    </Form>
+  );
+};
