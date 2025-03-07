@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -32,7 +31,7 @@ import TeamDashboard from './pages/TeamDashboard';
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import EnhancedHeader from './components/EnhancedHeader';
-import EnhancedFooter from './components/EnhancedFooter';
+import Footer from './components/Footer';
 
 import './App.css';
 
@@ -109,7 +108,7 @@ function App() {
           {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <EnhancedFooter />
+        <Footer />
         <Toaster />
       </Router>
     </QueryClientProvider>

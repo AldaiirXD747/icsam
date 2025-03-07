@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Pencil, Trash2, Calendar } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
-import { Match, MatchStatus } from '@/types';
+import { Match, MatchStatus, AdminMatch } from '@/types';
+import { convertDbMatchToAdminMatch, convertMatchToDbMatch } from '@/utils/typeConverters';
 
 type MatchFormData = {
   date: string;
@@ -26,10 +27,10 @@ type MatchFormData = {
 };
 
 const MatchManagement = () => {
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<AdminMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('list');
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<AdminMatch | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -72,22 +73,13 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const transformedData = data.map(match => ({
-        id: match.id,
-        date: match.date,
-        time: match.time,
-        location: match.location,
-        homeTeam: match.home_team,
-        awayTeam: match.away_team,
-        homeScore: match.home_score,
-        awayScore: match.away_score,
-        status: match.status as Match['status'],
-        category: match.category,
-        round: match.round,
-        championshipId: match.championship_id,
-        homeTeamName: match.home_team_details?.name || '',
-        awayTeamName: match.away_team_details?.name || '',
-      }));
+      const transformedData = data.map(match => 
+        convertDbMatchToAdminMatch(
+          match, 
+          match.home_team_details?.name || '', 
+          match.away_team_details?.name || ''
+        )
+      );
 
       setMatches(transformedData);
     } catch (error) {
@@ -151,21 +143,11 @@ const MatchManagement = () => {
     if (!validateForm()) return;
 
     try {
+      const matchData = convertMatchToDbMatch(formData as AdminMatch);
+      
       const { data, error } = await supabase
         .from('matches')
-        .insert({
-          date: formData.date,
-          time: formData.time,
-          location: formData.location,
-          home_team: formData.homeTeam,
-          away_team: formData.awayTeam,
-          home_score: formData.homeScore,
-          away_score: formData.awayScore,
-          status: formData.status,
-          category: formData.category,
-          round: formData.round,
-          championship_id: formData.championshipId,
-        })
+        .insert(matchData)
         .select(`
           *,
           home_team_details:teams!matches_home_team_fkey(id, name),
@@ -174,22 +156,11 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const newMatch = {
-        id: data[0].id,
-        date: data[0].date,
-        time: data[0].time,
-        location: data[0].location,
-        homeTeam: data[0].home_team,
-        awayTeam: data[0].away_team,
-        homeScore: data[0].home_score,
-        awayScore: data[0].away_score,
-        status: data[0].status as Match['status'],
-        category: data[0].category,
-        round: data[0].round,
-        championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_details?.name || '',
-        awayTeamName: data[0].away_team_details?.name || '',
-      };
+      const newMatch = convertDbMatchToAdminMatch(
+        data[0],
+        data[0].home_team_details?.name || '',
+        data[0].away_team_details?.name || ''
+      );
 
       setMatches([newMatch, ...matches]);
 
@@ -205,7 +176,7 @@ const MatchManagement = () => {
       toast({
         variant: "destructive",
         title: "Erro ao adicionar partida",
-        description: "Não foi possível adicionar a partida."
+        description: "Não foi possível adicionar a partida. Verifique se todos os campos estão preenchidos corretamente."
       });
     }
   };
@@ -214,21 +185,11 @@ const MatchManagement = () => {
     if (!selectedMatch || !validateForm()) return;
 
     try {
+      const matchData = convertMatchToDbMatch(formData as AdminMatch);
+
       const { data, error } = await supabase
         .from('matches')
-        .update({
-          date: formData.date,
-          time: formData.time,
-          location: formData.location,
-          home_team: formData.homeTeam,
-          away_team: formData.awayTeam,
-          home_score: formData.homeScore,
-          away_score: formData.awayScore,
-          status: formData.status,
-          category: formData.category,
-          round: formData.round,
-          championship_id: formData.championshipId,
-        })
+        .update(matchData)
         .eq('id', selectedMatch.id)
         .select(`
           *,
@@ -238,22 +199,11 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const updatedMatch = {
-        id: data[0].id,
-        date: data[0].date,
-        time: data[0].time,
-        location: data[0].location,
-        homeTeam: data[0].home_team,
-        awayTeam: data[0].away_team,
-        homeScore: data[0].home_score,
-        awayScore: data[0].away_score,
-        status: data[0].status as Match['status'],
-        category: data[0].category,
-        round: data[0].round,
-        championshipId: data[0].championship_id,
-        homeTeamName: data[0].home_team_details?.name || '',
-        awayTeamName: data[0].away_team_details?.name || '',
-      };
+      const updatedMatch = convertDbMatchToAdminMatch(
+        data[0],
+        data[0].home_team_details?.name || '',
+        data[0].away_team_details?.name || ''
+      );
 
       setMatches(matches.map(m => 
         m.id === selectedMatch.id ? updatedMatch : m
@@ -272,7 +222,7 @@ const MatchManagement = () => {
       toast({
         variant: "destructive",
         title: "Erro ao atualizar partida",
-        description: "Não foi possível atualizar a partida."
+        description: "Não foi possível atualizar a partida. Verifique se todos os campos estão preenchidos corretamente."
       });
     }
   };
@@ -304,7 +254,7 @@ const MatchManagement = () => {
     }
   };
 
-  const handleEditMatch = (match: Match) => {
+  const handleEditMatch = (match: AdminMatch) => {
     setSelectedMatch(match);
 
     setFormData({
@@ -325,25 +275,23 @@ const MatchManagement = () => {
   };
 
   const mapStatusForForm = (uiStatus: MatchStatus): MatchStatus => {
-    switch (uiStatus) {
-      case 'live':
-        return 'in_progress';
-      case 'finished':
-        return 'completed';
-      default:
-        return uiStatus;
-    }
+    if (uiStatus === 'in_progress') return 'in_progress';
+    if (uiStatus === 'completed') return 'completed';
+    if (uiStatus === 'scheduled') return 'scheduled';
+    if (uiStatus === 'postponed') return 'postponed';
+    if (uiStatus === 'canceled') return 'canceled';
+    
+    return 'scheduled';
   };
 
-  const mapStatusForDisplay = (dbStatus: string): MatchStatus => {
-    switch (dbStatus) {
-      case 'in_progress':
-        return 'live';
-      case 'completed':
-        return 'finished';
-      default:
-        return dbStatus as MatchStatus;
-    }
+  const mapStatusForDisplay = (dbStatus: string): string => {
+    if (dbStatus === 'in_progress') return 'Em andamento';
+    if (dbStatus === 'completed') return 'Finalizado';
+    if (dbStatus === 'scheduled') return 'Agendado';
+    if (dbStatus === 'postponed') return 'Adiado';
+    if (dbStatus === 'canceled') return 'Cancelado';
+    
+    return dbStatus;
   };
 
   const resetForm = () => {
@@ -400,23 +348,8 @@ const MatchManagement = () => {
     return matchesSearch && matchesCategory && matchesStatus && matchesChampionship;
   });
 
-  const formatStatus = (status: MatchStatus) => {
-    switch (status) {
-      case 'scheduled':
-        return 'Agendado';
-      case 'in_progress':
-      case 'live':
-        return 'Em andamento';
-      case 'completed':
-      case 'finished':
-        return 'Finalizado';
-      case 'postponed':
-        return 'Adiado';
-      case 'canceled':
-        return 'Cancelado';
-      default:
-        return status;
-    }
+  const formatStatus = (status: MatchStatus): string => {
+    return mapStatusForDisplay(status);
   };
 
   return (

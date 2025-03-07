@@ -57,6 +57,23 @@ export interface Championship {
 // Types for matches
 export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'postponed' | 'canceled';
 
+export interface AdminMatch {
+  id: string;
+  date: string;
+  time: string;
+  location: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: MatchStatus;
+  category: string;
+  round: string | null;
+  championshipId: string | null;
+  homeTeamName?: string;
+  awayTeamName?: string;
+}
+
 export interface Match {
   id: string;
   date: string;
@@ -121,15 +138,4 @@ export interface YellowCardLeader {
   // Additional properties for UI
   name?: string;
   team?: string;
-}
-
-// Type for extending match with additional admin properties
-export interface AdminMatch extends Match {
-  homeTeam: string;
-  awayTeam: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  championshipId: string | null;
-  homeTeamName: string;
-  awayTeamName: string;
 }

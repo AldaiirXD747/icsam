@@ -1,4 +1,5 @@
-import { Team, User, Match, TopScorer, YellowCardLeader } from "@/types";
+
+import { Team, User, Match, TopScorer, YellowCardLeader, AdminMatch } from "@/types";
 import { Database } from "@/integrations/supabase/types";
 
 /**
@@ -57,9 +58,53 @@ export const convertDbMatchToMatch = (
 };
 
 /**
- * Converts a Match object to a format ready for database insertion/update
+ * Converts a database match record to the AdminMatch interface used in the admin components
  */
-export const convertMatchToDbMatch = (match: Match) => {
+export const convertDbMatchToAdminMatch = (
+  dbMatch: any,
+  homeTeamName?: string,
+  awayTeamName?: string
+): AdminMatch => {
+  return {
+    id: dbMatch.id,
+    date: dbMatch.date,
+    time: dbMatch.time,
+    location: dbMatch.location,
+    homeTeam: dbMatch.home_team || "",
+    awayTeam: dbMatch.away_team || "",
+    homeScore: dbMatch.home_score,
+    awayScore: dbMatch.away_score,
+    status: dbMatch.status as Match["status"],
+    category: dbMatch.category,
+    round: dbMatch.round || null,
+    championshipId: dbMatch.championship_id,
+    homeTeamName: homeTeamName || "",
+    awayTeamName: awayTeamName || ""
+  };
+};
+
+/**
+ * Converts a Match or AdminMatch object to a format ready for database insertion/update
+ */
+export const convertMatchToDbMatch = (match: Match | AdminMatch) => {
+  // If it's an AdminMatch, convert it to the expected DB format
+  if ('homeTeam' in match && !('home_team' in match)) {
+    return {
+      date: match.date,
+      time: match.time,
+      location: match.location,
+      home_team: match.homeTeam,
+      away_team: match.awayTeam,
+      home_score: match.homeScore,
+      away_score: match.awayScore,
+      status: match.status,
+      category: match.category,
+      round: match.round,
+      championship_id: match.championshipId,
+    };
+  }
+  
+  // If it's a Match, use both camelCase and snake_case properties
   return {
     date: match.date,
     time: match.time,
