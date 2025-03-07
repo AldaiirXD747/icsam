@@ -1,11 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-
 const AboutSection = () => {
-  return (
-    <section className="py-16 bg-white">
+  return <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <div className="flex flex-col lg:flex-row items-center gap-12">
           <div className="lg:w-1/2 order-2 lg:order-1 animate-fade-in-up">
@@ -56,11 +53,7 @@ const AboutSection = () => {
           </div>
           <div className="lg:w-1/2 order-1 lg:order-2 animate-fade-in">
             <div className="relative">
-              <img 
-                src="https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/instituto-criancas.jpg" 
-                alt="Instituto Criança Santa Maria" 
-                className="w-full h-auto rounded-xl shadow-lg"
-              />
+              <img alt="Instituto Criança Santa Maria" src="https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/LOGO-INSTITUTO-CORTADA-1.png" className="w-full h-auto rounded-xl shadow-lg object-contain" />
               <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg hidden md:block">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-full bg-lime-primary flex items-center justify-center">
@@ -76,8 +69,6 @@ const AboutSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default AboutSection;
