@@ -56,9 +56,9 @@ const Teams = () => {
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center gap-2 mb-4">
               <Shield className="h-8 w-8 text-blue-primary" />
-              <h1 className="text-3xl md:text-4xl font-bold text-blue-primary">Times Participantes</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-primary">Times Participantes</h1>
             </div>
-            <p className="text-gray-600 max-w-3xl mx-auto mb-8">
+            <p className="text-sm sm:text-base text-gray-600 max-w-3xl mx-auto mb-8">
               Conheça os times que participam dos nossos campeonatos. Clique em cada time para ver mais detalhes.
             </p>
             
@@ -83,21 +83,21 @@ const Teams = () => {
             </div>
           ) : error ? (
             <div className="text-center py-10">
-              <p className="text-red-500">Não foi possível carregar os times. Por favor, tente novamente mais tarde.</p>
+              <p className="text-red-500 text-sm sm:text-base">Não foi possível carregar os times. Por favor, tente novamente mais tarde.</p>
             </div>
           ) : filteredTeams.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-blue-100">
               {searchTerm ? (
                 <>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum time encontrado</h3>
-                  <p className="text-gray-500">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Nenhum time encontrado</h3>
+                  <p className="text-sm sm:text-base text-gray-500">
                     Não encontramos nenhum time correspondente à sua busca. Tente outros termos.
                   </p>
                 </>
               ) : (
                 <>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Nenhum time cadastrado</h3>
-                  <p className="text-gray-500">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Nenhum time cadastrado</h3>
+                  <p className="text-sm sm:text-base text-gray-500">
                     Novos times serão exibidos aqui quando forem cadastrados pelo Painel Administrativo.
                   </p>
                 </>
@@ -105,7 +105,7 @@ const Teams = () => {
             </div>
           ) : (
             <>
-              <p className="text-sm text-gray-500 mb-4 text-center">
+              <p className="text-xs sm:text-sm text-gray-500 mb-4 text-center">
                 Mostrando {filteredTeams.length} {filteredTeams.length === 1 ? 'time' : 'times'}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

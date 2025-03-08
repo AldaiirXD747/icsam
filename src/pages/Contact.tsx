@@ -8,7 +8,7 @@ const Contact = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 mt-16">
+      <main className="flex-1 pt-20">
         <ContactSection />
       </main>
       <Footer />
