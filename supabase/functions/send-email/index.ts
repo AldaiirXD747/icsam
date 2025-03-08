@@ -16,7 +16,7 @@ interface EmailRequest {
   name?: string;
   email?: string;
   message?: string;
-  type: "contact" | "notification";
+  type: "contact" | "notification" | "reset_password";
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     let html = "";
-    let from = "Copa Sesc <noreply@example.com>";
+    let from = "Copa Sesc <noreply@resend.dev>";
 
     // Different email templates based on type
     if (type === "contact") {
@@ -68,6 +68,13 @@ const handler = async (req: Request): Promise<Response> => {
       html = `
         <h1>${subject}</h1>
         <p>${message || "Notificação do sistema Copa Sesc."}</p>
+      `;
+    } else if (type === "reset_password") {
+      html = `
+        <h1>${subject}</h1>
+        <p>${message}</p>
+        <p>Se você não solicitou esta redefinição de senha, por favor ignore este email.</p>
+        <p>Este é um email automático, por favor não responda.</p>
       `;
     }
 

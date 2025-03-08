@@ -7,7 +7,7 @@ interface EmailParams {
   name?: string;
   email?: string;
   message?: string;
-  type: 'contact' | 'notification';
+  type: 'contact' | 'notification' | 'reset_password';
 }
 
 export const sendEmail = async (params: EmailParams): Promise<{success: boolean; error?: string}> => {
