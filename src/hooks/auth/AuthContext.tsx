@@ -80,17 +80,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Sign in function
   const signIn = async (email: string, password: string) => {
     try {
+      // First try with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) {
-        console.error('Error signing in:', error);
-        return { success: false, error: error.message };
+      if (!error) {
+        return { success: true };
       }
       
-      return { success: true };
+      console.log('Trying custom authentication after Supabase Auth failed');
+      
+      // If Supabase Auth fails, try with custom authentication for app_users table
+      const { data: userData, error: customError } = await supabase
+        .rpc('verify_user_credentials', {
+          p_email: email,
+          p_password: password
+        });
+      
+      if (customError) {
+        console.error('Error in custom authentication:', customError);
+        return { success: false, error: customError.message };
+      }
+      
+      if (userData && userData.length > 0) {
+        const user = userData[0];
+        
+        // Set user session manually since we're using custom auth
+        const sessionData = {
+          user: {
+            id: user.id,
+            email: user.email,
+            user_metadata: {
+              name: user.name,
+              role: user.role
+            }
+          }
+        };
+        
+        // Store the session data in localStorage for persistence
+        localStorage.setItem('custom_auth_session', JSON.stringify(sessionData));
+        
+        // Set the session in the context
+        setUser(sessionData.user as unknown as User);
+        
+        return { success: true };
+      }
+      
+      return { success: false, error: 'Credenciais inválidas.' };
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
       return { success: false, error: error.message || 'An unexpected error occurred' };
@@ -100,7 +138,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Sign out function
   const signOut = async () => {
     try {
+      // Clear custom auth session if it exists
+      localStorage.removeItem('custom_auth_session');
+      
+      // Also sign out from Supabase Auth
       await supabase.auth.signOut();
+      
+      // Clear the user and session in the context
+      setUser(null);
+      setSession(null);
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
@@ -113,13 +159,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Check if user has team access
   const checkTeamAccess = async () => {
-    if (!user) return false;
+    if (!user) {
+      // Check if there's a custom auth session
+      const customSession = localStorage.getItem('custom_auth_session');
+      if (!customSession) return false;
+      
+      try {
+        const parsedSession = JSON.parse(customSession);
+        if (parsedSession.user?.user_metadata?.role === 'team_manager') {
+          return true;
+        }
+      } catch (e) {
+        console.error('Error parsing custom session:', e);
+        return false;
+      }
+      
+      return false;
+    }
     
     try {
       // Check for team_id in user metadata
-      const teamId = user.user_metadata?.team_id;
+      const role = user.user_metadata?.role;
       
-      if (teamId) {
+      if (role === 'team_manager') {
         return true;
       }
       
@@ -144,6 +206,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Check if user has admin access
   const checkAdminAccess = async () => {
+    // First check custom authentication
+    const customSession = localStorage.getItem('custom_auth_session');
+    if (customSession) {
+      try {
+        const parsedSession = JSON.parse(customSession);
+        if (parsedSession.user?.user_metadata?.role === 'admin') {
+          return true;
+        }
+      } catch (e) {
+        console.error('Error parsing custom session:', e);
+      }
+    }
+    
+    // Then check Supabase authentication
     if (!user) return false;
     
     try {

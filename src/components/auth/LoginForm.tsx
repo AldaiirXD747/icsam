@@ -46,6 +46,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     setLoading(true);
     
     try {
+      console.log('Attempting login with:', formData.email);
       const result = await signIn(formData.email, formData.password);
       
       if (result.success) {
@@ -57,6 +58,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         // Notify parent component of successful login
         onLoginSuccess();
       } else {
+        console.error('Login failed:', result.error);
         setError(result.error || 'Credenciais inválidas. Tente novamente.');
       }
     } catch (error: any) {
