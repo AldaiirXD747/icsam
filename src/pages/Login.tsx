@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import LoginForm from '@/components/auth/LoginForm';
 import ResetSuccessMessage from '@/components/auth/ResetSuccessMessage';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,22 +12,28 @@ const Login = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const resetSuccess = searchParams.get('reset') === 'true';
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Check if the user is already authenticated
   useEffect(() => {
+    // Don't check if we're already redirecting to avoid loops
+    if (isRedirecting) return;
+    
     const checkAuthStatus = async () => {
+      // Wait for loading to complete
+      if (loading) return;
+      
       // If the user is already logged in, redirect to admin panel
       if (user) {
         console.log('User already authenticated, redirecting to admin panel');
         setIsRedirecting(true);
-        window.location.href = '/admin';
+        navigate('/admin', { replace: true });
       }
     };
     
     checkAuthStatus();
-  }, [user]);
+  }, [user, loading, navigate, isRedirecting]);
 
   // Show toast when reset=true parameter is present (after password reset)
   useEffect(() => {
@@ -43,12 +48,10 @@ const Login = () => {
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');
     setIsRedirecting(true);
-    
-    // Force hard redirection to admin panel to ensure page reload
-    window.location.href = '/admin';
+    navigate('/admin', { replace: true });
   };
 
-  if (isRedirecting) {
+  if (isRedirecting || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-primary"></div>

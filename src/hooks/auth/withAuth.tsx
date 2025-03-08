@@ -11,6 +11,9 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
     const [checking, setChecking] = useState(true);
     
     useEffect(() => {
+      // Avoid multiple checkAccess calls
+      if (!checking) return;
+      
       const checkAccess = async () => {
         if (loading) return;
         
@@ -19,7 +22,8 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
         if (!session && !user) {
           // Not authenticated - neither via Supabase nor custom auth
           console.log('Not authenticated, redirecting to login');
-          navigate('/login');
+          navigate('/login', { replace: true });
+          setChecking(false);
           return;
         }
         
@@ -29,7 +33,8 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
           
           if (!isAdmin) {
             console.log('Not an admin, redirecting to home');
-            navigate('/');
+            navigate('/', { replace: true });
+            setChecking(false);
             return;
           }
           setHasAccess(true);
@@ -39,7 +44,8 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
           
           if (!hasTeamAccess) {
             console.log('No team access, redirecting to team login');
-            navigate('/team/login');
+            navigate('/team/login', { replace: true });
+            setChecking(false);
             return;
           }
           setHasAccess(true);
@@ -52,7 +58,7 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
       };
       
       checkAccess();
-    }, [session, user, loading, navigate, checkAdminAccess, checkTeamAccess]);
+    }, [session, user, loading, navigate, checkAdminAccess, checkTeamAccess, checking, requiredRole]);
     
     if (loading || checking) {
       return (

@@ -1,4 +1,3 @@
-
 import { createContext, ReactNode, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -23,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     // Check active session
@@ -66,23 +66,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event);
+        
+        // Prevent redirect loops by checking the redirecting state
+        if (redirecting) return;
+        
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
         
         // Handle sign in and sign out events
         if (event === 'SIGNED_IN') {
+          setRedirecting(true);
           toast({
             title: 'Login realizado com sucesso',
             variant: 'default',
           });
-          navigate('/admin');
+          
+          // Use setTimeout to avoid potential race conditions
+          setTimeout(() => {
+            navigate('/admin', { replace: true });
+            setRedirecting(false);
+          }, 100);
         } else if (event === 'SIGNED_OUT') {
+          setRedirecting(true);
           toast({
             title: 'Você foi desconectado',
             variant: 'default',
           });
-          navigate('/login');
+          
+          // Use setTimeout to avoid potential race conditions
+          setTimeout(() => {
+            navigate('/login', { replace: true });
+            setRedirecting(false);
+          }, 100);
         }
       }
     );
@@ -91,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, redirecting]);
   
   // Sign in function
   const signIn = async (email: string, password: string) => {

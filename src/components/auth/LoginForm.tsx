@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,6 +27,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -56,7 +57,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           description: "Você será redirecionado para o painel administrativo."
         });
         
-        // Trigger immediate redirection
+        // Call the success handler which will handle navigation
         onLoginSuccess();
       } else {
         console.error('Login failed:', result.error);
