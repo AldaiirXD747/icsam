@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { sendEmail } from '@/services/emailService';
 
 const Reset = () => {
   const [email, setEmail] = useState('');
@@ -35,6 +36,18 @@ const Reset = () => {
       });
       
       if (error) throw error;
+      
+      // Also send a notification email using our email service
+      await sendEmail({
+        to: email,
+        subject: "Redefinição de senha - Copa Sesc",
+        message: `
+          Foi solicitada uma redefinição de senha para a sua conta.
+          Verifique sua caixa de entrada para as instruções enviadas pelo Supabase.
+          Se você não receber o email em alguns minutos, verifique sua pasta de spam.
+        `,
+        type: "notification"
+      });
       
       // Show success message
       setSuccess(true);
