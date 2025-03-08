@@ -17,6 +17,7 @@ interface EmailRequest {
   email?: string;
   message?: string;
   type: "contact" | "notification" | "reset_password";
+  resetToken?: string; // Adicionado para suportar token de redefinição
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -26,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, subject, name, email, message, type }: EmailRequest = await req.json();
+    const { to, subject, name, email, message, type, resetToken }: EmailRequest = await req.json();
 
     // Validate required fields
     if (!to || !subject || !type) {
@@ -70,9 +71,18 @@ const handler = async (req: Request): Promise<Response> => {
         <p>${message || "Notificação do sistema Copa Sesc."}</p>
       `;
     } else if (type === "reset_password") {
+      const resetUrl = resetToken 
+        ? `${Deno.env.get("PUBLIC_APP_URL") || "http://localhost:5173"}/reset-password?token=${resetToken}`
+        : `${Deno.env.get("PUBLIC_APP_URL") || "http://localhost:5173"}/reset`;
+        
       html = `
         <h1>${subject}</h1>
-        <p>${message}</p>
+        <p>Você solicitou uma redefinição de senha para sua conta no Copa Sesc.</p>
+        <p>Clique no link abaixo para redefinir sua senha:</p>
+        <p><a href="${resetUrl}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Redefinir minha senha</a></p>
+        <p>Se o botão acima não funcionar, copie e cole o link a seguir em seu navegador:</p>
+        <p><a href="${resetUrl}">${resetUrl}</a></p>
+        <p>Este link expira em 24 horas.</p>
         <p>Se você não solicitou esta redefinição de senha, por favor ignore este email.</p>
         <p>Este é um email automático, por favor não responda.</p>
       `;

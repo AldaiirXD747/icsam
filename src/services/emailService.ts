@@ -8,6 +8,7 @@ interface EmailParams {
   email?: string;
   message?: string;
   type: 'contact' | 'notification' | 'reset_password';
+  resetToken?: string; // Adicionado para suportar token de redefinição
 }
 
 export const sendEmail = async (params: EmailParams): Promise<{success: boolean; error?: string}> => {

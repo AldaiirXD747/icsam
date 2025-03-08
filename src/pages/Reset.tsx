@@ -37,21 +37,19 @@ const Reset = () => {
       
       if (error) throw error;
       
-      // Send our own password reset email as a backup
+      // Send our own custom password reset email
       try {
         await sendEmail({
           to: email,
           subject: "Redefinição de senha - Copa Sesc",
           message: `
             <p>Foi solicitada uma redefinição de senha para a sua conta no Copa Sesc.</p>
-            <p>Verifique sua caixa de entrada para as instruções de redefinição de senha enviadas pelo Supabase.</p>
-            <p>Se você não receber o email em alguns minutos, verifique sua pasta de spam ou tente novamente.</p>
-            <p>Alternativamente, você pode acessar o link: <a href="${window.location.origin}/login?reset=true">Redefinir senha</a></p>
+            <p>Siga as instruções no email enviado pelo Supabase ou use o link abaixo.</p>
           `,
           type: "reset_password"
         });
       } catch (emailError) {
-        console.error('Error sending backup email:', emailError);
+        console.error('Error sending custom reset email:', emailError);
         // Continue even if our email fails, as Supabase should have sent one
       }
       
