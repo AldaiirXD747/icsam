@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,6 +20,8 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const [searchParams] = useSearchParams();
+  const resetSuccess = searchParams.get('reset') === 'true';
 
   // Verificar se o usuário já está autenticado
   useEffect(() => {
@@ -33,6 +35,16 @@ const Login = () => {
     
     checkSession();
   }, [navigate]);
+
+  // Mostrar toast quando o parâmetro reset=true estiver presente (após redefinição de senha)
+  useEffect(() => {
+    if (resetSuccess) {
+      toast({
+        title: "Senha redefinida com sucesso",
+        description: "Você pode fazer login com sua nova senha agora.",
+      });
+    }
+  }, [resetSuccess, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -85,7 +97,7 @@ const Login = () => {
           <div className="max-w-md mx-auto glass-card p-8 animate-fade-in-up">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-blue-primary mb-2">Login</h2>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Entre para acessar o painel administrativo
               </p>
             </div>
@@ -93,6 +105,12 @@ const Login = () => {
             {error && (
               <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-6">
                 {error}
+              </div>
+            )}
+            
+            {resetSuccess && (
+              <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg mb-6">
+                Sua senha foi redefinida com sucesso. Por favor, faça login com sua nova senha.
               </div>
             )}
             

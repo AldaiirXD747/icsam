@@ -22,8 +22,11 @@ import PlayerDetail from './pages/PlayerDetail';
 import Transparencia from './pages/Transparencia';
 import NotFound from './pages/NotFound';
 
-// Páginas Admin
+// Páginas Auth
 import Login from './pages/Login';
+import Reset from './pages/Reset';
+
+// Páginas Admin
 import AdminDashboard from './pages/AdminDashboard';
 import AdminStandings from './pages/AdminStandings';
 
@@ -101,6 +104,7 @@ function App() {
                 {/* Rotas de Autenticação */}
                 <Route path="/admin/login" element={<Login />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/reset" element={<Reset />} />
                 <Route path="/team/login" element={<TeamLogin />} />
 
                 {/* Rotas Admin Protegidas */}
