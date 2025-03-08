@@ -90,8 +90,10 @@ const TeamLogin = () => {
           description: "Você será redirecionado para o painel do time."
         });
         
-        // Redirect to team dashboard
-        navigate('/team/dashboard');
+        // Redirect to team dashboard com um pequeno delay
+        setTimeout(() => {
+          navigate('/team/dashboard');
+        }, 500);
       }
     } catch (error: any) {
       console.error('Error signing in:', error);

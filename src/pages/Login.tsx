@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +19,20 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signIn } = useAuth();
+
+  // Verificar se o usuário já está autenticado
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Se já estiver autenticado, redirecionar para o painel admin
+        navigate('/admin');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -37,39 +52,21 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Verificar credenciais contra a tabela app_users
-      const { data, error } = await supabase
-        .rpc('verify_user_credentials', {
-          p_email: formData.email,
-          p_password: formData.password
-        });
+      // Usar o método signIn do hook useAuth em vez da chamada direta
+      const result = await signIn(formData.email, formData.password);
       
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        const user = data[0];
-        
-        // Salvar dados do usuário na sessão
-        localStorage.setItem('user', JSON.stringify({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        }));
-        
-        // Redirecionar com base na função
-        if (user.role === 'admin') {
-          navigate('/admin');
-        } else if (user.role === 'team_manager') {
-          navigate('/team/dashboard');
-        }
-        
+      if (result.success) {
         toast({
           title: "Login realizado com sucesso",
-          description: `Bem-vindo(a), ${user.name}!`
+          description: "Você será redirecionado para o painel administrativo."
         });
+        
+        // Redirecionar após um pequeno delay para garantir que a autenticação foi processada
+        setTimeout(() => {
+          navigate('/admin');
+        }, 500);
       } else {
-        setError('Credenciais inválidas. Tente novamente.');
+        setError(result.error || 'Credenciais inválidas. Tente novamente.');
       }
     } catch (error: any) {
       console.error('Erro de login:', error);

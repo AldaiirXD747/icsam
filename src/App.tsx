@@ -34,6 +34,8 @@ import TeamDashboard from './pages/TeamDashboard';
 // Componentes
 import { Toaster } from './components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ScrollToTop from './components/ScrollToTop';
+import BackToTopButton from './components/BackToTopButton';
 
 // Wrap protected routes
 const ProtectedAdminDashboard = withAuth(AdminDashboard, 'admin');
@@ -56,6 +58,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProviderWrapper>
+          {/* ScrollToTop garante que as páginas começam do topo quando navegamos */}
+          <ScrollToTop />
           <div className="flex flex-col min-h-screen">
             <div className="flex-grow">
               <Routes>
@@ -123,6 +127,8 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
+            {/* Botão para voltar ao topo e para a página inicial */}
+            <BackToTopButton />
             <Toaster />
           </div>
         </AuthProviderWrapper>
