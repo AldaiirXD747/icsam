@@ -14,6 +14,8 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
       const checkAccess = async () => {
         if (loading) return;
         
+        console.log('withAuth: Checking access', { session, user, requiredRole });
+        
         if (!session && !user) {
           // Not authenticated - neither via Supabase nor custom auth
           console.log('Not authenticated, redirecting to login');

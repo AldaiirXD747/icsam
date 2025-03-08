@@ -45,7 +45,13 @@ const BatchPlayerRegistration = () => {
     return input
       .split('\n')
       .map(line => line.trim())
-      .filter(line => line && !line.includes('SUB -') && !line.includes('ATLETAS'));
+      .filter(line => {
+        // Skip empty lines, category headers, and hyphens
+        return line && 
+               !line.includes('SUB -') && 
+               !line.includes('SUB-') && 
+               !line.includes('ATLETAS');
+      });
   };
 
   const handleSubmit = async () => {
@@ -79,12 +85,16 @@ const BatchPlayerRegistration = () => {
     }
 
     // Confirm before proceeding
-    if (!window.confirm(`Cadastrar ${playerNames.length} jogadores para o time selecionado?`)) {
+    if (!window.confirm(`Cadastrar ${playerNames.length} jogadores para o time selecionado na categoria ${selectedCategory}?`)) {
       return;
     }
 
     try {
       setIsLoading(true);
+      
+      console.log("Registering players:", playerNames);
+      console.log("Team ID:", selectedTeam);
+      console.log("Category:", selectedCategory);
       
       const players = playerNames.map(name => ({
         name,
@@ -98,11 +108,16 @@ const BatchPlayerRegistration = () => {
         .insert(players)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Detailed error:', error);
+        throw error;
+      }
+
+      console.log("Registration successful, players:", data);
 
       toast({
         title: "Jogadores cadastrados",
-        description: `${players.length} jogadores foram cadastrados com sucesso.`
+        description: `${players.length} jogadores foram cadastrados com sucesso para a categoria ${selectedCategory}.`
       });
       
       setInputData('');
