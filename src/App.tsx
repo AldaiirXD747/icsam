@@ -57,6 +57,7 @@ const queryClient = new QueryClient({
 });
 
 import AddMatchDataPage from './pages/admin/AddMatchDataPage';
+import BatchPlayerRegistrationPage from './pages/admin/BatchPlayerRegistrationPage';
 
 function App() {
   return (
@@ -122,6 +123,8 @@ function App() {
                 <Route path="/admin/gallery" element={<ProtectedAdminDashboard />} />
                 <Route path="/admin/transparency" element={<ProtectedAdminDashboard />} />
                 <Route path="/admin/sync" element={<ProtectedAdminDashboard />} />
+                <Route path="/admin/add-match-data" element={<AddMatchDataPage />} />
+                <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPage />} />
 
                 {/* Rotas de Time Protegidas */}
                 <Route path="/team/dashboard" element={<ProtectedTeamDashboard />} />
