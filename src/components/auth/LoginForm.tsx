@@ -50,12 +50,13 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const result = await signIn(formData.email, formData.password);
       
       if (result.success) {
+        console.log('Login successful in LoginForm');
         toast({
           title: "Login realizado com sucesso",
           description: "Você será redirecionado para o painel administrativo."
         });
         
-        // Immediate redirection
+        // Trigger immediate redirection
         onLoginSuccess();
       } else {
         console.error('Login failed:', result.error);

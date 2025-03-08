@@ -23,12 +23,12 @@ const Login = () => {
       if (user) {
         console.log('User already authenticated, redirecting to admin panel');
         setIsRedirecting(true);
-        navigate('/admin');
+        window.location.href = '/admin';
       }
     };
     
     checkAuthStatus();
-  }, [user, navigate]);
+  }, [user]);
 
   // Show toast when reset=true parameter is present (after password reset)
   useEffect(() => {
@@ -43,7 +43,8 @@ const Login = () => {
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');
     setIsRedirecting(true);
-    // Force redirection to admin panel
+    
+    // Force hard redirection to admin panel to ensure page reload
     window.location.href = '/admin';
   };
 

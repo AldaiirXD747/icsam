@@ -36,8 +36,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
         
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
+        console.log('Initial session data:', data.session);
+        
+        // Check for custom session in localStorage
+        const customSessionStr = localStorage.getItem('custom_auth_session');
+        if (customSessionStr && !data.session) {
+          try {
+            console.log('Found custom session, setting user from localStorage');
+            const customSession = JSON.parse(customSessionStr);
+            setUser(customSession.user as unknown as User);
+          } catch (e) {
+            console.error('Error parsing custom session:', e);
+            localStorage.removeItem('custom_auth_session');
+          }
+        } else {
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        }
       } catch (error) {
         console.error('Unexpected error during getSession:', error);
       } finally {
@@ -61,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: 'Login realizado com sucesso',
             variant: 'default',
           });
+          navigate('/admin');
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: 'Você foi desconectado',
@@ -80,6 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Sign in function
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting login with email:', email);
+      
       // First try with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -87,10 +105,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (!error) {
+        console.log('Supabase Auth login successful:', data);
+        localStorage.removeItem('custom_auth_session'); // Clear any custom session
         return { success: true };
       }
       
-      console.log('Trying custom authentication after Supabase Auth failed');
+      console.log('Trying custom authentication after Supabase Auth failed with error:', error);
       
       // If Supabase Auth fails, try with custom authentication for app_users table
       const { data: userData, error: customError } = await supabase
@@ -106,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (userData && userData.length > 0) {
         const user = userData[0];
+        console.log('Custom auth login successful:', user);
         
         // Set user session manually since we're using custom auth
         const sessionData = {
@@ -128,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: true };
       }
       
+      console.error('Login failed: Invalid credentials');
       return { success: false, error: 'Credenciais inválidas.' };
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
@@ -206,31 +228,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Check if user has admin access
   const checkAdminAccess = async () => {
-    // First check custom authentication
-    const customSession = localStorage.getItem('custom_auth_session');
-    if (customSession) {
-      try {
-        const parsedSession = JSON.parse(customSession);
-        if (parsedSession.user?.user_metadata?.role === 'admin') {
-          return true;
-        }
-      } catch (e) {
-        console.error('Error parsing custom session:', e);
-      }
-    }
-    
-    // Then check Supabase authentication
-    if (!user) return false;
-    
     try {
+      console.log('Checking admin access...');
+      
+      // First check custom authentication
+      const customSession = localStorage.getItem('custom_auth_session');
+      if (customSession) {
+        try {
+          const parsedSession = JSON.parse(customSession);
+          console.log('Custom session found:', parsedSession);
+          
+          if (parsedSession.user?.user_metadata?.role === 'admin') {
+            console.log('Admin access granted via custom session');
+            return true;
+          }
+        } catch (e) {
+          console.error('Error parsing custom session:', e);
+        }
+      }
+      
+      // Then check Supabase authentication
+      if (!user) {
+        console.log('No user found, denying admin access');
+        return false;
+      }
+      
       // Check role from user metadata
       const role = user.user_metadata?.role;
+      console.log('User role from metadata:', role);
       
       if (role === 'admin') {
+        console.log('Admin access granted via user metadata');
         return true;
       }
       
       // Alternatively, check the app_users table
+      console.log('Checking app_users table for admin access...');
       const { data, error } = await supabase
         .rpc('verify_user_credentials', {
           p_email: user.email || '',
@@ -242,7 +275,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      return data.some(userData => userData.role === 'admin');
+      const isAdmin = data.some(userData => userData.role === 'admin');
+      console.log('Admin access from app_users table:', isAdmin);
+      return isAdmin;
     } catch (error) {
       console.error('Error checking admin access:', error);
       return false;
