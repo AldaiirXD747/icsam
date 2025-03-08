@@ -6,27 +6,29 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import LoginForm from '@/components/auth/LoginForm';
 import ResetSuccessMessage from '@/components/auth/ResetSuccessMessage';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const resetSuccess = searchParams.get('reset') === 'true';
+  const { user } = useAuth();
 
-  // Verificar se o usuário já está autenticado
+  // Check if the user is already authenticated
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Se já estiver autenticado, redirecionar para o painel admin
+    const checkAuthStatus = async () => {
+      // If the user is already logged in, redirect to admin panel
+      if (user) {
+        console.log('User already authenticated, redirecting to admin panel');
         navigate('/admin');
       }
     };
     
-    checkSession();
-  }, [navigate]);
+    checkAuthStatus();
+  }, [user, navigate]);
 
-  // Mostrar toast quando o parâmetro reset=true estiver presente (após redefinição de senha)
+  // Show toast when reset=true parameter is present (after password reset)
   useEffect(() => {
     if (resetSuccess) {
       toast({
@@ -37,10 +39,9 @@ const Login = () => {
   }, [resetSuccess, toast]);
 
   const handleLoginSuccess = () => {
-    // Redirecionar após um pequeno delay para garantir que a autenticação foi processada
-    setTimeout(() => {
-      navigate('/admin');
-    }, 500);
+    console.log('Login successful, redirecting to admin panel');
+    // Immediate redirection after successful login
+    navigate('/admin');
   };
 
   return (

@@ -55,8 +55,10 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           description: "Você será redirecionado para o painel administrativo."
         });
         
-        // Notify parent component of successful login
-        onLoginSuccess();
+        // Ensure immediate redirection after successful login
+        setTimeout(() => {
+          onLoginSuccess();
+        }, 100); // Short timeout to ensure the toast appears
       } else {
         console.error('Login failed:', result.error);
         setError(result.error || 'Credenciais inválidas. Tente novamente.');
