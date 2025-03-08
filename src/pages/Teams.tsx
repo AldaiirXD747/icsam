@@ -51,7 +51,7 @@ const Teams = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-blue-50">
       <Navbar />
-      <main className="flex-grow py-16">
+      <main className="flex-grow pt-24 pb-16"> {/* Updated pt-16 to pt-24 for more space at the top */}
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center gap-2 mb-4">
