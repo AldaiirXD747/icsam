@@ -42,7 +42,7 @@ const ContactSection = () => {
     
     try {
       // Define admin email that will receive contact form submissions
-      const adminEmail = 'admin@example.com'; // Replace with your actual admin email
+      const adminEmail = 'contato@institutocriancasantamaria.com.br'; // Updated with the actual email
       
       const { success, error } = await sendEmail({
         to: adminEmail,
@@ -180,7 +180,7 @@ const ContactSection = () => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Email</h3>
-            <p className="text-gray-600">contato@copasesc.com.br</p>
+            <p className="text-gray-600">contato@institutocriancasantamaria.com.br</p>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -190,7 +190,7 @@ const ContactSection = () => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Telefone</h3>
-            <p className="text-gray-600">(00) 0000-0000</p>
+            <p className="text-gray-600">(61) 99312-8187</p>
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-md text-center">
@@ -201,7 +201,7 @@ const ContactSection = () => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Endereço</h3>
-            <p className="text-gray-600">Av. Exemplo, 1000 - Centro</p>
+            <p className="text-gray-600">Quadra 309 Conjunto A - lote 12<br />Santa Maria, Brasília - DF</p>
           </div>
         </div>
       </div>
