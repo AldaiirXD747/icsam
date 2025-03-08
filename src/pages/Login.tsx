@@ -14,6 +14,7 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const resetSuccess = searchParams.get('reset') === 'true';
   const { user } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Check if the user is already authenticated
   useEffect(() => {
@@ -21,6 +22,7 @@ const Login = () => {
       // If the user is already logged in, redirect to admin panel
       if (user) {
         console.log('User already authenticated, redirecting to admin panel');
+        setIsRedirecting(true);
         navigate('/admin');
       }
     };
@@ -40,9 +42,19 @@ const Login = () => {
 
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');
-    // Immediate redirection after successful login
-    navigate('/admin');
+    setIsRedirecting(true);
+    // Force redirection to admin panel
+    window.location.href = '/admin';
   };
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-primary"></div>
+        <p className="ml-3 text-blue-primary">Redirecionando para o painel administrativo...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
