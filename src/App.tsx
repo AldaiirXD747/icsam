@@ -56,6 +56,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import AddMatchDataPage from './pages/admin/AddMatchDataPage';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
