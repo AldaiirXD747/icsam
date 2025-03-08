@@ -50,18 +50,24 @@ const AddMatchData = () => {
         continue;
       }
       
-      // Parse match data (format: "Team A 1x0 Team B - CATEGORY")
-      const matchPattern = /^(.*?)\s+(\d+)x(\d+)\s+(.*?)\s+-\s+(.*?)$/;
+      // Improved match pattern to handle various spacing
+      // Format examples: 
+      // "Team A 1x0 Team B - CATEGORY"
+      // "Team A 1x0 Team B -CATEGORY"
+      // "Team A 1x0 Team B -   CATEGORY"
+      // "Team A 1x0 Team B SUB - 13"
+      const matchPattern = /^(.*?)\s+(\d+)x(\d+)\s+(.*?)(?:\s+-\s+|\s+-|\s+)(?:SUB\s*-\s*|\s*)((?:13|11)\b.*?)$/i;
       const match = trimmedLine.match(matchPattern);
       
       if (match) {
-        const [, homeTeam, homeScore, awayScore, awayTeam, category] = match;
+        const [, homeTeam, homeScore, awayScore, awayTeam, categoryPart] = match;
+        const category = `SUB-${categoryPart.trim()}`;
         
         matches.push({
           date: currentDate,
           time: '12:00', // Default time
           location: 'Campo Central', // Default location
-          category: category.trim(),
+          category: category,
           homeTeamName: homeTeam.trim(),
           awayTeamName: awayTeam.trim(),
           homeScore: parseInt(homeScore),
@@ -134,7 +140,8 @@ const AddMatchData = () => {
             <p className="text-sm text-gray-500 mb-2">
               Cole os resultados das partidas no formato:<br />
               <code>RODADA X DD/MM/AAAA</code><br />
-              <code>Time A 3x1 Time B - SUB-13</code>
+              <code>Time A 3x1 Time B - SUB-13</code><br />
+              <code>Time A 2x0 Time B SUB-11</code>
             </p>
             <Textarea
               placeholder="RODADA 3 23/02/2025&#10;Federal 3x1 Estrela Vermelha - SUB-13&#10;Federal 2x0 Estrela Vermelha - SUB-11"
