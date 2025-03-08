@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { sendEmail } from '@/services/emailService';
+import { sendEmail, generateResetToken } from '@/services/emailService';
 
 const Reset = () => {
   const [email, setEmail] = useState('');
@@ -32,21 +32,21 @@ const Reset = () => {
       
       // Use Supabase's password reset functionality
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/login?reset=true',
+        redirectTo: window.location.origin + '/reset-password',
       });
       
       if (error) throw error;
+      
+      // Generate our own reset token and send custom email
+      const resetToken = generateResetToken(email);
       
       // Send our own custom password reset email
       try {
         await sendEmail({
           to: email,
           subject: "Redefinição de senha - Copa Sesc",
-          message: `
-            <p>Foi solicitada uma redefinição de senha para a sua conta no Copa Sesc.</p>
-            <p>Siga as instruções no email enviado pelo Supabase ou use o link abaixo.</p>
-          `,
-          type: "reset_password"
+          type: "reset_password",
+          resetToken: resetToken
         });
       } catch (emailError) {
         console.error('Error sending custom reset email:', emailError);

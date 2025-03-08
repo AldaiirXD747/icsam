@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -21,6 +20,7 @@ import Gallery from './pages/Gallery';
 import PlayerDetail from './pages/PlayerDetail';
 import Transparencia from './pages/Transparencia';
 import NotFound from './pages/NotFound';
+import ResetPassword from './pages/ResetPassword';
 
 // Páginas Auth
 import Login from './pages/Login';
@@ -105,6 +105,7 @@ function App() {
                 <Route path="/admin/login" element={<Login />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset" element={<Reset />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/team/login" element={<TeamLogin />} />
 
                 {/* Rotas Admin Protegidas */}

@@ -17,7 +17,7 @@ interface EmailRequest {
   email?: string;
   message?: string;
   type: "contact" | "notification" | "reset_password";
-  resetToken?: string; // Adicionado para suportar token de redefinição
+  resetToken?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
