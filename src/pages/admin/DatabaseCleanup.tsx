@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Trash2, RefreshCw, CalendarClock } from 'lucide-react';
+import { Loader2, Trash2, RefreshCw, CalendarClock, FileX } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import { removeDuplicateMatches, updateMatchDates } from '@/utils/matchDataManager';
+import { removeDuplicateMatches, updateMatchDates, removeSpecificMatches } from '@/utils/matchDataManager';
 
 const DatabaseCleanup = () => {
   const [isRemoving, setIsRemoving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRemovingSpecific, setIsRemovingSpecific] = useState(false);
   const [results, setResults] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -81,6 +82,40 @@ const DatabaseCleanup = () => {
     }
   };
 
+  const handleRemoveSpecificMatches = async () => {
+    try {
+      setIsRemovingSpecific(true);
+      setResults(prev => [...prev, "Iniciando remoção de partidas específicas..."]);
+      
+      const result = await removeSpecificMatches();
+      
+      if (result.success) {
+        toast({
+          title: "Operação concluída",
+          description: result.message,
+        });
+        setResults(prev => [...prev, `✅ ${result.message}`]);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro na operação",
+          description: result.error,
+        });
+        setResults(prev => [...prev, `❌ Erro: ${result.error}`]);
+      }
+    } catch (error) {
+      console.error('Error removing specific matches:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao remover as partidas específicas.",
+      });
+      setResults(prev => [...prev, "❌ Erro inesperado ao remover partidas específicas."]);
+    } finally {
+      setIsRemovingSpecific(false);
+    }
+  };
+
   const executeFullCleanup = async () => {
     // First remove duplicates
     await handleRemoveDuplicates();
@@ -117,7 +152,7 @@ const DatabaseCleanup = () => {
               <Button 
                 variant="destructive" 
                 onClick={handleRemoveDuplicates}
-                disabled={isRemoving || isUpdating}
+                disabled={isRemoving || isUpdating || isRemovingSpecific}
                 className="w-full"
               >
                 {isRemoving ? (
@@ -147,7 +182,7 @@ const DatabaseCleanup = () => {
               <Button 
                 variant="outline" 
                 onClick={handleUpdateDates}
-                disabled={isRemoving || isUpdating}
+                disabled={isRemoving || isUpdating || isRemovingSpecific}
                 className="w-full"
               >
                 {isUpdating ? (
@@ -166,6 +201,36 @@ const DatabaseCleanup = () => {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+              <FileX className="h-5 w-5 text-red-500" />
+              Remover Partidas Específicas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Esta operação remove as partidas específicas listadas nas datas 22/02/2025, 23/02/2025 e 08/03/2025, 
+              incluindo todos os jogos das categorias SUB-11 e SUB-13.
+            </p>
+            <Button 
+              variant="destructive"
+              onClick={handleRemoveSpecificMatches}
+              disabled={isRemoving || isUpdating || isRemovingSpecific}
+              className="w-full"
+            >
+              {isRemovingSpecific ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removendo partidas específicas...
+                </>
+              ) : (
+                'Remover Partidas Específicas'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5 text-green-500" />
               Executar Limpeza Completa
             </CardTitle>
@@ -177,10 +242,10 @@ const DatabaseCleanup = () => {
             </p>
             <Button 
               onClick={executeFullCleanup}
-              disabled={isRemoving || isUpdating}
+              disabled={isRemoving || isUpdating || isRemovingSpecific}
               className="w-full bg-[#1a237e] hover:bg-[#0d1864]"
             >
-              {(isRemoving || isUpdating) ? (
+              {(isRemoving || isUpdating || isRemovingSpecific) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processando...

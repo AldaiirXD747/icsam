@@ -374,3 +374,116 @@ export const correctAllMatchDates = async () => {
     return { success: false, error: 'Unexpected error occurred' };
   }
 };
+
+/**
+ * Removes specific matches from the database by their dates and team names
+ */
+export const removeSpecificMatches = async () => {
+  try {
+    // Define the dates and match combinations to remove
+    const matchesToRemove = [
+      // 22/02/2025 matches
+      { date: '2025-02-22', home: 'LYON', away: 'BSA', category: 'SUB-13' },
+      { date: '2025-02-22', home: 'LYON', away: 'BSA', category: 'SUB-11' },
+      { date: '2025-02-22', home: 'ATLÉTICO CITY', away: 'GUERREIROS', category: 'SUB-13' },
+      { date: '2025-02-22', home: 'ATLÉTICO CITY', away: 'GUERREIROS', category: 'SUB-11' },
+      
+      // 23/02/2025 matches
+      { date: '2025-02-23', home: 'FEDERAL', away: 'ESTRELA VERMELHA', category: 'SUB-13' },
+      { date: '2025-02-23', home: 'FEDERAL', away: 'ESTRELA VERMELHA', category: 'SUB-11' },
+      { date: '2025-02-23', home: 'ALVINEGRO', away: 'FURACÃO', category: 'SUB-11' },
+      { date: '2025-02-23', home: 'ALVINEGRO', away: 'FURACÃO', category: 'SUB-13' },
+      
+      // 08/03/2025 matches
+      { date: '2025-03-08', home: 'LYON', away: 'GUERREIROS', category: 'SUB-13' },
+      { date: '2025-03-08', home: 'LYON', away: 'GUERREIROS', category: 'SUB-11' },
+      { date: '2025-03-08', home: 'MONTE', away: 'BSA', category: 'SUB-11' },
+      { date: '2025-03-08', home: 'MONTE', away: 'BSA', category: 'SUB-13' },
+      { date: '2025-03-08', home: 'FURACÃO', away: 'ESTRELA VERMELHA', category: 'SUB-11' },
+      { date: '2025-03-08', home: 'FURACÃO', away: 'ESTRELA VERMELHA', category: 'SUB-13' },
+      { date: '2025-03-08', home: 'ALVINEGRO', away: 'GRÊMIO OCIDENTAL', category: 'SUB-13' },
+      { date: '2025-03-08', home: 'ALVINEGRO', away: 'GRÊMIO OCIDENTAL', category: 'SUB-11' }
+    ];
+    
+    // Get all teams to map names to IDs
+    const { data: teams, error: teamsError } = await supabase
+      .from('teams')
+      .select('id, name');
+    
+    if (teamsError) {
+      console.error('Error fetching teams:', teamsError);
+      return { success: false, error: teamsError.message };
+    }
+    
+    const teamNameToId: {[key: string]: string} = {};
+    teams?.forEach(team => {
+      teamNameToId[team.name.toUpperCase()] = team.id;
+    });
+    
+    let deletedCount = 0;
+    let failedCount = 0;
+    
+    // Process each match to remove
+    for (const match of matchesToRemove) {
+      const homeTeamId = teamNameToId[match.home];
+      const awayTeamId = teamNameToId[match.away];
+      
+      if (!homeTeamId || !awayTeamId) {
+        console.error(`Could not find team IDs for: ${match.home} vs ${match.away}`);
+        failedCount++;
+        continue;
+      }
+      
+      // Find and delete the match
+      const { data: matchToDelete, error: findError } = await supabase
+        .from('matches')
+        .select('id')
+        .eq('date', match.date)
+        .eq('home_team', homeTeamId)
+        .eq('away_team', awayTeamId)
+        .eq('category', match.category);
+      
+      if (findError) {
+        console.error(`Error finding match: ${match.home} vs ${match.away} on ${match.date}`, findError);
+        failedCount++;
+        continue;
+      }
+      
+      if (matchToDelete && matchToDelete.length > 0) {
+        for (const m of matchToDelete) {
+          const { error: deleteError } = await supabase
+            .from('matches')
+            .delete()
+            .eq('id', m.id);
+          
+          if (deleteError) {
+            console.error(`Error deleting match with ID ${m.id}:`, deleteError);
+            failedCount++;
+          } else {
+            deletedCount++;
+          }
+        }
+      } else {
+        console.log(`No match found for: ${match.home} vs ${match.away} on ${match.date} in category ${match.category}`);
+      }
+    }
+    
+    // Recalculate standings after deletions
+    const { error: recalcError } = await supabase.rpc('recalculate_standings');
+    if (recalcError) {
+      console.error('Error recalculating standings:', recalcError);
+      return { 
+        success: true, 
+        message: `Removed ${deletedCount} matches, but standings recalculation failed: ${recalcError.message}. Failed to delete ${failedCount} matches.` 
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: `Successfully removed ${deletedCount} matches and recalculated standings. Failed to delete ${failedCount} matches.` 
+    };
+  } catch (error) {
+    console.error('Unexpected error removing specific matches:', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
