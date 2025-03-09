@@ -198,10 +198,10 @@ export const getChampionshipById = async (id: string) => {
     // Em um sistema real, isso faria uma chamada para a API para obter o campeonato por ID
     return {
       id,
-      name: "Campeonato Base Forte 2025", 
+      name: "Base Forte", 
       description: "Campeonato organizado pelo Instituto Criança Santa Maria",
-      start_date: "2025-02-08",
-      end_date: "2025-03-22",
+      start_date: "2024-02-08",
+      end_date: "2024-03-22",
       location: "São Paulo",
       categories: ["SUB-11", "SUB-13"],
       status: "ongoing"
@@ -215,7 +215,7 @@ export const getChampionshipById = async (id: string) => {
 export const getChampionshipTeams = async (id: string, category?: string) => {
   try {
     // Em um sistema real, isso faria uma chamada para a API para obter os times do campeonato
-    // Aqui estamos apenas retornando dados mock para o campeonato Base Forte 2025
+    // Aqui estamos apenas retornando dados mock para o campeonato Base Forte 2024
     const teamsGrupoA = [
       {
         id: "1",
@@ -303,12 +303,12 @@ export const getChampionshipMatches = async (
 ) => {
   try {
     // Esta função retornaria partidas do campeonato em um sistema real
-    // Vamos simular dados para o campeonato Base Forte 2025
+    // Vamos simular dados para o campeonato Base Forte 2024
     const matches = [
-      // Primeira Rodada - 08/02/2025
+      // Primeira Rodada - 08/02/2024
       {
         id: "1",
-        date: "2025-02-08",
+        date: "2024-02-08",
         time: "14:00",
         home_team: "Federal",
         away_team: "Furacão",
@@ -320,7 +320,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "2",
-        date: "2025-02-08",
+        date: "2024-02-08",
         time: "15:00",
         home_team: "Federal",
         away_team: "Furacão",
@@ -332,7 +332,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "3",
-        date: "2025-02-08",
+        date: "2024-02-08",
         time: "16:00",
         home_team: "Atlético City",
         away_team: "BSA",
@@ -344,7 +344,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "4",
-        date: "2025-02-08",
+        date: "2024-02-08",
         time: "17:00",
         home_team: "Atlético City",
         away_team: "BSA",
@@ -359,7 +359,7 @@ export const getChampionshipMatches = async (
       // Semifinais
       {
         id: "100",
-        date: "2025-03-15",
+        date: "2024-03-15",
         time: "14:00",
         home_team: "1º Grupo A",
         away_team: "2º Grupo B",
@@ -371,7 +371,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "101",
-        date: "2025-03-15",
+        date: "2024-03-15",
         time: "15:00",
         home_team: "1º Grupo B",
         away_team: "2º Grupo A",
@@ -383,7 +383,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "102",
-        date: "2025-03-15",
+        date: "2024-03-15",
         time: "16:00",
         home_team: "1º Grupo A",
         away_team: "2º Grupo B",
@@ -395,7 +395,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "103",
-        date: "2025-03-15",
+        date: "2024-03-15",
         time: "17:00",
         home_team: "1º Grupo B",
         away_team: "2º Grupo A",
@@ -409,7 +409,7 @@ export const getChampionshipMatches = async (
       // Finais
       {
         id: "104",
-        date: "2025-03-22",
+        date: "2024-03-22",
         time: "14:00",
         home_team: "Vencedor SF1",
         away_team: "Vencedor SF2",
@@ -421,7 +421,7 @@ export const getChampionshipMatches = async (
       },
       {
         id: "105",
-        date: "2025-03-22",
+        date: "2024-03-22",
         time: "16:00",
         home_team: "Vencedor SF1",
         away_team: "Vencedor SF2",

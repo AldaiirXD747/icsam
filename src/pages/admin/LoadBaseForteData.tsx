@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Database, RefreshCw, TableProperties } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import { loadBaseForte2025Data } from '@/utils/dataLoader';
+import { loadBaseForte2024Data } from '@/utils/dataLoader';
 import { updateBaseForteResults } from '@/utils/baseForteUpdater';
 
 const LoadBaseForteData = () => {
@@ -14,7 +14,7 @@ const LoadBaseForteData = () => {
   const { toast } = useToast();
 
   const handleLoadData = async () => {
-    if (!confirm("ATENÇÃO: Esta operação irá remover TODOS os dados existentes de partidas e inserir novos dados para o Campeonato Base Forte 2025. Deseja continuar?")) {
+    if (!confirm("ATENÇÃO: Esta operação irá remover TODOS os dados existentes de partidas e inserir novos dados para o Campeonato Base Forte 2024. Deseja continuar?")) {
       return;
     }
     
@@ -22,14 +22,14 @@ const LoadBaseForteData = () => {
       setIsLoading(true);
       setResults([]);
       
-      setResults(prev => [...prev, "Iniciando carregamento de dados do Campeonato Base Forte 2025..."]);
+      setResults(prev => [...prev, "Iniciando carregamento de dados do Campeonato Base Forte 2024..."]);
       
-      const result = await loadBaseForte2025Data();
+      const result = await loadBaseForte2024Data();
       
       if (result.success) {
         toast({
           title: "Operação concluída",
-          description: "Dados do Campeonato Base Forte 2025 carregados com sucesso.",
+          description: "Dados do Campeonato Base Forte 2024 carregados com sucesso.",
         });
         
         setResults(result.results);
@@ -57,7 +57,7 @@ const LoadBaseForteData = () => {
   };
 
   const handleUpdateResults = async () => {
-    if (!confirm("ATENÇÃO: Esta operação irá atualizar os resultados das partidas do Campeonato Base Forte 2025. Deseja continuar?")) {
+    if (!confirm("ATENÇÃO: Esta operação irá atualizar os resultados das partidas do Campeonato Base Forte 2024. Deseja continuar?")) {
       return;
     }
     
@@ -65,14 +65,14 @@ const LoadBaseForteData = () => {
       setIsLoading(true);
       setResults([]);
       
-      setResults(prev => [...prev, "Iniciando atualização de resultados do Campeonato Base Forte 2025..."]);
+      setResults(prev => [...prev, "Iniciando atualização de resultados do Campeonato Base Forte 2024..."]);
       
       const result = await updateBaseForteResults();
       
       if (result.success) {
         toast({
           title: "Operação concluída",
-          description: "Resultados do Campeonato Base Forte 2025 atualizados com sucesso.",
+          description: "Resultados do Campeonato Base Forte 2024 atualizados com sucesso.",
         });
         
         setResults(result.results);
@@ -102,7 +102,7 @@ const LoadBaseForteData = () => {
   return (
     <AdminLayout>
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-6 text-[#1a237e]">Carregar Dados do Campeonato Base Forte 2025</h1>
+        <h1 className="text-2xl font-bold mb-6 text-[#1a237e]">Carregar Dados do Campeonato Base Forte 2024</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
@@ -115,7 +115,7 @@ const LoadBaseForteData = () => {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
-                  Esta operação irá remover TODOS os dados existentes de partidas, estatísticas e recalcular as classificações, inserindo todos os dados do Campeonato Base Forte 2025 conforme especificado.
+                  Esta operação irá remover TODOS os dados existentes de partidas, estatísticas e recalcular as classificações, inserindo todos os dados do Campeonato Base Forte 2024 conforme especificado.
                 </p>
                 
                 <div className="flex flex-col space-y-2 text-sm text-red-600">
@@ -137,7 +137,7 @@ const LoadBaseForteData = () => {
                   ) : (
                     <>
                       <RefreshCw className="mr-2 h-4 w-4" />
-                      Carregar Dados do Campeonato Base Forte 2025
+                      Carregar Dados do Campeonato Base Forte 2024
                     </>
                   )}
                 </Button>
@@ -155,7 +155,7 @@ const LoadBaseForteData = () => {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
-                  Esta operação irá atualizar apenas os resultados das partidas do Campeonato Base Forte 2025 conforme especificado, sem remover todos os dados existentes.
+                  Esta operação irá atualizar apenas os resultados das partidas do Campeonato Base Forte 2024 conforme especificado, sem remover todos os dados existentes.
                 </p>
                 
                 <div className="flex flex-col space-y-2 text-sm text-amber-600">

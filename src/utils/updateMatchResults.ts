@@ -126,28 +126,28 @@ export const updateMatchResults = async (results: MatchResult[]) => {
 
 // Function to update results based on the provided list
 export const updateBaseForteMatchResults = async () => {
-  // February 22, 2025 matches
+  // February 22, 2024 matches
   const feb22Matches: MatchResult[] = [
-    { date: '2025-02-22', homeTeamName: 'LYON', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 0, awayScore: 0 },
-    { date: '2025-02-22', homeTeamName: 'LYON', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 3, awayScore: 1 },
-    { date: '2025-02-22', homeTeamName: 'ATLÉTICO CITY', awayTeamName: 'GUERREIROS', category: 'SUB-13', homeScore: 7, awayScore: 0 },
-    { date: '2025-02-22', homeTeamName: 'ATLÉTICO CITY', awayTeamName: 'GUERREIROS', category: 'SUB-11', homeScore: 2, awayScore: 0 },
-    { date: '2025-02-22', homeTeamName: 'FEDERAL', awayTeamName: 'ESTRELA VERMELHA', category: 'SUB-13', homeScore: 5, awayScore: 1 },
-    { date: '2025-02-22', homeTeamName: 'FEDERAL', awayTeamName: 'ESTRELA VERMELHA', category: 'SUB-11', homeScore: 2, awayScore: 0 },
-    { date: '2025-02-22', homeTeamName: 'ALVINEGRO', awayTeamName: 'FURACÃO', category: 'SUB-11', homeScore: 0, awayScore: 8 },
-    { date: '2025-02-22', homeTeamName: 'ALVINEGRO', awayTeamName: 'FURACÃO', category: 'SUB-13', homeScore: 0, awayScore: 9 }
+    { date: '2024-02-22', homeTeamName: 'Lyon', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 0, awayScore: 0 },
+    { date: '2024-02-22', homeTeamName: 'Lyon', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 3, awayScore: 1 },
+    { date: '2024-02-22', homeTeamName: 'Atlético City', awayTeamName: 'Guerreiros', category: 'SUB-13', homeScore: 7, awayScore: 0 },
+    { date: '2024-02-22', homeTeamName: 'Atlético City', awayTeamName: 'Guerreiros', category: 'SUB-11', homeScore: 2, awayScore: 0 },
+    { date: '2024-02-23', homeTeamName: 'Federal', awayTeamName: 'Estrela Vermelha', category: 'SUB-13', homeScore: 5, awayScore: 1 },
+    { date: '2024-02-23', homeTeamName: 'Federal', awayTeamName: 'Estrela Vermelha', category: 'SUB-11', homeScore: 2, awayScore: 0 },
+    { date: '2024-02-23', homeTeamName: 'Alvinegro', awayTeamName: 'Furacão', category: 'SUB-11', homeScore: 0, awayScore: 8 },
+    { date: '2024-02-23', homeTeamName: 'Alvinegro', awayTeamName: 'Furacão', category: 'SUB-13', homeScore: 0, awayScore: 9 }
   ];
   
-  // March 8, 2025 matches
+  // March 8, 2024 matches
   const mar8Matches: MatchResult[] = [
-    { date: '2025-03-08', homeTeamName: 'LYON', awayTeamName: 'GUERREIROS', category: 'SUB-13', homeScore: 5, awayScore: 0 },
-    { date: '2025-03-08', homeTeamName: 'LYON', awayTeamName: 'GUERREIROS', category: 'SUB-11', homeScore: 1, awayScore: 2 },
-    { date: '2025-03-08', homeTeamName: 'MONTE', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 4, awayScore: 1 },
-    { date: '2025-03-08', homeTeamName: 'MONTE', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 1, awayScore: 0 },
-    { date: '2025-03-08', homeTeamName: 'FURACÃO', awayTeamName: 'ESTRELA VERMELHA', category: 'SUB-11', homeScore: 12, awayScore: 0 },
-    { date: '2025-03-08', homeTeamName: 'FURACÃO', awayTeamName: 'ESTRELA VERMELHA', category: 'SUB-13', homeScore: 3, awayScore: 1 },
-    { date: '2025-03-08', homeTeamName: 'ALVINEGRO', awayTeamName: 'GRÊMIO OCIDENTAL', category: 'SUB-13', homeScore: 0, awayScore: 4 },
-    { date: '2025-03-08', homeTeamName: 'ALVINEGRO', awayTeamName: 'GRÊMIO OCIDENTAL', category: 'SUB-11', homeScore: 1, awayScore: 4 }
+    { date: '2024-03-08', homeTeamName: 'Lyon', awayTeamName: 'Guerreiros', category: 'SUB-13', homeScore: 5, awayScore: 0 },
+    { date: '2024-03-08', homeTeamName: 'Lyon', awayTeamName: 'Guerreiros', category: 'SUB-11', homeScore: 1, awayScore: 2 },
+    { date: '2024-03-08', homeTeamName: 'Monte', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 4, awayScore: 1 },
+    { date: '2024-03-08', homeTeamName: 'Monte', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 1, awayScore: 0 },
+    { date: '2024-03-08', homeTeamName: 'Furacão', awayTeamName: 'Estrela Vermelha', category: 'SUB-11', homeScore: 12, awayScore: 0 },
+    { date: '2024-03-08', homeTeamName: 'Furacão', awayTeamName: 'Estrela Vermelha', category: 'SUB-13', homeScore: 3, awayScore: 1 },
+    { date: '2024-03-08', homeTeamName: 'Alvinegro', awayTeamName: 'Grêmio Ocidental', category: 'SUB-13', homeScore: 0, awayScore: 4 },
+    { date: '2024-03-08', homeTeamName: 'Alvinegro', awayTeamName: 'Grêmio Ocidental', category: 'SUB-11', homeScore: 1, awayScore: 4 }
   ];
   
   // Update both sets of matches

@@ -2,18 +2,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import { updateBaseForteResults } from './baseForteUpdater';
 
-export const loadBaseForte2025Data = async () => {
+export const loadBaseForte2024Data = async () => {
   try {
     const results: string[] = [];
     
     // Passo 1: Verificar se o campeonato já existe
-    results.push("🔍 Verificando se o campeonato Base Forte 2025 já existe...");
+    results.push("🔍 Verificando se o campeonato Base Forte 2024 já existe...");
     
     const { data: existingChampionship, error: championshipError } = await supabase
       .from('championships')
       .select('id')
-      .eq('name', 'Campeonato Base Forte')
-      .eq('year', '2025')
+      .eq('name', 'Base Forte')
+      .eq('year', '2024')
       .single();
     
     if (championshipError && championshipError.code !== 'PGRST116') {
@@ -28,19 +28,32 @@ export const loadBaseForte2025Data = async () => {
     
     let championshipId = '';
     
+    // Remover campeonato existente de 2025 se houver
+    const { error: delete2025Error } = await supabase
+      .from('championships')
+      .delete()
+      .eq('year', '2025');
+    
+    if (delete2025Error) {
+      console.error('Erro ao remover campeonato de 2025:', delete2025Error);
+      results.push(`⚠️ Aviso: Não foi possível remover campeonato de 2025: ${delete2025Error.message}`);
+    } else {
+      results.push("✅ Dados do campeonato de 2025 removidos com sucesso");
+    }
+    
     // Se o campeonato não existir, criar um novo
     if (!existingChampionship) {
-      results.push("📝 Campeonato não encontrado. Criando novo campeonato...");
+      results.push("📝 Campeonato não encontrado. Criando novo campeonato Base Forte 2024...");
       
       const { data: newChampionship, error: createError } = await supabase
         .from('championships')
         .insert({
-          name: 'Campeonato Base Forte',
-          year: '2025',
+          name: 'Base Forte',
+          year: '2024',
           description: 'Campeonato organizado pelo Instituto Criança Santa Maria',
           banner_image: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/banner-campeonato.jpg',
-          start_date: '2025-02-08',
-          end_date: '2025-03-22',
+          start_date: '2024-02-08',
+          end_date: '2024-03-22',
           location: 'São Paulo',
           categories: ['SUB-11', 'SUB-13'],
           organizer: 'Instituto Criança Santa Maria',
@@ -67,29 +80,37 @@ export const loadBaseForte2025Data = async () => {
       results.push(`✅ Campeonato existente encontrado com ID: ${championshipId}`);
     }
     
-    // Passo 2: Verificar se os times já estão cadastrados
-    results.push("🔍 Verificando times cadastrados...");
+    // Passo 2: Limpar times existentes
+    results.push("🔄 Limpando times existentes...");
     
-    const { data: teams, error: teamsError } = await supabase
-      .from('teams')
-      .select('name, category')
-      .in('category', ['SUB-11', 'SUB-13']);
+    // Primeiro remover registros relacionados da standings
+    const { error: deleteStandingsError } = await supabase
+      .from('standings')
+      .delete()
+      .not('id', 'is', null);
     
-    if (teamsError) {
-      console.error('Erro ao verificar times:', teamsError);
-      results.push(`❌ Erro ao verificar times: ${teamsError.message}`);
-      return { 
-        success: false, 
-        error: 'Erro ao verificar times', 
-        results 
-      };
+    if (deleteStandingsError) {
+      console.error('Erro ao limpar dados de classificação:', deleteStandingsError);
+      results.push(`⚠️ Aviso: Não foi possível limpar classificações: ${deleteStandingsError.message}`);
+    } else {
+      results.push("✅ Dados de classificação removidos com sucesso");
     }
     
-    // Mapear os times existentes
-    const existingTeams = new Set();
-    teams?.forEach(team => {
-      existingTeams.add(`${team.name}-${team.category}`);
-    });
+    // Remover times existentes
+    const { error: deleteTeamsError } = await supabase
+      .from('teams')
+      .delete()
+      .not('id', 'is', null);
+    
+    if (deleteTeamsError) {
+      console.error('Erro ao limpar times:', deleteTeamsError);
+      results.push(`⚠️ Aviso: Não foi possível limpar times: ${deleteTeamsError.message}`);
+    } else {
+      results.push("✅ Times existentes removidos com sucesso");
+    }
+    
+    // Passo 3: Inserir times
+    results.push("🔄 Inserindo times do campeonato Base Forte 2024...");
     
     const requiredTeams = [
       { name: 'Furacão', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png', group: 'A' },
@@ -107,26 +128,22 @@ export const loadBaseForte2025Data = async () => {
     // Passo 3: Inserir times que não existem
     for (const team of requiredTeams) {
       for (const category of ['SUB-11', 'SUB-13']) {
-        if (!existingTeams.has(`${team.name}-${category}`)) {
-          results.push(`📝 Inserindo time ${team.name} (${category}) no grupo ${team.group}...`);
-          
-          const { error: insertTeamError } = await supabase
-            .from('teams')
-            .insert({
-              name: team.name,
-              logo: team.logo,
-              category: category,
-              group_name: team.group
-            });
-          
-          if (insertTeamError) {
-            console.error(`Erro ao inserir time ${team.name}:`, insertTeamError);
-            results.push(`❌ Erro ao inserir time ${team.name}: ${insertTeamError.message}`);
-          } else {
-            results.push(`✅ Time ${team.name} (${category}) inserido no grupo ${team.group}`);
-          }
+        results.push(`📝 Inserindo time ${team.name} (${category}) no grupo ${team.group}...`);
+        
+        const { error: insertTeamError } = await supabase
+          .from('teams')
+          .insert({
+            name: team.name,
+            logo: team.logo,
+            category: category,
+            group_name: team.group
+          });
+        
+        if (insertTeamError) {
+          console.error(`Erro ao inserir time ${team.name}:`, insertTeamError);
+          results.push(`❌ Erro ao inserir time ${team.name}: ${insertTeamError.message}`);
         } else {
-          results.push(`✅ Time ${team.name} (${category}) já existe no sistema`);
+          results.push(`✅ Time ${team.name} (${category}) inserido no grupo ${team.group}`);
         }
       }
     }
@@ -162,7 +179,7 @@ export const loadBaseForte2025Data = async () => {
     results.push("✅ Classificações recalculadas com sucesso");
     
     // Concluir a operação
-    results.push("🎉 Operação concluída! Todos os dados do Campeonato Base Forte 2025 foram carregados com sucesso.");
+    results.push("🎉 Operação concluída! Todos os dados do Campeonato Base Forte 2024 foram carregados com sucesso.");
     
     return {
       success: true,
