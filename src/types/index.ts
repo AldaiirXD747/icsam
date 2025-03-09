@@ -26,6 +26,13 @@ export interface Match {
     name: string;
     logo: string;
   };
+  
+  // Allow both snake_case and camelCase for compatibility
+  homeScore?: number | null;
+  awayScore?: number | null;
+  championshipId?: string | null;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface Player {
@@ -34,6 +41,7 @@ export interface Player {
   number?: number;
   position: string;
   team_id?: string;
+  teamId?: string;
   photo?: string;
   category?: string;
 }
@@ -46,6 +54,7 @@ export interface Team {
   logo?: string;
   category?: string;
   group_name?: string;
+  groupName?: string;
   active?: boolean;
   
   // Adding properties to solve errors in TeamDetailView and TeamManagement
@@ -63,7 +72,9 @@ export interface User {
   id: string;
   email: string;
   teamId?: string;
+  team_id?: string;
   name?: string;
+  teams?: any[]; // For compatibility with UserManagement component
 }
 
 export interface Championship {
@@ -72,8 +83,11 @@ export interface Championship {
   year: string;
   description?: string;
   banner_image?: string;
+  bannerImage?: string;
   start_date: string;
+  startDate?: string;
   end_date: string;
+  endDate?: string;
   location: string;
   categories: string[];
   organizer?: string;
@@ -82,38 +96,59 @@ export interface Championship {
 }
 
 // Add types that are used in admin components
-export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'postponed';
+export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'live';
 
 export interface AdminMatch extends Match {
   homeTeamName?: string;
+  home_team_name?: string;
   awayTeamName?: string;
+  away_team_name?: string;
   homeTeamLogo?: string;
+  home_team_logo?: string;
   awayTeamLogo?: string;
+  away_team_logo?: string;
   championship?: Championship;
 }
 
 export interface TopScorer {
   id: string;
   player_id: string;
+  playerId?: string;
   team_id: string;
+  teamId?: string;
   goals: number;
   category: string;
   championship_id?: string;
+  championshipId?: string;
   player_name?: string;
+  playerName?: string;
   team_name?: string;
+  teamName?: string;
   team_logo?: string;
+  teamLogo?: string;
+  name?: string;
+  team?: any;
 }
 
 export interface YellowCardLeader {
   id: string;
   player_id: string;
+  playerId?: string;
   team_id: string;
+  teamId?: string;
   yellow_cards: number;
+  yellowCards?: number;
   category: string;
   championship_id?: string;
+  championshipId?: string;
   player_name?: string;
+  playerName?: string;
   team_name?: string;
+  teamName?: string;
   team_logo?: string;
+  teamLogo?: string;
+  name?: string;
+  team?: any;
 }
 
 export interface GalleryImage {
@@ -121,9 +156,12 @@ export interface GalleryImage {
   title: string;
   description?: string;
   image_url: string;
+  imageUrl?: string;
   championship_id?: string;
+  championshipId?: string;
   featured?: boolean;
   created_at?: string;
+  createdAt?: string;
 }
 
 export interface TransparencyDocument {
@@ -132,7 +170,11 @@ export interface TransparencyDocument {
   description?: string;
   category: string;
   file_url: string;
+  fileUrl?: string;
   icon_type: string;
+  iconType?: string;
   published_date: string;
+  publishedDate?: string;
   created_at?: string;
+  createdAt?: string;
 }

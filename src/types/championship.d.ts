@@ -30,6 +30,12 @@ export interface ChampionshipMatch {
   location: string;
   round: string | null;
   championship_id?: string | null;
+  
+  // Adding additional properties for the UI
+  home_team_name?: string;
+  away_team_name?: string;
+  home_team_logo?: string;
+  away_team_logo?: string;
 }
 
 export interface ChampionshipTeam {
@@ -77,21 +83,26 @@ export interface UserAccount {
   email: string;
   role: string;
   created_at: string;
+  teams?: any[]; // For compatibility with UserManagement component
 }
 
-export type UserRole = 'admin' | 'team' | 'user';
+export type UserRole = 'admin' | 'team' | 'user' | 'team_manager';
 
 export interface CreateUserPayload {
   name: string;
   email: string;
   password: string;
   role: UserRole;
+  teams?: any[]; // For compatibility with UserManagement component
 }
 
 export interface UpdateUserPayload {
   name?: string;
   email?: string;
   role?: UserRole;
+  id?: string; // For compatibility with UserManagement component
+  password?: string; // For compatibility with UserManagement component
+  teams?: any[]; // For compatibility with UserManagement component
 }
 
 export interface UserTeamAssociation {
