@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { BarChart, Users, Trophy, Calendar, Filter } from 'lucide-react';
@@ -9,8 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StatisticsTables from '@/components/StatisticsTables';
 
 const Statistics = () => {
+  const location = useLocation();
   const [selectedChampionship, setSelectedChampionship] = useState('base-forte-2025');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Set default championship based on route
+  useEffect(() => {
+    if (location.pathname.includes('/base-forte-2025')) {
+      setSelectedChampionship('base-forte-2025');
+    }
+  }, [location.pathname]);
   
   return (
     <div className="min-h-screen flex flex-col">

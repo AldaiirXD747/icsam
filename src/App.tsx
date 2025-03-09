@@ -41,6 +41,7 @@ function App() {
           <Route path="/partidas" element={<Matches />} />
           <Route path="/jogos" element={<Matches />} />
           <Route path="/estatisticas" element={<Statistics />} />
+          <Route path="/estatisticas/base-forte-2025" element={<Statistics />} />
           <Route path="/classificacao" element={<Standings />} />
           
           {/* Admin Routes */}
