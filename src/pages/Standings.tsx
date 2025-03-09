@@ -83,7 +83,10 @@ const Standings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <StandingsTable championshipId={selectedChampionship} category={selectedCategory} />
+                <StandingsTable 
+                  championshipId={selectedChampionship} 
+                  category={selectedCategory} 
+                />
               </CardContent>
             </Card>
           )}
