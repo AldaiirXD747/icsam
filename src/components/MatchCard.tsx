@@ -51,6 +51,11 @@ const MatchCard: React.FC<MatchCardProps> = ({
   venue = "Campo Sintético - Quadra 120",
 }) => {
   const showScore = status === 'live' || status === 'finished';
+  const defaultLogo = "/placeholder.svg";
+
+  // Ensure we have valid team logos - if not, use placeholder
+  const homeLogo = homeTeam.logo || defaultLogo;
+  const awayLogo = awayTeam.logo || defaultLogo;
 
   return (
     <div className={`glass-card overflow-hidden transition-all duration-300 hover:shadow-md ${status === 'finished' ? 'bg-gray-50' : ''}`}>
@@ -77,9 +82,13 @@ const MatchCard: React.FC<MatchCardProps> = ({
           <div className="flex flex-col items-center w-2/5">
             <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
               <img 
-                src={homeTeam.logo} 
+                src={homeLogo} 
                 alt={homeTeam.name} 
                 className="h-full object-contain"
+                onError={(e) => {
+                  // If image fails to load, replace with placeholder
+                  (e.target as HTMLImageElement).src = defaultLogo;
+                }}
               />
             </div>
             <div className="text-center">
@@ -108,9 +117,13 @@ const MatchCard: React.FC<MatchCardProps> = ({
           <div className="flex flex-col items-center w-2/5">
             <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
               <img 
-                src={awayTeam.logo} 
+                src={awayLogo} 
                 alt={awayTeam.name} 
                 className="h-full object-contain"
+                onError={(e) => {
+                  // If image fails to load, replace with placeholder
+                  (e.target as HTMLImageElement).src = defaultLogo;
+                }}
               />
             </div>
             <div className="text-center">

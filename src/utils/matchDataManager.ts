@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -484,6 +485,92 @@ export const removeSpecificMatches = async () => {
     };
   } catch (error) {
     console.error('Unexpected error removing specific matches:', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
+
+/**
+ * Removes ghost matches (matches with invalid teams or scores) from the database
+ */
+export const removeGhostMatches = async () => {
+  try {
+    // First identify matches that have missing team IDs or appear to be duplicates
+    const { data: matches, error: fetchError } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        date,
+        time,
+        category,
+        home_team,
+        away_team,
+        home_score,
+        away_score,
+        status,
+        home_team_details:teams!matches_home_team_fkey(id, name, logo),
+        away_team_details:teams!matches_away_team_fkey(id, name, logo)
+      `);
+    
+    if (fetchError) {
+      console.error('Error fetching matches:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+    
+    // Identify ghost matches (those with missing team details or suspicious scores)
+    const ghostMatches = matches?.filter(match => {
+      // Check if either team is missing
+      const missingTeam = !match.home_team_details || !match.away_team_details;
+      
+      // Check if either team is missing a logo
+      const missingLogo = 
+        !match.home_team_details?.logo || 
+        !match.away_team_details?.logo;
+      
+      // Check for suspicious scores (high-score mismatches like 0-9, 0-8, etc.)
+      const suspiciousScore = 
+        (match.home_score === 0 && match.away_score >= 8) || 
+        (match.away_score === 0 && match.home_score >= 8);
+      
+      return missingTeam || (missingLogo && suspiciousScore);
+    }) || [];
+    
+    console.log(`Found ${ghostMatches.length} potential ghost matches`);
+    
+    let deletedCount = 0;
+    let failedCount = 0;
+    
+    // Delete each ghost match
+    for (const match of ghostMatches) {
+      const { error: deleteError } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', match.id);
+      
+      if (deleteError) {
+        console.error(`Error deleting ghost match with ID ${match.id}:`, deleteError);
+        failedCount++;
+      } else {
+        console.log(`Successfully deleted ghost match: ${match.id}`);
+        deletedCount++;
+      }
+    }
+    
+    // Recalculate standings after deletions
+    const { error: recalcError } = await supabase.rpc('recalculate_standings');
+    if (recalcError) {
+      console.error('Error recalculating standings:', recalcError);
+      return { 
+        success: true, 
+        message: `Removed ${deletedCount} ghost matches, but standings recalculation failed: ${recalcError.message}.` 
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: `Successfully removed ${deletedCount} ghost matches and recalculated standings. Failed to delete ${failedCount} matches.` 
+    };
+  } catch (error) {
+    console.error('Unexpected error removing ghost matches:', error);
     return { success: false, error: 'Unexpected error occurred' };
   }
 };

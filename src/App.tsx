@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from '@/pages/Index';
 import About from '@/pages/About';
 import Teams from '@/pages/Teams';
@@ -14,6 +15,7 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { Toaster } from '@/components/ui/toaster';
 import LoadBaseForteData from '@/pages/admin/LoadBaseForteData';
 import UpdateMatchResults from '@/pages/admin/UpdateMatchResults';
+import DatabaseCleanup from '@/pages/admin/DatabaseCleanup';
 
 function App() {
   const queryClient = new QueryClient();
@@ -38,6 +40,7 @@ function App() {
           <Route path="/admin" element={<div>Admin Dashboard</div>} />
           <Route path="/admin/load-base-forte-data" element={<LoadBaseForteData />} />
           <Route path="/admin/update-match-results" element={<UpdateMatchResults />} />
+          <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
           
           {/* Add more routes as needed */}
           <Route path="*" element={<div>404 Not Found</div>} />
