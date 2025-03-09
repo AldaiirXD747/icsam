@@ -16,6 +16,7 @@ import { Toaster } from '@/components/ui/toaster';
 import LoadBaseForteData from '@/pages/admin/LoadBaseForteData';
 import UpdateMatchResults from '@/pages/admin/UpdateMatchResults';
 import DatabaseCleanup from '@/pages/admin/DatabaseCleanup';
+import Championship from '@/pages/Championship';
 
 function App() {
   const queryClient = new QueryClient({
@@ -36,7 +37,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/championships" element={<Championships />} />
-          <Route path="/championships/:id" element={<div>Championship Details</div>} />
+          <Route path="/championships/:id" element={<Championship />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/partidas" element={<Matches />} />
           <Route path="/jogos" element={<Matches />} />

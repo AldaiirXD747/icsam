@@ -1,396 +1,179 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { addMatch, removeDuplicateMatches } from './matchDataManager';
+import { updateBaseForteResults } from './baseForteUpdater';
 
-interface TeamInfo {
-  id: string;
-  name: string;
-  logo: string;
-  category: string;
-  group_name: string;
-}
-
-/**
- * Loads the Base Forte 2025 Championship data
- */
 export const loadBaseForte2025Data = async () => {
-  const results: string[] = [];
   try {
-    results.push("Iniciando carregamento de dados do Campeonato Base Forte 2025...");
+    const results: string[] = [];
     
-    // Step 1: Clean up existing data
-    results.push("Removendo partidas existentes...");
+    // Passo 1: Verificar se o campeonato já existe
+    results.push("🔍 Verificando se o campeonato Base Forte 2025 já existe...");
     
-    // Delete all matches
-    const { error: deleteMatchesError } = await supabase
-      .from('matches')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (deleteMatchesError) {
-      results.push(`❌ Erro ao remover partidas: ${deleteMatchesError.message}`);
-      throw deleteMatchesError;
-    }
-    
-    // Delete top scorers
-    const { error: deleteTopScorersError } = await supabase
-      .from('top_scorers')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (deleteTopScorersError) {
-      results.push(`❌ Erro ao remover artilheiros: ${deleteTopScorersError.message}`);
-    }
-    
-    // Delete yellow card leaders
-    const { error: deleteYellowCardsError } = await supabase
-      .from('yellow_card_leaders')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (deleteYellowCardsError) {
-      results.push(`❌ Erro ao remover cartões amarelos: ${deleteYellowCardsError.message}`);
-    }
-    
-    // Clear standings table
-    const { error: clearStandingsError } = await supabase
-      .from('standings')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (clearStandingsError) {
-      results.push(`❌ Erro ao limpar tabela de classificação: ${clearStandingsError.message}`);
-    }
-    
-    // Step 2: Create or update championship
-    results.push("Criando/atualizando campeonato...");
-    
-    // Check if championship already exists
-    const { data: existingChampionship, error: championshipCheckError } = await supabase
+    const { data: existingChampionship, error: championshipError } = await supabase
       .from('championships')
       .select('id')
       .eq('name', 'Campeonato Base Forte')
       .eq('year', '2025')
-      .limit(1);
+      .single();
     
-    if (championshipCheckError) {
-      results.push(`❌ Erro ao verificar campeonato existente: ${championshipCheckError.message}`);
-      throw championshipCheckError;
+    if (championshipError && championshipError.code !== 'PGRST116') {
+      console.error('Erro ao verificar campeonato:', championshipError);
+      results.push(`❌ Erro ao verificar campeonato: ${championshipError.message}`);
+      return { 
+        success: false, 
+        error: 'Erro ao verificar campeonato', 
+        results 
+      };
     }
     
-    let championshipId;
+    let championshipId = '';
     
-    if (existingChampionship && existingChampionship.length > 0) {
-      // Update existing championship
-      championshipId = existingChampionship[0].id;
+    // Se o campeonato não existir, criar um novo
+    if (!existingChampionship) {
+      results.push("📝 Campeonato não encontrado. Criando novo campeonato...");
       
-      const { error: updateChampionshipError } = await supabase
-        .from('championships')
-        .update({
-          description: 'Campeonato Base Forte - Edição 2025',
-          start_date: '2025-02-08',
-          end_date: '2025-03-21',
-          categories: ['SUB-11', 'SUB-13'],
-          status: 'ongoing',
-          location: 'Santa Maria, DF',
-          organizer: 'Instituto Base Forte'
-        })
-        .eq('id', championshipId);
-      
-      if (updateChampionshipError) {
-        results.push(`❌ Erro ao atualizar campeonato: ${updateChampionshipError.message}`);
-        throw updateChampionshipError;
-      }
-      
-      results.push(`✅ Campeonato atualizado com ID: ${championshipId}`);
-    } else {
-      // Create new championship
-      const { data: newChampionship, error: createChampionshipError } = await supabase
+      const { data: newChampionship, error: createError } = await supabase
         .from('championships')
         .insert({
           name: 'Campeonato Base Forte',
           year: '2025',
-          description: 'Campeonato Base Forte - Edição 2025',
+          description: 'Campeonato organizado pelo Instituto Criança Santa Maria',
+          banner_image: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/banner-campeonato.jpg',
           start_date: '2025-02-08',
-          end_date: '2025-03-21',
+          end_date: '2025-03-22',
+          location: 'São Paulo',
           categories: ['SUB-11', 'SUB-13'],
-          status: 'ongoing',
-          location: 'Santa Maria, DF',
-          organizer: 'Instituto Base Forte',
-          banner_image: '/lovable-uploads/d9479deb-326b-4848-89fb-ef3e3f4c9601.png'
+          organizer: 'Instituto Criança Santa Maria',
+          sponsors: ['Patrocinador 1', 'Patrocinador 2'],
+          status: 'ongoing'
         })
-        .select('id');
+        .select()
+        .single();
       
-      if (createChampionshipError) {
-        results.push(`❌ Erro ao criar campeonato: ${createChampionshipError.message}`);
-        throw createChampionshipError;
-      }
-      
-      championshipId = newChampionship[0].id;
-      results.push(`✅ Novo campeonato criado com ID: ${championshipId}`);
-    }
-    
-    // Step 3: Update teams with correct group assignments
-    results.push("Atualizando times com grupos corretos...");
-    
-    // Fetch existing teams
-    const { data: existingTeams, error: teamsError } = await supabase
-      .from('teams')
-      .select('id, name, logo, category');
-    
-    if (teamsError) {
-      results.push(`❌ Erro ao buscar times existentes: ${teamsError.message}`);
-      throw teamsError;
-    }
-    
-    // Map team names to their standard format
-    const teamNameMapping: {[key: string]: string} = {
-      'FURACÃO': 'Furacão',
-      'ESTRELA': 'Estrela Vermelha',
-      'ESTRELA VERMELHA': 'Estrela Vermelha',
-      'GRÊMIO OCIDENTAL': 'Grêmio Ocidental',
-      'FEDERAL': 'Federal',
-      'ALVINEGRO': 'Alvinegro',
-      'ATLÉTICO CITY': 'Atlético City',
-      'MONTE': 'Monte',
-      'GUERREIROS': 'Guerreiros',
-      'LYON': 'Lyon',
-      'BSA': 'BSA'
-    };
-    
-    // Define groups
-    const teamGroups: {[key: string]: string} = {
-      'Furacão': 'A',
-      'Estrela Vermelha': 'A',
-      'Grêmio Ocidental': 'A',
-      'Federal': 'A',
-      'Alvinegro': 'A',
-      'Atlético City': 'B',
-      'Monte': 'B',
-      'Guerreiros': 'B',
-      'Lyon': 'B',
-      'BSA': 'B'
-    };
-    
-    // Map to hold team info by standardized name
-    const teamMap: {[key: string]: TeamInfo} = {};
-    
-    // Update team groups
-    for (const team of existingTeams) {
-      const standardName = team.name;
-      
-      // Check if team needs group update
-      if (teamGroups[standardName]) {
-        // Update team's group
-        const { error: updateTeamError } = await supabase
-          .from('teams')
-          .update({ group_name: teamGroups[standardName] })
-          .eq('id', team.id);
-        
-        if (updateTeamError) {
-          results.push(`❌ Erro ao atualizar grupo do time ${standardName}: ${updateTeamError.message}`);
-        } else {
-          results.push(`✅ Grupo do time ${standardName} atualizado para ${teamGroups[standardName]}`);
-        }
-      }
-      
-      // Store team info for each category
-      if (team.category === 'SUB-11' || team.category === 'SUB-13') {
-        teamMap[`${standardName}-${team.category}`] = {
-          id: team.id,
-          name: standardName,
-          logo: team.logo,
-          category: team.category,
-          group_name: teamGroups[standardName] || 'N/A'
+      if (createError) {
+        console.error('Erro ao criar campeonato:', createError);
+        results.push(`❌ Erro ao criar campeonato: ${createError.message}`);
+        return { 
+          success: false, 
+          error: 'Erro ao criar campeonato', 
+          results 
         };
       }
+      
+      championshipId = newChampionship.id;
+      results.push(`✅ Campeonato criado com ID: ${championshipId}`);
+    } else {
+      championshipId = existingChampionship.id;
+      results.push(`✅ Campeonato existente encontrado com ID: ${championshipId}`);
     }
     
-    // Log team mapping for debugging
-    results.push(`Mapeamento de times carregado com ${Object.keys(teamMap).length} entradas`);
+    // Passo 2: Verificar se os times já estão cadastrados
+    results.push("🔍 Verificando times cadastrados...");
     
-    // Step 4: Insert match data
-    results.push("Inserindo dados de partidas...");
+    const { data: teams, error: teamsError } = await supabase
+      .from('teams')
+      .select('name, category')
+      .in('category', ['SUB-11', 'SUB-13']);
     
-    // Helper function to get team ID from name and category
-    const getTeamId = (name: string, category: string): string => {
-      const standardName = teamNameMapping[name] || name;
-      const key = `${standardName}-${category}`;
-      
-      if (!teamMap[key]) {
-        results.push(`⚠️ Time não encontrado: ${name} (${category})`);
-        return '';
-      }
-      
-      return teamMap[key].id;
-    };
+    if (teamsError) {
+      console.error('Erro ao verificar times:', teamsError);
+      results.push(`❌ Erro ao verificar times: ${teamsError.message}`);
+      return { 
+        success: false, 
+        error: 'Erro ao verificar times', 
+        results 
+      };
+    }
     
-    // Function to add match data
-    const addMatchData = async (
-      date: string,
-      homeTeam: string,
-      awayTeam: string,
-      homeScore: number,
-      awayScore: number,
-      category: string
-    ) => {
-      const homeTeamId = getTeamId(homeTeam, category);
-      const awayTeamId = getTeamId(awayTeam, category);
-      
-      if (!homeTeamId || !awayTeamId) {
-        results.push(`❌ Não foi possível adicionar partida ${homeTeam} x ${awayTeam} (${category}): Times não encontrados`);
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase
-          .from('matches')
-          .insert({
-            date: date,
-            time: '15:00:00',
-            location: 'Campo Sintético - Base Forte',
-            category: category,
-            home_team: homeTeamId,
-            away_team: awayTeamId,
-            home_score: homeScore,
-            away_score: awayScore,
-            status: 'completed',
-            round: 'Fase de Grupos',
-            championship_id: championshipId
-          })
-          .select();
-        
-        if (error) {
-          results.push(`❌ Erro ao adicionar partida ${homeTeam} x ${awayTeam}: ${error.message}`);
+    // Mapear os times existentes
+    const existingTeams = new Set();
+    teams?.forEach(team => {
+      existingTeams.add(`${team.name}-${team.category}`);
+    });
+    
+    const requiredTeams = [
+      { name: 'Furacão', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png', group: 'A' },
+      { name: 'Estrela Vermelha', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png', group: 'A' },
+      { name: 'Grêmio Ocidental', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png', group: 'A' },
+      { name: 'Federal', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/6.png', group: 'A' },
+      { name: 'Alvinegro', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/1.png', group: 'A' },
+      { name: 'Atlético City', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png', group: 'B' },
+      { name: 'Monte', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png', group: 'B' },
+      { name: 'Guerreiros', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/9.png', group: 'B' },
+      { name: 'Lyon', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png', group: 'B' },
+      { name: 'BSA', logo: 'https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/4.png', group: 'B' }
+    ];
+    
+    // Passo 3: Inserir times que não existem
+    for (const team of requiredTeams) {
+      for (const category of ['SUB-11', 'SUB-13']) {
+        if (!existingTeams.has(`${team.name}-${category}`)) {
+          results.push(`📝 Inserindo time ${team.name} (${category}) no grupo ${team.group}...`);
+          
+          const { error: insertTeamError } = await supabase
+            .from('teams')
+            .insert({
+              name: team.name,
+              logo: team.logo,
+              category: category,
+              group_name: team.group
+            });
+          
+          if (insertTeamError) {
+            console.error(`Erro ao inserir time ${team.name}:`, insertTeamError);
+            results.push(`❌ Erro ao inserir time ${team.name}: ${insertTeamError.message}`);
+          } else {
+            results.push(`✅ Time ${team.name} (${category}) inserido no grupo ${team.group}`);
+          }
         } else {
-          results.push(`✅ Partida adicionada: ${homeTeam} ${homeScore} x ${awayScore} ${awayTeam} (${category})`);
+          results.push(`✅ Time ${team.name} (${category}) já existe no sistema`);
         }
-      } catch (e) {
-        results.push(`❌ Exceção ao adicionar partida ${homeTeam} x ${awayTeam}: ${e.message}`);
       }
-    };
-    
-    // Add all matches from the provided data
-    
-    // 08/02/25
-    await addMatchData('2025-02-08', 'FEDERAL', 'FURACÃO', 0, 6, 'SUB-11');
-    await addMatchData('2025-02-08', 'FEDERAL', 'FURACÃO', 0, 1, 'SUB-13');
-    await addMatchData('2025-02-08', 'ATLÉTICO CITY', 'BSA', 5, 0, 'SUB-11');
-    await addMatchData('2025-02-08', 'ATLÉTICO CITY', 'BSA', 2, 1, 'SUB-13');
-    await addMatchData('2025-02-08', 'GRÊMIO OCIDENTAL', 'ESTRELA', 2, 1, 'SUB-11');
-    await addMatchData('2025-02-08', 'GRÊMIO OCIDENTAL', 'ESTRELA', 4, 0, 'SUB-13');
-    await addMatchData('2025-02-08', 'LYON', 'MONTE', 0, 3, 'SUB-11');
-    await addMatchData('2025-02-08', 'LYON', 'MONTE', 0, 2, 'SUB-13');
-    
-    // 14/02/25
-    await addMatchData('2025-02-14', 'ATLÉTICO CITY', 'LYON', 1, 0, 'SUB-11');
-    await addMatchData('2025-02-14', 'ATLÉTICO CITY', 'LYON', 3, 3, 'SUB-13');
-    await addMatchData('2025-02-14', 'MONTE', 'GUERREIROS', 3, 0, 'SUB-11');
-    await addMatchData('2025-02-14', 'MONTE', 'GUERREIROS', 8, 0, 'SUB-13');
-    
-    // 15/02/25
-    await addMatchData('2025-02-15', 'FEDERAL', 'GRÊMIO OCIDENTAL', 2, 1, 'SUB-11');
-    await addMatchData('2025-02-15', 'FEDERAL', 'GRÊMIO OCIDENTAL', 1, 3, 'SUB-13');
-    await addMatchData('2025-02-15', 'ESTRELA', 'ALVINEGRO', 3, 1, 'SUB-11');
-    await addMatchData('2025-02-15', 'ESTRELA', 'ALVINEGRO', 0, 2, 'SUB-13');
-    
-    // 22/02/25
-    await addMatchData('2025-02-22', 'LYON', 'BSA', 3, 1, 'SUB-11');
-    await addMatchData('2025-02-22', 'LYON', 'BSA', 0, 0, 'SUB-13');
-    await addMatchData('2025-02-22', 'ATLÉTICO CITY', 'GUERREIROS', 2, 0, 'SUB-11');
-    await addMatchData('2025-02-22', 'ATLÉTICO CITY', 'GUERREIROS', 7, 0, 'SUB-13');
-    
-    // 23/02/25
-    await addMatchData('2025-02-23', 'FEDERAL', 'ESTRELA VERMELHA', 2, 0, 'SUB-11');
-    await addMatchData('2025-02-23', 'FEDERAL', 'ESTRELA VERMELHA', 5, 1, 'SUB-13');
-    await addMatchData('2025-02-23', 'ALVINEGRO', 'FURACÃO', 0, 8, 'SUB-11');
-    await addMatchData('2025-02-23', 'ALVINEGRO', 'FURACÃO', 0, 9, 'SUB-13');
-    
-    // 08/03/25
-    await addMatchData('2025-03-08', 'LYON', 'GUERREIROS', 1, 2, 'SUB-11');
-    await addMatchData('2025-03-08', 'LYON', 'GUERREIROS', 5, 0, 'SUB-13');
-    await addMatchData('2025-03-08', 'MONTE', 'BSA', 4, 1, 'SUB-11');
-    await addMatchData('2025-03-08', 'MONTE', 'BSA', 1, 0, 'SUB-13');
-    await addMatchData('2025-03-08', 'FURACÃO', 'ESTRELA VERMELHA', 12, 0, 'SUB-11');
-    await addMatchData('2025-03-08', 'FURACÃO', 'ESTRELA VERMELHA', 3, 1, 'SUB-13');
-    await addMatchData('2025-03-08', 'ALVINEGRO', 'GRÊMIO OCIDENTAL', 1, 4, 'SUB-11');
-    await addMatchData('2025-03-08', 'ALVINEGRO', 'GRÊMIO OCIDENTAL', 0, 4, 'SUB-13');
-    
-    // Add semifinal matches (TBD)
-    // SUB-11 Semifinal (14/03/25)
-    await addMatchData('2025-03-14', 'FURACÃO', 'ATLÉTICO CITY', 0, 0, 'SUB-11');
-    await addMatchData('2025-03-14', 'GRÊMIO OCIDENTAL', 'MONTE', 0, 0, 'SUB-11');
-    
-    // SUB-13 Semifinal (14/03/25)
-    await addMatchData('2025-03-14', 'FURACÃO', 'MONTE', 0, 0, 'SUB-13');
-    await addMatchData('2025-03-14', 'GRÊMIO OCIDENTAL', 'ATLÉTICO CITY', 0, 0, 'SUB-13');
-    
-    // Update semifinal matches with 'semifinal' round and 'scheduled' status
-    const { error: updateSemifinalsError } = await supabase
-      .from('matches')
-      .update({ 
-        round: 'Semifinal',
-        status: 'scheduled',
-        home_score: null,
-        away_score: null
-      })
-      .eq('date', '2025-03-14');
-    
-    if (updateSemifinalsError) {
-      results.push(`❌ Erro ao atualizar partidas da semifinal: ${updateSemifinalsError.message}`);
-    } else {
-      results.push(`✅ Partidas da semifinal atualizadas para status 'agendado'`);
     }
     
-    // Add final matches (TBD)
-    // SUB-11 Final (21/03/25)
-    await addMatchData('2025-03-21', 'FURACÃO', 'MONTE', 0, 0, 'SUB-11');
+    // Passo 4: Atualizar as partidas e resultados
+    results.push("🔄 Atualizando partidas e resultados...");
     
-    // SUB-13 Final (21/03/25)
-    await addMatchData('2025-03-21', 'FURACÃO', 'GRÊMIO OCIDENTAL', 0, 0, 'SUB-13');
+    const updateResult = await updateBaseForteResults();
+    results.push(...updateResult.results);
     
-    // Update final matches with 'final' round and 'scheduled' status
-    const { error: updateFinalsError } = await supabase
-      .from('matches')
-      .update({ 
-        round: 'Final',
-        status: 'scheduled',
-        home_score: null,
-        away_score: null
-      })
-      .eq('date', '2025-03-21');
-    
-    if (updateFinalsError) {
-      results.push(`❌ Erro ao atualizar partidas da final: ${updateFinalsError.message}`);
-    } else {
-      results.push(`✅ Partidas da final atualizadas para status 'agendado'`);
+    if (!updateResult.success) {
+      return { 
+        success: false, 
+        error: 'Erro ao atualizar partidas e resultados', 
+        results 
+      };
     }
     
-    // Step 5: Recalculate standings
-    results.push("Recalculando tabela de classificação...");
+    // Passo 5: Verificar tabela de classificação
+    results.push("🔍 Verificando tabela de classificação...");
     
-    const { error: recalcError } = await supabase.rpc('recalculate_standings');
-    
-    if (recalcError) {
-      results.push(`❌ Erro ao recalcular classificação: ${recalcError.message}`);
-    } else {
-      results.push(`✅ Tabela de classificação recalculada com sucesso`);
+    const { error: standingsError } = await supabase.rpc('recalculate_standings');
+    if (standingsError) {
+      console.error('Erro ao recalcular classificações:', standingsError);
+      results.push(`❌ Erro ao recalcular classificações: ${standingsError.message}`);
+      return { 
+        success: false, 
+        error: 'Erro ao recalcular classificações', 
+        results 
+      };
     }
     
-    results.push("✅ Processo de carregamento de dados concluído com sucesso!");
+    results.push("✅ Classificações recalculadas com sucesso");
+    
+    // Concluir a operação
+    results.push("🎉 Operação concluída! Todos os dados do Campeonato Base Forte 2025 foram carregados com sucesso.");
     
     return {
       success: true,
-      results: results
+      results
     };
   } catch (error) {
-    console.error('Erro durante o carregamento de dados:', error);
-    results.push(`❌ Erro inesperado: ${error.message}`);
-    
+    console.error('Erro inesperado ao carregar dados:', error);
     return {
       success: false,
-      results: results,
-      error: error.message
+      error: 'Erro inesperado ao carregar dados',
+      results: [`❌ Erro inesperado: ${error.message || error}`]
     };
   }
 };
