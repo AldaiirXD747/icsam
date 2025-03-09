@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import TeamManagement from '@/components/admin/TeamManagement';
 import ChampionshipManagement from '@/components/admin/ChampionshipManagement';
 import MatchManagement from '@/components/admin/MatchManagement';
@@ -14,7 +14,7 @@ import TransparencyManagement from '@/components/admin/TransparencyManagement';
 import UserManagement from '@/components/admin/UserManagement';
 import DataSyncManager from '@/components/admin/DataSyncManager';
 import { useUser } from '@/lib/clerk-mock';
-import { BarChart4, Trophy, Users, UserCog, CalendarDays, Medal, ImageIcon, Database, Table, FileText } from 'lucide-react';
+import { BarChart4, Trophy, Users, UserCog, CalendarDays, Medal, ImageIcon, Database, Table, FileText, RefreshCw } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("championships");
@@ -30,11 +30,35 @@ const AdminDashboard = () => {
         <div className="container mx-auto p-4">
           <h1 className="text-3xl font-bold mb-6 text-blue-primary">Painel Administrativo</h1>
           
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <DataSyncManager />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card className="overflow-hidden">
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-bold mb-4 text-blue-primary">Ferramentas de Manutenção</h2>
+                <div className="space-y-2">
+                  <Button 
+                    className="w-full flex justify-start items-center gap-2"
+                    onClick={() => window.location.href = '/admin/database-cleanup'}
+                  >
+                    <Database className="h-4 w-4" />
+                    Limpeza de Banco de Dados
+                  </Button>
+                  <Button 
+                    className="w-full flex justify-start items-center gap-2"
+                    onClick={() => window.location.href = '/admin/load-base-forte'}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Carregar Dados do Campeonato Base Forte 2025
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mb-6">
+              <CardContent className="pt-6">
+                <DataSyncManager />
+              </CardContent>
+            </Card>
+          </div>
           
           <Card>
             <CardHeader className="pb-3">
