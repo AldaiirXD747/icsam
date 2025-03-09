@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+
 const AboutSection = () => {
   return <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
@@ -71,4 +73,5 @@ const AboutSection = () => {
       </div>
     </section>;
 };
+
 export default AboutSection;
