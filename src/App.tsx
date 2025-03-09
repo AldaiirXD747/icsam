@@ -1,12 +1,13 @@
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from "@/components/ui/toaster"
-import HomePage from '@/pages/HomePage'
-import AboutPage from '@/pages/AboutPage'
-import TeamsPage from '@/pages/TeamsPage'
-import ChampionshipsPage from '@/pages/ChampionshipsPage'
-import ChampionshipDetails from '@/pages/ChampionshipDetails'
-import ContactPage from '@/pages/ContactPage'
-import MatchesPage from '@/pages/MatchesPage'
+import Index from '@/pages/Index'
+import About from '@/pages/About'
+import Teams from '@/pages/Teams'
+import Championships from '@/pages/Championships'
+import Championship from '@/pages/Championship'
+import Contact from '@/pages/Contact'
+import Matches from '@/pages/Matches'
 import AdminDashboard from '@/pages/AdminDashboard'
 import DatabaseCleanup from '@/pages/admin/DatabaseCleanup'
 import LoadBaseForteData from '@/pages/admin/LoadBaseForteData'
@@ -18,13 +19,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/sobre" element={<AboutPage />} />
-        <Route path="/times" element={<TeamsPage />} />
-        <Route path="/campeonatos" element={<ChampionshipsPage />} />
-        <Route path="/campeonatos/:id" element={<ChampionshipDetails />} />
-        <Route path="/contato" element={<ContactPage />} />
-        <Route path="/partidas" element={<MatchesPage />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/sobre" element={<About />} />
+        <Route path="/times" element={<Teams />} />
+        <Route path="/campeonatos" element={<Championships />} />
+        <Route path="/campeonatos/:id" element={<Championship />} />
+        <Route path="/contato" element={<Contact />} />
+        <Route path="/partidas" element={<Matches />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
         <Route path="/admin/load-base-forte" element={<LoadBaseForteData />} />
