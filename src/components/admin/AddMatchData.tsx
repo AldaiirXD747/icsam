@@ -12,6 +12,35 @@ const AddMatchData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  /**
+   * Verifies if a date falls on a weekend (Saturday or Sunday)
+   */
+  const isWeekend = (dateStr: string): boolean => {
+    const date = new Date(dateStr);
+    const day = date.getDay(); // 0 is Sunday, 6 is Saturday
+    return day === 0 || day === 6;
+  };
+
+  /**
+   * Adjusts a date to the nearest weekend if it's not already on a weekend
+   */
+  const adjustToWeekend = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const day = date.getDay(); // 0 is Sunday, 6 is Saturday
+    
+    if (day === 0 || day === 6) {
+      // Already on a weekend
+      return dateStr;
+    }
+    
+    // Calculate days until Saturday (6 - day)
+    const daysToSaturday = 6 - day;
+    date.setDate(date.getDate() + daysToSaturday);
+    
+    // Format back to YYYY-MM-DD
+    return date.toISOString().split('T')[0];
+  };
+
   const parseMatchData = (input: string): MatchData[] => {
     const matches: MatchData[] = [];
     const lines = input.trim().split('\n');
@@ -33,7 +62,15 @@ const AddMatchData = () => {
         if (datePart) {
           // Convert DD/MM/YYYY to YYYY-MM-DD
           const [day, month, year] = datePart.split('/');
-          currentDate = `${year}-${month}-${day}`;
+          let formattedDate = `${year}-${month}-${day}`;
+          
+          // Ensure date is on a weekend
+          if (!isWeekend(formattedDate)) {
+            formattedDate = adjustToWeekend(formattedDate);
+            console.log(`Date adjusted to weekend: ${formattedDate}`);
+          }
+          
+          currentDate = formattedDate;
         }
         
         // Find round information
@@ -98,9 +135,11 @@ const AddMatchData = () => {
       
       // Confirm before proceeding
       if (!window.confirm(`Adicionar ${matches.length} partidas ao sistema?`)) {
+        setIsLoading(false);
         return;
       }
       
+      console.log('Matches to be added:', matches);
       const result = await addBatchMatches(matches);
       
       if (result.success) {
@@ -144,7 +183,7 @@ const AddMatchData = () => {
               <code>Time A 2x0 Time B SUB-11</code>
             </p>
             <Textarea
-              placeholder="RODADA 3 23/02/2025&#10;Federal 3x1 Estrela Vermelha - SUB-13&#10;Federal 2x0 Estrela Vermelha - SUB-11"
+              placeholder="RODADA 3 22/02/2025&#10;Federal 3x1 Estrela Vermelha - SUB-13&#10;Federal 2x0 Estrela Vermelha - SUB-11"
               value={inputData}
               onChange={(e) => setInputData(e.target.value)}
               rows={10}
