@@ -162,7 +162,7 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="rounded-lg hover:bg-gray-100 py-2.5">
-                    <Link to="/jogos" className="w-full flex items-center gap-2">
+                    <Link to="/partidas" className="w-full flex items-center gap-2">
                       <Calendar size={16} className="text-blue-primary" />
                       <span>Partidas</span>
                     </Link>
@@ -262,7 +262,7 @@ const Navbar = () => {
               <MobileSubLink to="/times" onClick={() => setIsMenuOpen(false)} icon={<Users size={16} />}>
                 Times
               </MobileSubLink>
-              <MobileSubLink to="/jogos" onClick={() => setIsMenuOpen(false)} icon={<Calendar size={16} />}>
+              <MobileSubLink to="/partidas" onClick={() => setIsMenuOpen(false)} icon={<Calendar size={16} />}>
                 Partidas
               </MobileSubLink>
               <MobileSubLink to="/estatisticas" onClick={() => setIsMenuOpen(false)} icon={<BarChart2 size={16} />}>

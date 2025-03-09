@@ -1,208 +1,106 @@
 
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Star, Award, Shield } from "lucide-react";
-
-// Empty data for player statistics
-const playerStats = [];
-
-// Empty data for team statistics
-const teamStats = [];
-
-// Prepare chart data for top scorers
-const prepareGoalScorerChartData = (players, category) => {
-  return players
-    .filter(player => category === 'all' || player.category === category)
-    .sort((a, b) => b.goals - a.goals)
-    .slice(0, 5)
-    .map(player => ({
-      name: player.name,
-      goals: player.goals,
-      team: player.teamName,
-    }));
-};
-
-// Prepare chart data for top assisters
-const prepareAssistChartData = (players, category) => {
-  return players
-    .filter(player => category === 'all' || player.category === category)
-    .sort((a, b) => b.assists - a.assists)
-    .slice(0, 5)
-    .map(player => ({
-      name: player.name,
-      assists: player.assists,
-      team: player.teamName,
-    }));
-};
-
-// Prepare chart data for team goals
-const prepareTeamGoalChartData = (teams, category) => {
-  return teams
-    .filter(team => category === 'all' || team.category === category)
-    .sort((a, b) => b.goalsScored - a.goalsScored)
-    .slice(0, 5)
-    .map(team => ({
-      name: team.name,
-      goalsScored: team.goalsScored,
-      goalsConceded: team.goalsConceded,
-    }));
-};
+import React from 'react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { BarChart, Users, Trophy, Calendar } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Statistics = () => {
-  const { championshipId } = useParams<{ championshipId?: string }>();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
-  // Prepare chart data
-  const topScorersData = prepareGoalScorerChartData(playerStats, selectedCategory);
-  const topAssistersData = prepareAssistChartData(playerStats, selectedCategory);
-  const teamGoalsData = prepareTeamGoalChartData(teamStats, selectedCategory);
-
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="pt-24 flex-grow">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-blue-primary mb-4">
-              {championshipId ? 'Estatísticas do Campeonato' : 'Estatísticas Gerais'}
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Acompanhe as estatísticas dos jogadores e times. Veja quem são os artilheiros, 
-              os líderes em assistências e outras métricas importantes.
-            </p>
-          </div>
+      <main className="flex-grow pt-24 pb-16">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl font-bold text-[#1a237e] mb-4">Estatísticas</h1>
+          <p className="text-gray-600 mb-8">
+            Acompanhe todas as estatísticas dos campeonatos organizados pelo Instituto Criança Santa Maria.
+          </p>
           
-          {/* Category Filter */}
-          <div className="glass-card p-6 mb-8">
-            <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
-              Filtrar por Categoria
-            </label>
-            <Select 
-              value={selectedCategory} 
-              onValueChange={(value) => setSelectedCategory(value)}
-            >
-              <SelectTrigger className="w-full md:w-64">
-                <SelectValue placeholder="Selecione uma categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Categorias</SelectItem>
-                <SelectItem value="SUB-11">SUB-11</SelectItem>
-                <SelectItem value="SUB-13">SUB-13</SelectItem>
-                <SelectItem value="SUB-15">SUB-15</SelectItem>
-                <SelectItem value="SUB-17">SUB-17</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Tabs for different statistics */}
-          <Tabs defaultValue="players">
-            <TabsList className="w-full max-w-md mx-auto">
-              <TabsTrigger value="players" className="flex-1">Jogadores</TabsTrigger>
-              <TabsTrigger value="teams" className="flex-1">Times</TabsTrigger>
+          <Tabs defaultValue="scorers">
+            <TabsList className="mb-6">
+              <TabsTrigger value="scorers" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                Artilheiros
+              </TabsTrigger>
+              <TabsTrigger value="cards" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                Cartões
+              </TabsTrigger>
+              <TabsTrigger value="teams" className="data-[state=active]:bg-blue-primary data-[state=active]:text-white">
+                Times
+              </TabsTrigger>
             </TabsList>
             
-            {/* Player Statistics */}
-            <TabsContent value="players">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                {/* Top Scorers */}
-                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 p-2 rounded-full mr-3">
-                      <Trophy className="h-6 w-6 text-blue-primary" />
-                    </div>
-                    <h2 className="text-xl font-bold text-blue-primary">Artilheiros</h2>
+            <TabsContent value="scorers">
+              <Card>
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+                  <CardTitle className="flex items-center text-blue-primary">
+                    <Trophy className="mr-2 h-5 w-5" />
+                    Artilheiros do Campeonato
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="text-gray-500 mb-4">
+                    Esta seção mostrará os artilheiros dos campeonatos. Selecione um campeonato no menu para ver os dados.
+                  </p>
+                  
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <BarChart className="h-16 w-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-400">
+                      Selecione um campeonato para visualizar os artilheiros
+                    </h3>
                   </div>
-                  <div className="h-80 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Nenhum dado disponível</h3>
-                      <p>Estatísticas de artilheiros serão exibidas quando adicionadas no painel administrativo.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Top Assisters */}
-                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-lime-100 p-2 rounded-full mr-3">
-                      <Star className="h-6 w-6 text-lime-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-blue-primary">Assistências</h2>
-                  </div>
-                  <div className="h-80 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <Star className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Nenhum dado disponível</h3>
-                      <p>Estatísticas de assistências serão exibidas quando adicionadas no painel administrativo.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Discipline Stats */}
-                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow lg:col-span-2">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-red-100 p-2 rounded-full mr-3">
-                      <Award className="h-6 w-6 text-red-600" />
-                    </div>
-                    <h2 className="text-xl font-bold text-blue-primary">Cartões</h2>
-                  </div>
-                  <div className="py-16 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Nenhum dado disponível</h3>
-                      <p>Estatísticas de cartões serão exibidas quando adicionadas no painel administrativo.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </TabsContent>
             
-            {/* Team Statistics */}
+            <TabsContent value="cards">
+              <Card>
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+                  <CardTitle className="flex items-center text-blue-primary">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    Cartões do Campeonato
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="text-gray-500 mb-4">
+                    Esta seção mostrará as estatísticas de cartões dos campeonatos. Selecione um campeonato no menu para ver os dados.
+                  </p>
+                  
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Calendar className="h-16 w-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-400">
+                      Selecione um campeonato para visualizar as estatísticas de cartões
+                    </h3>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
             <TabsContent value="teams">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                {/* Team Goals */}
-                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 p-2 rounded-full mr-3">
-                      <Shield className="h-6 w-6 text-blue-primary" />
-                    </div>
-                    <h2 className="text-xl font-bold text-blue-primary">Gols por Time</h2>
+              <Card>
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+                  <CardTitle className="flex items-center text-blue-primary">
+                    <Users className="mr-2 h-5 w-5" />
+                    Estatísticas dos Times
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <p className="text-gray-500 mb-4">
+                    Esta seção mostrará as estatísticas dos times nos campeonatos. Selecione um campeonato no menu para ver os dados.
+                  </p>
+                  
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Users className="h-16 w-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-400">
+                      Selecione um campeonato para visualizar as estatísticas dos times
+                    </h3>
                   </div>
-                  <div className="h-80 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <Shield className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Nenhum dado disponível</h3>
-                      <p>Estatísticas de gols por time serão exibidas quando adicionadas no painel administrativo.</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Team Performance */}
-                <div className="glass-card p-6 shadow-md rounded-xl hover:shadow-lg transition-shadow">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-blue-100 p-2 rounded-full mr-3">
-                      <Trophy className="h-6 w-6 text-blue-primary" />
-                    </div>
-                    <h2 className="text-xl font-bold text-blue-primary">Desempenho dos Times</h2>
-                  </div>
-                  <div className="py-16 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium mb-2">Nenhum dado disponível</h3>
-                      <p>Estatísticas de desempenho dos times serão exibidas quando adicionadas no painel administrativo.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
