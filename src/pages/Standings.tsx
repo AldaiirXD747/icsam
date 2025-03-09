@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StandingsTable from '@/components/StandingsTable';
 
 const Standings = () => {
-  const [selectedChampionship, setSelectedChampionship] = useState('');
+  const [selectedChampionship, setSelectedChampionship] = useState('base-forte-2025');
   const [selectedCategory, setSelectedCategory] = useState('all');
   
   return (
@@ -39,7 +39,7 @@ const Standings = () => {
                       <SelectValue placeholder="Selecione um campeonato" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos os campeonatos</SelectItem>
+                      <SelectItem value="todos-campeonatos">Todos os campeonatos</SelectItem>
                       <SelectItem value="base-forte-2025">Campeonato Base Forte</SelectItem>
                     </SelectContent>
                   </Select>
@@ -66,7 +66,7 @@ const Standings = () => {
             </CardContent>
           </Card>
           
-          {!selectedChampionship ? (
+          {!selectedChampionship || selectedChampionship === 'todos-campeonatos' ? (
             <div className="bg-white rounded-lg p-8 shadow-md text-center">
               <Trophy className="h-16 w-16 mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-400 mb-2">
