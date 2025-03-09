@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 
 interface MatchResult {
   date: string;
@@ -9,160 +9,159 @@ interface MatchResult {
   homeScore: number;
   awayScore: number;
   round?: string;
-  status?: string;
+  status: string;
+  location?: string;
+  time?: string;
 }
 
 export const updateMatchResults = async (results: MatchResult[]) => {
-  const updates: { success: boolean; message: string }[] = [];
-  let hasErrors = false;
-
   try {
-    // First, get all teams to map names to IDs
-    const { data: teams, error: teamsError } = await supabase
-      .from('teams')
-      .select('id, name, category');
-    
-    if (teamsError) {
-      console.error('Error fetching teams:', teamsError);
-      return { 
-        success: false, 
-        error: teamsError.message, 
-        updates: [{ success: false, message: `Erro ao buscar times: ${teamsError.message}` }] 
-      };
-    }
-    
-    // Group teams by name and category
-    const teamMap: Record<string, Record<string, string>> = {};
-    
-    teams?.forEach(team => {
-      if (!teamMap[team.name.toUpperCase()]) {
-        teamMap[team.name.toUpperCase()] = {};
-      }
-      teamMap[team.name.toUpperCase()][team.category] = team.id;
-    });
+    const updateResults = [];
+    const errors = [];
     
     // Process each match result
     for (const result of results) {
       try {
-        const homeTeamName = result.homeTeamName.toUpperCase();
-        const awayTeamName = result.awayTeamName.toUpperCase();
-        
-        // Check if teams exist in the database
-        if (!teamMap[homeTeamName] || !teamMap[homeTeamName][result.category]) {
-          const message = `Time ${result.homeTeamName} não encontrado para categoria ${result.category}`;
-          console.error(message);
-          updates.push({ success: false, message });
-          hasErrors = true;
-          continue;
-        }
-        
-        if (!teamMap[awayTeamName] || !teamMap[awayTeamName][result.category]) {
-          const message = `Time ${result.awayTeamName} não encontrado para categoria ${result.category}`;
-          console.error(message);
-          updates.push({ success: false, message });
-          hasErrors = true;
-          continue;
-        }
-        
-        const homeTeamId = teamMap[homeTeamName][result.category];
-        const awayTeamId = teamMap[awayTeamName][result.category];
-        
-        // Check if match already exists
-        const { data: existingMatch, error: checkError } = await supabase
-          .from('matches')
+        // First, get the team IDs
+        const { data: homeTeamData, error: homeTeamError } = await supabase
+          .from('teams')
           .select('id')
-          .eq('home_team', homeTeamId)
-          .eq('away_team', awayTeamId)
-          .eq('category', result.category)
-          .eq('date', result.date);
+          .ilike('name', result.homeTeamName)
+          .single();
         
-        if (checkError) {
-          console.error('Error checking for existing match:', checkError);
-          updates.push({ success: false, message: `Erro ao verificar partida: ${checkError.message}` });
-          hasErrors = true;
+        if (homeTeamError) {
+          updateResults.push({
+            success: false,
+            message: `Time da casa "${result.homeTeamName}" não encontrado`
+          });
           continue;
         }
         
-        // Update or insert match
-        if (existingMatch && existingMatch.length > 0) {
+        const { data: awayTeamData, error: awayTeamError } = await supabase
+          .from('teams')
+          .select('id')
+          .ilike('name', result.awayTeamName)
+          .single();
+        
+        if (awayTeamError) {
+          updateResults.push({
+            success: false,
+            message: `Time visitante "${result.awayTeamName}" não encontrado`
+          });
+          continue;
+        }
+        
+        // Find the match in database using team IDs, date and category
+        const { data: matchData, error: matchError } = await supabase
+          .from('matches')
+          .select('*')
+          .eq('home_team', homeTeamData.id)
+          .eq('away_team', awayTeamData.id)
+          .eq('category', result.category)
+          .eq('date', result.date)
+          .maybeSingle();
+        
+        if (matchError) {
+          updateResults.push({
+            success: false,
+            message: `Erro ao buscar partida: ${matchError.message}`
+          });
+          continue;
+        }
+        
+        // Determine if we need to create a new match or update existing
+        if (!matchData) {
+          // Create new match - calculate local time if not provided
+          const matchTime = result.time || '15:00:00';
+          const matchLocation = result.location || 'Local a definir';
+          const matchRound = result.round || null;
+          const matchStatus = result.status || 
+            (result.homeScore !== null && result.awayScore !== null ? 'completed' : 'scheduled');
+          
+          // Insert new match
+          const { data: newMatch, error: insertError } = await supabase
+            .from('matches')
+            .insert({
+              date: result.date,
+              time: matchTime,
+              home_team: homeTeamData.id,
+              away_team: awayTeamData.id,
+              home_score: result.homeScore,
+              away_score: result.awayScore,
+              category: result.category,
+              status: matchStatus,
+              location: matchLocation,
+              round: matchRound
+            })
+            .select()
+            .single();
+          
+          if (insertError) {
+            updateResults.push({
+              success: false,
+              message: `Erro ao criar nova partida: ${insertError.message}`
+            });
+          } else {
+            updateResults.push({
+              success: true,
+              message: `Nova partida criada: ${result.homeTeamName} vs ${result.awayTeamName}`
+            });
+          }
+        } else {
           // Update existing match
           const { error: updateError } = await supabase
             .from('matches')
             .update({
               home_score: result.homeScore,
               away_score: result.awayScore,
-              status: result.status || (result.homeScore !== null ? 'completed' : 'scheduled'),
-              round: result.round || null
+              status: result.status || 
+                (result.homeScore !== null && result.awayScore !== null ? 'completed' : matchData.status),
+              round: result.round || matchData.round
             })
-            .eq('id', existingMatch[0].id);
+            .eq('id', matchData.id);
           
           if (updateError) {
-            console.error('Error updating match:', updateError);
-            updates.push({ success: false, message: `Erro ao atualizar partida: ${updateError.message}` });
-            hasErrors = true;
-          } else {
-            updates.push({ 
-              success: true, 
-              message: `Placar atualizado: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName}` 
+            updateResults.push({
+              success: false,
+              message: `Erro ao atualizar partida: ${updateError.message}`
             });
-          }
-        } else {
-          // Insert new match
-          const { error: insertError } = await supabase
-            .from('matches')
-            .insert({
-              date: result.date,
-              time: '14:00',  // Default time if not provided
-              location: 'São Paulo',  // Default location if not provided
-              category: result.category,
-              home_team: homeTeamId,
-              away_team: awayTeamId,
-              home_score: result.homeScore,
-              away_score: result.awayScore,
-              status: result.status || (result.homeScore !== null ? 'completed' : 'scheduled'),
-              round: result.round || null
-            });
-          
-          if (insertError) {
-            console.error('Error inserting match:', insertError);
-            updates.push({ success: false, message: `Erro ao inserir partida: ${insertError.message}` });
-            hasErrors = true;
           } else {
-            updates.push({ 
+            updateResults.push({
               success: true, 
-              message: `Partida inserida: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName}` 
+              message: `Partida atualizada: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName}`
             });
           }
         }
       } catch (error) {
-        console.error('Error processing match:', error);
-        updates.push({ success: false, message: `Erro inesperado: ${error instanceof Error ? error.message : 'Desconhecido'}` });
-        hasErrors = true;
+        errors.push(error instanceof Error ? error.message : String(error));
+        updateResults.push({
+          success: false,
+          message: `Erro inesperado: ${error instanceof Error ? error.message : 'Desconhecido'}`
+        });
       }
     }
     
-    // Recalculate standings
+    // Recalculate the standings
     try {
-      const { error: recalcError } = await supabase.rpc('recalculate_standings');
-      if (recalcError) {
-        console.error('Error recalculating standings:', recalcError);
-        updates.push({ success: false, message: `Erro ao recalcular classificações: ${recalcError.message}` });
-        hasErrors = true;
-      } else {
-        updates.push({ success: true, message: 'Classificações recalculadas com sucesso' });
-      }
+      await supabase.rpc('recalculate_standings');
     } catch (error) {
-      console.error('Error calling recalculate_standings:', error);
-      updates.push({ success: false, message: `Erro ao recalcular classificações: ${error instanceof Error ? error.message : 'Desconhecido'}` });
-      hasErrors = true;
+      console.error('Erro ao recalcular classificação:', error);
+      updateResults.push({
+        success: false,
+        message: `Erro ao recalcular classificação: ${error instanceof Error ? error.message : 'Desconhecido'}`
+      });
     }
+    
+    // Determine overall success
+    const overallSuccess = updateResults.every(result => result.success);
     
     return {
-      success: !hasErrors,
-      updates: updates
+      success: overallSuccess,
+      error: errors.length > 0 ? errors.join(', ') : undefined,
+      updates: updateResults
     };
   } catch (error) {
-    console.error('Unexpected error in updateMatchResults:', error);
+    console.error('Erro ao atualizar resultados:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido',

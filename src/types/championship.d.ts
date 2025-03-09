@@ -1,4 +1,3 @@
-
 export interface ChampionshipStanding {
   position: number;
   team_id: string;
@@ -14,7 +13,7 @@ export interface ChampionshipStanding {
   goal_difference: number;
 }
 
-export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'in_progress' | 'completed' | 'cancelled' | 'postponed';
+export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'finalizado' | 'encerrado';
 
 // Additional types needed for admin components
 export interface ChampionshipMatch {
@@ -36,6 +35,17 @@ export interface ChampionshipMatch {
   away_team_name?: string;
   home_team_logo?: string;
   away_team_logo?: string;
+  
+  // Camel case alternatives for frontend compatibility
+  homeTeam?: string;
+  awayTeam?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  championshipId?: string | null;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 }
 
 export interface ChampionshipTeam {

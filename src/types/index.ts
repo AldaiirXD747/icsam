@@ -1,4 +1,3 @@
-
 export interface Match {
   id: string;
   date: string;
@@ -21,11 +20,11 @@ export interface Match {
   homeTeam?: {
     name: string;
     logo: string;
-  };
+  } | string;
   awayTeam?: {
     name: string;
     logo: string;
-  };
+  } | string;
   
   // Allow both snake_case and camelCase for compatibility
   homeScore?: number | null;
@@ -33,6 +32,10 @@ export interface Match {
   championshipId?: string | null;
   created_at?: string;
   createdAt?: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 }
 
 export interface Player {
@@ -96,7 +99,7 @@ export interface Championship {
 }
 
 // Add types that are used in admin components
-export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'live';
+export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'finalizado' | 'encerrado' | 'canceled';
 
 export interface AdminMatch extends Match {
   homeTeamName?: string;

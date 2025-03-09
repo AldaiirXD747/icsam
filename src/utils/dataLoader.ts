@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { updateBaseForteResults } from './baseForteUpdater';
 
@@ -192,5 +191,28 @@ export const loadBaseForte2024Data = async () => {
       error: 'Erro inesperado ao carregar dados',
       results: [`❌ Erro inesperado: ${error.message || error}`]
     };
+  }
+};
+
+const updateBaseForteData = async () => {
+  try {
+    const result = await updateBaseForteResults();
+    toast({
+      title: result.success ? "Dados atualizados" : "Erro na atualização",
+      description: result.success 
+        ? `Dados do Base Forte 2024 atualizados com sucesso!` 
+        : `Erro: ${result.error}`,
+      variant: result.success ? "default" : "destructive",
+    });
+    
+    return result.success;
+  } catch (error) {
+    console.error('Erro ao carregar dados do Base Forte:', error);
+    toast({
+      title: "Erro na atualização",
+      description: `Ocorreu um erro: ${error instanceof Error ? error.message : 'Desconhecido'}`,
+      variant: "destructive",
+    });
+    return false;
   }
 };
