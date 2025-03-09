@@ -22,19 +22,41 @@ const AddMatchData = () => {
   };
 
   /**
-   * Adjusts a date to the nearest weekend if it's not already on a weekend
+   * Maps specific weekday dates to the correct weekend dates in March 2025
+   * If the date isn't specifically mapped, it adjusts to the nearest weekend
    */
   const adjustToWeekend = (dateStr: string): string => {
     const date = new Date(dateStr);
-    const day = date.getDay(); // 0 is Sunday, 6 is Saturday
     
-    if (day === 0 || day === 6) {
-      // Already on a weekend
+    // First check if the date is already on a weekend
+    if (isWeekend(dateStr)) {
       return dateStr;
     }
     
-    // Calculate days until Saturday (6 - day)
-    const daysToSaturday = 6 - day;
+    // Special handling for March 2025 dates - map to 08/03/2025 (Saturday) and 09/03/2025 (Sunday)
+    const month = date.getMonth(); // 0-indexed, so 2 = March
+    const year = date.getFullYear();
+    
+    if (month === 2 && year === 2025) {
+      // Map weekday dates to the specific weekend (8-9 March 2025)
+      const day = date.getDate();
+      
+      if (day <= 7) {
+        // First week of March - map to Saturday March 8
+        return '2025-03-08';
+      } else if (day > 9 && day <= 14) {
+        // Second week of March - map to Sunday March 9
+        return '2025-03-09';
+      } else if (day > 14) {
+        // For later dates in March, use the nearest weekend
+        const daysUntilSaturday = (6 - date.getDay()) % 7;
+        date.setDate(date.getDate() + daysUntilSaturday);
+        return date.toISOString().split('T')[0];
+      }
+    }
+    
+    // Default: Calculate days until Saturday (6 - day)
+    const daysToSaturday = (6 - date.getDay()) % 7;
     date.setDate(date.getDate() + daysToSaturday);
     
     // Format back to YYYY-MM-DD
@@ -183,7 +205,7 @@ const AddMatchData = () => {
               <code>Time A 2x0 Time B SUB-11</code>
             </p>
             <Textarea
-              placeholder="RODADA 3 22/02/2025&#10;Federal 3x1 Estrela Vermelha - SUB-13&#10;Federal 2x0 Estrela Vermelha - SUB-11"
+              placeholder="RODADA 3 08/03/2025&#10;Federal 3x1 Estrela Vermelha - SUB-13&#10;Federal 2x0 Estrela Vermelha - SUB-11"
               value={inputData}
               onChange={(e) => setInputData(e.target.value)}
               rows={10}

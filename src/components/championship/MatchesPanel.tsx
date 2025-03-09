@@ -95,7 +95,7 @@ const MatchesPanel: React.FC<MatchesPanelProps> = ({ matches, isLoading, selecte
               <div className="flex items-center gap-2 mb-3">
                 <Calendar className="h-5 w-5 text-[#1a237e]" />
                 <h3 className="font-medium text-gray-700">
-                  {format(new Date(date), 'EEEE, dd MMMM yyyy', { locale: ptBR })}
+                  {format(new Date(date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </h3>
               </div>
               
