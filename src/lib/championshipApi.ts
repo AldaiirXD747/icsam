@@ -1,25 +1,61 @@
 
 export const getChampionshipStandings = async (championshipId: string, category: string) => {
   try {
-    // Construct the URL with query parameters
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/championships/${championshipId}/standings`;
-    const queryParams = new URLSearchParams();
-    queryParams.append('category', category === 'all' ? 'SUB-11' : category); // Default to SUB-11 if 'all' is selected
-
-    // Append query parameters to the URL
-    const queryString = queryParams.toString();
-    if (queryString) {
-        url += `?${queryString}`;
+    // Usar valores diretos do Supabase em vez de process.env
+    const baseUrl = 'https://vhyghnawrfjoosgrmsyw.supabase.co';
+    const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWdobmF3cmZqb29zZ3Jtc3l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyODA0NzgsImV4cCI6MjA1Njg1NjQ3OH0.BibbDZ6WrWvYfR0ok94QXnwUFfjXtxT4s0xmWFyCX4A';
+    
+    // Construir a URL para obter a classificação
+    const url = `${baseUrl}/rest/v1/standings`;
+    const headers = {
+      'apikey': apiKey,
+      'Content-Type': 'application/json'
+    };
+    
+    // Filtrar por categoria
+    const categoryFilter = category !== 'all' ? `category=eq.${category}` : '';
+    
+    let queryParams = new URLSearchParams();
+    if (categoryFilter) {
+      queryParams.append('category', category);
     }
-
-    const response = await fetch(url);
-
+    
+    // Ordenar por posição
+    queryParams.append('order', 'position.asc');
+    
+    // Obter time associado para exibir logo e nome
+    queryParams.append('select', '*,teams:team_id(name,logo)');
+    
+    // Montar a URL final
+    const finalUrl = `${url}?${queryParams.toString()}`;
+    
+    // Fazer a requisição
+    const response = await fetch(finalUrl, {
+      method: 'GET',
+      headers: headers
+    });
+    
     if (!response.ok) {
       throw new Error(`Failed to fetch standings: ${response.status} ${response.statusText}`);
     }
-
+    
     const data = await response.json();
-    return data;
+    
+    // Formatar os dados para o formato esperado pelo componente
+    return data.map((item: any) => ({
+      position: item.position,
+      team_id: item.team_id,
+      team_name: item.teams?.name || 'Time Desconhecido',
+      team_logo: item.teams?.logo || null,
+      points: item.points,
+      played: item.played,
+      won: item.won,
+      drawn: item.drawn,
+      lost: item.lost,
+      goals_for: item.goals_for,
+      goals_against: item.goals_against,
+      goal_difference: item.goal_difference
+    }));
   } catch (error) {
     console.error("Error fetching championship standings:", error);
     return [];
@@ -32,108 +68,121 @@ export const getChampionshipStatistics = async (
   type: 'scorers' | 'cards' | 'teams'
 ) => {
   try {
-    // Base URL for the Supabase API
-    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vhyghnawrfjoosgrmsyw.supabase.co';
-    const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWdobmF3cmZqb29zZ3Jtc3l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyODA0NzgsImV4cCI6MjA1Njg1NjQ3OH0.BibbDZ6WrWvYfR0ok94QXnwUFfjXtxT4s0xmWFyCX4A';
+    // Usar valores diretos em vez de process.env
+    const baseUrl = 'https://vhyghnawrfjoosgrmsyw.supabase.co';
+    const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeWdobmF3cmZqb29zZ3Jtc3l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyODA0NzgsImV4cCI6MjA1Njg1NjQ3OH0.BibbDZ6WrWvYfR0ok94QXnwUFfjXtxT4s0xmWFyCX4A';
     
-    // Build the URL based on the type of statistics
-    let url = `${baseUrl}/rest/v1/`;
-    let headers = {
+    // Configuração base para requisições
+    const headers = {
       'apikey': apiKey,
       'Content-Type': 'application/json'
     };
     
-    // Filter by category if not 'all'
-    const categoryFilter = category !== 'all' ? `&category=eq.${category}` : '';
+    // Filtrar por categoria se não for 'all'
+    const categoryFilter = category !== 'all' ? `category=eq.${category}` : '';
     
     if (type === 'scorers') {
-      // For now, return mock scorer data
-      // In production this would fetch from top_scorers table
-      return [
-        {
-          player_id: "p1",
-          player_name: "João Silva",
-          team_name: "Furacão",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png",
-          goals: 7
-        },
-        {
-          player_id: "p2",
-          player_name: "Pedro Oliveira",
-          team_name: "Grêmio Ocidental",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png",
-          goals: 5
-        },
-        {
-          player_id: "p3",
-          player_name: "Rafael Santos",
-          team_name: "Atlético City",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png",
-          goals: 4
-        }
-      ];
+      // Para artilheiros, buscar da tabela top_scorers
+      let url = `${baseUrl}/rest/v1/top_scorers`;
+      let queryParams = new URLSearchParams();
+      
+      if (categoryFilter) {
+        queryParams.append('category', category);
+      }
+      
+      queryParams.append('select', '*,players:player_id(name),teams:team_id(name,logo)');
+      queryParams.append('order', 'goals.desc');
+      
+      const finalUrl = `${url}?${queryParams.toString()}`;
+      
+      const response = await fetch(finalUrl, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch scorers: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      return data.map((item: any) => ({
+        player_id: item.player_id,
+        player_name: item.players?.name || 'Jogador Desconhecido',
+        team_name: item.teams?.name || 'Time Desconhecido',
+        team_logo: item.teams?.logo || null,
+        goals: item.goals
+      }));
     }
     
     if (type === 'cards') {
-      // For now, return mock card statistics
-      // In production this would fetch from yellow_card_leaders table
-      return [
-        {
-          player_id: "p4",
-          player_name: "Carlos Ferreira",
-          team_name: "Monte",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/2.png",
-          yellow_cards: 3,
-          red_cards: 1
-        },
-        {
-          player_id: "p5",
-          player_name: "Lucas Mendes",
-          team_name: "Lyon",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/lion.png",
-          yellow_cards: 2,
-          red_cards: 0
-        },
-        {
-          player_id: "p6",
-          player_name: "Gabriel Costa",
-          team_name: "Estrela Vermelha",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/5.png",
-          yellow_cards: 2,
-          red_cards: 0
-        }
-      ];
+      // Para cartões, buscar da tabela yellow_card_leaders
+      let url = `${baseUrl}/rest/v1/yellow_card_leaders`;
+      let queryParams = new URLSearchParams();
+      
+      if (categoryFilter) {
+        queryParams.append('category', category);
+      }
+      
+      queryParams.append('select', '*,players:player_id(name),teams:team_id(name,logo)');
+      queryParams.append('order', 'yellow_cards.desc');
+      
+      const finalUrl = `${url}?${queryParams.toString()}`;
+      
+      const response = await fetch(finalUrl, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch cards: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      return data.map((item: any) => ({
+        player_id: item.player_id,
+        player_name: item.players?.name || 'Jogador Desconhecido',
+        team_name: item.teams?.name || 'Time Desconhecido',
+        team_logo: item.teams?.logo || null,
+        yellow_cards: item.yellow_cards,
+        red_cards: 0 // Adicionar suporte para cartões vermelhos no futuro
+      }));
     }
     
     if (type === 'teams') {
-      // For now, return mock team statistics
-      // In production this would be calculated from matches
-      return [
-        {
-          team_id: "t1",
-          team_name: "Furacão",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/8.png",
-          total_goals: 15,
-          matches_played: 5,
-          goals_per_match: 3.0
-        },
-        {
-          team_id: "t2",
-          team_name: "Grêmio Ocidental",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2025/02/Captura-de-tela-2025-02-13-112406.png",
-          total_goals: 10,
-          matches_played: 5,
-          goals_per_match: 2.0
-        },
-        {
-          team_id: "t3",
-          team_name: "Atlético City",
-          team_logo: "https://institutocriancasantamaria.com.br/wp-content/uploads/2024/11/7.png",
-          total_goals: 8,
-          matches_played: 5,
-          goals_per_match: 1.6
-        }
-      ];
+      // Estatísticas de times calculadas a partir da tabela standings
+      let url = `${baseUrl}/rest/v1/standings`;
+      let queryParams = new URLSearchParams();
+      
+      if (categoryFilter) {
+        queryParams.append('category', category);
+      }
+      
+      queryParams.append('select', '*,teams:team_id(name,logo)');
+      queryParams.append('order', 'goals_for.desc');
+      
+      const finalUrl = `${url}?${queryParams.toString()}`;
+      
+      const response = await fetch(finalUrl, {
+        method: 'GET',
+        headers: headers
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch team statistics: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      return data.map((item: any) => ({
+        team_id: item.team_id,
+        team_name: item.teams?.name || 'Time Desconhecido',
+        team_logo: item.teams?.logo || null,
+        total_goals: item.goals_for,
+        matches_played: item.played,
+        goals_per_match: item.played > 0 ? (item.goals_for / item.played).toFixed(1) : 0
+      }));
     }
     
     return [];

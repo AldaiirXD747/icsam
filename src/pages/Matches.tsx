@@ -70,30 +70,43 @@ const Matches = () => {
           .from('matches')
           .select(`
             *,
-            home_team_details:teams!matches_home_team_fkey(id, name),
-            away_team_details:teams!matches_away_team_fkey(id, name)
+            home_team_details:teams!home_team(id, name, logo),
+            away_team_details:teams!away_team(id, name, logo)
           `)
-          .order('date');
+          .order('date', { ascending: true });
         
         if (error) throw error;
         
-        const formattedMatches = data?.map(match => {
-          const appMatch = convertDbMatchToMatch(match);
-          
-          if (match.home_team_details) {
-            appMatch.home_team_name = match.home_team_details.name;
-            appMatch.homeTeamName = match.home_team_details.name;
-          }
-          
-          if (match.away_team_details) {
-            appMatch.away_team_name = match.away_team_details.name;
-            appMatch.awayTeamName = match.away_team_details.name;
-          }
-          
-          return appMatch;
-        }) || [];
+        console.log("Partidas carregadas:", data?.length || 0);
         
-        setMatches(formattedMatches);
+        if (data && data.length > 0) {
+          const formattedMatches = data.map(match => {
+            return {
+              id: match.id,
+              date: match.date,
+              time: match.time,
+              home_team: match.home_team,
+              away_team: match.away_team,
+              home_score: match.home_score,
+              away_score: match.away_score,
+              status: match.status,
+              category: match.category,
+              location: match.location,
+              round: match.round,
+              home_team_name: match.home_team_details?.name || 'Time da Casa',
+              away_team_name: match.away_team_details?.name || 'Time Visitante',
+              homeTeamName: match.home_team_details?.name || 'Time da Casa',
+              awayTeamName: match.away_team_details?.name || 'Time Visitante',
+              homeTeamLogo: match.home_team_details?.logo || '',
+              awayTeamLogo: match.away_team_details?.logo || ''
+            };
+          });
+          
+          setMatches(formattedMatches);
+        } else {
+          console.log("Nenhuma partida encontrada");
+          setError('Não foram encontradas partidas no sistema.');
+        }
       } catch (error) {
         console.error('Error fetching matches:', error);
         setError('Não foi possível carregar as partidas. Por favor, tente novamente mais tarde.');
@@ -277,12 +290,12 @@ const Matches = () => {
                           id={Number(match.id)}
                           homeTeam={{
                             name: match.home_team_name || 'Time da Casa',
-                            logo: teamLogos[match.home_team] || '/placeholder.svg',
+                            logo: match.homeTeamLogo || teamLogos[match.home_team] || '/placeholder.svg',
                             score: match.home_score
                           }}
                           awayTeam={{
                             name: match.away_team_name || 'Time Visitante',
-                            logo: teamLogos[match.away_team] || '/placeholder.svg',
+                            logo: match.awayTeamLogo || teamLogos[match.away_team] || '/placeholder.svg',
                             score: match.away_score
                           }}
                           category={match.category}

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getChampionshipStandings } from '@/lib/championshipApi';
 import { ChampionshipStanding } from '@/types/championship';
 import { AlertCircle, Loader2, Trophy } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface StandingsTableProps {
   championshipId: string;
@@ -27,9 +28,43 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
           return;
         }
         
-        // Use the category parameter to fetch the standings
-        const standingsData = await getChampionshipStandings(championshipId, category === 'all' ? 'SUB-11' : category);
-        setStandings(standingsData);
+        // Buscar diretamente do Supabase se a categoria for especificada
+        if (category !== 'all') {
+          const { data, error } = await supabase
+            .from('standings')
+            .select(`
+              *,
+              teams:team_id (
+                name,
+                logo
+              )
+            `)
+            .eq('category', category)
+            .order('position', { ascending: true });
+          
+          if (error) throw error;
+          
+          const formattedData = data.map(item => ({
+            position: item.position,
+            team_id: item.team_id,
+            team_name: item.teams?.name || 'Time Desconhecido',
+            team_logo: item.teams?.logo || null,
+            points: item.points,
+            played: item.played,
+            won: item.won,
+            drawn: item.drawn,
+            lost: item.lost,
+            goals_for: item.goals_for,
+            goals_against: item.goals_against,
+            goal_difference: item.goal_difference
+          }));
+          
+          setStandings(formattedData);
+        } else {
+          // Caso contrário, usar a função da API
+          const standingsData = await getChampionshipStandings(championshipId, category);
+          setStandings(standingsData);
+        }
       } catch (err) {
         console.error('Error loading standings:', err);
         setError('Não foi possível carregar a classificação.');
