@@ -1,280 +1,127 @@
-
-import { supabase } from '../integrations/supabase/client';
-import type { ChampionshipFull, ChampionshipTeam, ChampionshipMatch, ChampionshipStanding } from '@/types/championship';
-
-// Get championship by ID
-export const getChampionshipById = async (id: string): Promise<ChampionshipFull | null> => {
+export const getChampionshipStandings = async (championshipId: string, category: string) => {
   try {
-    const { data, error } = await supabase
-      .from('championships')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    if (!data) return null;
-    
-    // Parse categories if it's a string, otherwise use as is or default to empty array
-    let parsedCategories;
-    try {
-      parsedCategories = typeof data.categories === 'string' 
-        ? JSON.parse(data.categories) 
-        : data.categories || [];
-    } catch (e) {
-      parsedCategories = [];
-    }
-    
-    // Parse sponsors if it's a string, otherwise use as is or default to empty array
-    let parsedSponsors;
-    try {
-      parsedSponsors = typeof data.sponsors === 'string' 
-        ? JSON.parse(data.sponsors) 
-        : data.sponsors || [];
-    } catch (e) {
-      parsedSponsors = [];
-    }
-    
-    // Ensure status is one of the expected values
-    const validStatus = ['upcoming', 'ongoing', 'finished'];
-    const status = validStatus.includes(data.status) 
-      ? data.status as 'upcoming' | 'ongoing' | 'finished'
-      : 'upcoming';
-      
-    return {
-      id: data.id,
-      name: data.name,
-      year: data.year,
-      description: data.description,
-      banner_image: data.banner_image,
-      start_date: data.start_date,
-      end_date: data.end_date,
-      location: data.location,
-      categories: parsedCategories,
-      organizer: data.organizer,
-      sponsors: parsedSponsors,
-      status: status
-    };
-  } catch (error) {
-    console.error('Error fetching championship:', error);
-    return null;
-  }
-};
+    // Construct the URL with query parameters
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/championships/${championshipId}/standings`;
+    const queryParams = new URLSearchParams();
+    queryParams.append('category', category === 'all' ? 'SUB-11' : category); // Default to SUB-11 if 'all' is selected
 
-// Get teams participating in a championship
-export const getChampionshipTeams = async (championshipId: string, category?: string): Promise<ChampionshipTeam[]> => {
-  try {
-    // For now, we'll return all teams since there's no direct link between championships and teams
-    // In a real implementation, this would be filtered by championships_teams join table
-    let query = supabase
-      .from('teams')
-      .select('*')
-      .order('name');
-    
-    if (category) {
-      query = query.eq('category', category);
+    // Append query parameters to the URL
+    const queryString = queryParams.toString();
+    if (queryString) {
+        url += `?${queryString}`;
     }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    return (data || []).map(team => ({
-      id: team.id,
-      name: team.name,
-      logo: team.logo,
-      category: team.category,
-      group_name: team.group_name
-    }));
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch standings: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Error fetching championship teams:', error);
+    console.error("Error fetching championship standings:", error);
     return [];
   }
 };
 
-// Get matches for a championship
-export const getChampionshipMatches = async (
+export const getChampionshipStatistics = async (
   championshipId: string, 
-  filters?: { status?: string, category?: string }
-): Promise<ChampionshipMatch[]> => {
+  category: string, 
+  type: 'scorers' | 'cards' | 'teams'
+) => {
   try {
-    let query = supabase
-      .from('matches')
-      .select(`
-        id,
-        date,
-        time,
-        location,
-        category,
-        home_team,
-        away_team,
-        home_score,
-        away_score,
-        status,
-        round,
-        championship_id,
-        home_team:home_team(id, name, logo),
-        away_team:away_team(id, name, logo)
-      `)
-      .eq('championship_id', championshipId)
-      .order('date', { ascending: true })
-      .order('time', { ascending: true });
+    // For now, we'll return mock data
+    // In a real implementation, this would fetch from your database
     
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
+    // Mock data for development
+    if (type === 'scorers') {
+      return [
+        {
+          player_id: "p1",
+          player_name: "João Silva",
+          team_name: "Flamengo Sub-15",
+          team_logo: "/placeholder.svg",
+          goals: 7
+        },
+        {
+          player_id: "p2",
+          player_name: "Pedro Oliveira",
+          team_name: "Vasco Sub-15",
+          team_logo: "/placeholder.svg",
+          goals: 5
+        },
+        {
+          player_id: "p3",
+          player_name: "Rafael Santos",
+          team_name: "Fluminense Sub-15",
+          team_logo: "/placeholder.svg",
+          goals: 4
+        }
+      ];
     }
     
-    if (filters?.category) {
-      query = query.eq('category', filters.category);
+    if (type === 'cards') {
+      return [
+        {
+          player_id: "p4",
+          player_name: "Carlos Ferreira",
+          team_name: "Botafogo Sub-15",
+          team_logo: "/placeholder.svg",
+          yellow_cards: 3,
+          red_cards: 1
+        },
+        {
+          player_id: "p5",
+          player_name: "Lucas Mendes",
+          team_name: "Flamengo Sub-15",
+          team_logo: "/placeholder.svg",
+          yellow_cards: 2,
+          red_cards: 0
+        },
+        {
+          player_id: "p6",
+          player_name: "Gabriel Costa",
+          team_name: "Vasco Sub-15",
+          team_logo: "/placeholder.svg",
+          yellow_cards: 2,
+          red_cards: 0
+        }
+      ];
     }
     
-    const { data, error } = await query;
+    if (type === 'teams') {
+      return [
+        {
+          team_id: "t1",
+          team_name: "Flamengo Sub-15",
+          team_logo: "/placeholder.svg",
+          total_goals: 15,
+          matches_played: 5,
+          goals_per_match: 3.0
+        },
+        {
+          team_id: "t2",
+          team_name: "Vasco Sub-15",
+          team_logo: "/placeholder.svg",
+          total_goals: 10,
+          matches_played: 5,
+          goals_per_match: 2.0
+        },
+        {
+          team_id: "t3",
+          team_name: "Fluminense Sub-15",
+          team_logo: "/placeholder.svg",
+          total_goals: 8,
+          matches_played: 5,
+          goals_per_match: 1.6
+        }
+      ];
+    }
     
-    if (error) throw error;
-    
-    return (data || []).map(match => {
-      // Safely access nested data
-      const homeTeam = match.home_team as any;
-      const awayTeam = match.away_team as any;
-      
-      return {
-        id: match.id,
-        date: match.date,
-        time: match.time,
-        location: match.location,
-        category: match.category,
-        home_team: match.home_team,
-        away_team: match.away_team,
-        home_score: match.home_score,
-        away_score: match.away_score,
-        status: match.status,
-        round: match.round,
-        home_team_name: homeTeam ? homeTeam.name : 'Unknown',
-        away_team_name: awayTeam ? awayTeam.name : 'Unknown',
-        home_team_logo: homeTeam ? homeTeam.logo : null,
-        away_team_logo: awayTeam ? awayTeam.logo : null
-      };
-    });
-  } catch (error) {
-    console.error('Error fetching championship matches:', error);
     return [];
-  }
-};
-
-// Get standings for a championship
-export const getChampionshipStandings = async (championshipId: string, category: string, groupName?: string): Promise<ChampionshipStanding[]> => {
-  if (!championshipId || !category) {
-    return [];
-  }
-  
-  try {
-    const { data: standings, error: standingsError } = await supabase
-      .from('standings')
-      .select(`
-        *,
-        team:team_id(id, name, logo)
-      `)
-      .eq('category', category);
-    
-    if (standingsError) throw standingsError;
-    
-    if (!standings || standings.length === 0) {
-      return [];
-    }
-    
-    if (groupName) {
-      return standings
-        .filter(standing => standing.group_name === groupName)
-        .map(standing => ({
-          position: standing.position,
-          team_id: standing.team_id,
-          team_name: standing.team?.name || 'Desconhecido',
-          team_logo: standing.team?.logo || null,
-          points: standing.points,
-          played: standing.played,
-          won: standing.won,
-          drawn: standing.drawn,
-          lost: standing.lost,
-          goals_for: standing.goals_for,
-          goals_against: standing.goals_against,
-          goal_difference: standing.goal_difference
-        }));
-    }
-    
-    return standings.map(standing => ({
-      position: standing.position,
-      team_id: standing.team_id,
-      team_name: standing.team?.name || 'Desconhecido',
-      team_logo: standing.team?.logo || null,
-      points: standing.points,
-      played: standing.played,
-      won: standing.won,
-      drawn: standing.drawn,
-      lost: standing.lost,
-      goals_for: standing.goals_for,
-      goals_against: standing.goals_against,
-      goal_difference: standing.goal_difference
-    }));
   } catch (error) {
-    console.error('Error fetching championship standings:', error);
-    return [];
-  }
-};
-
-// Get top scorers for a championship
-export const getChampionshipTopScorers = async (championshipId: string, category?: string, limit: number = 10): Promise<any[]> => {
-  try {
-    let query = supabase
-      .from('top_scorers')
-      .select(`
-        *,
-        player:player_id(id, name, number, position, photo),
-        team:team_id(id, name, logo)
-      `)
-      .eq('championship_id', championshipId)
-      .order('goals', { ascending: false })
-      .limit(limit);
-    
-    if (category) {
-      query = query.eq('category', category);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching championship top scorers:', error);
-    return [];
-  }
-};
-
-// Get yellow card leaders for a championship
-export const getChampionshipYellowCards = async (championshipId: string, category?: string, limit: number = 10): Promise<any[]> => {
-  try {
-    let query = supabase
-      .from('yellow_card_leaders')
-      .select(`
-        *,
-        player:player_id(id, name, number, position, photo),
-        team:team_id(id, name, logo)
-      `)
-      .eq('championship_id', championshipId)
-      .order('yellow_cards', { ascending: false })
-      .limit(limit);
-    
-    if (category) {
-      query = query.eq('category', category);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching championship yellow cards:', error);
+    console.error(`Error fetching ${type} statistics:`, error);
     return [];
   }
 };

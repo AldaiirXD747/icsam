@@ -10,6 +10,7 @@ import Contact from '@/pages/Contact';
 import Matches from '@/pages/Matches';
 import Statistics from '@/pages/Statistics';
 import Standings from '@/pages/Standings';
+import NotFound from '@/pages/NotFound';
 import ScrollToTop from '@/components/ScrollToTop';
 import { Toaster } from '@/components/ui/toaster';
 import LoadBaseForteData from '@/pages/admin/LoadBaseForteData';
@@ -17,7 +18,14 @@ import UpdateMatchResults from '@/pages/admin/UpdateMatchResults';
 import DatabaseCleanup from '@/pages/admin/DatabaseCleanup';
 
 function App() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -41,8 +49,8 @@ function App() {
           <Route path="/admin/update-match-results" element={<UpdateMatchResults />} />
           <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
           
-          {/* Add more routes as needed */}
-          <Route path="*" element={<div>404 Not Found</div>} />
+          {/* 404 Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
       <Toaster />

@@ -6,6 +6,7 @@ import { BarChart, Users, Trophy, Calendar, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import StatisticsTables from '@/components/StatisticsTables';
 
 const Statistics = () => {
   const [selectedChampionship, setSelectedChampionship] = useState('base-forte-2025');
@@ -39,6 +40,7 @@ const Statistics = () => {
                       <SelectValue placeholder="Selecione um campeonato" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="todos-campeonatos">Todos os campeonatos</SelectItem>
                       <SelectItem value="base-forte-2025">Campeonato Base Forte</SelectItem>
                     </SelectContent>
                   </Select>
@@ -87,16 +89,11 @@ const Statistics = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-500 mb-4">
-                    Esta seção mostrará os artilheiros dos campeonatos. Selecione um campeonato no menu para ver os dados.
-                  </p>
-                  
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <BarChart className="h-16 w-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-400">
-                      Nenhum dado disponível para esta categoria
-                    </h3>
-                  </div>
+                  <StatisticsTables 
+                    championshipId={selectedChampionship} 
+                    category={selectedCategory} 
+                    type="scorers"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -110,16 +107,11 @@ const Statistics = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-500 mb-4">
-                    Esta seção mostrará as estatísticas de cartões dos campeonatos. Selecione um campeonato no menu para ver os dados.
-                  </p>
-                  
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <Calendar className="h-16 w-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-400">
-                      Nenhum dado disponível para esta categoria
-                    </h3>
-                  </div>
+                  <StatisticsTables 
+                    championshipId={selectedChampionship} 
+                    category={selectedCategory} 
+                    type="cards"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -133,16 +125,11 @@ const Statistics = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <p className="text-gray-500 mb-4">
-                    Esta seção mostrará as estatísticas dos times nos campeonatos. Selecione um campeonato no menu para ver os dados.
-                  </p>
-                  
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <Users className="h-16 w-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-400">
-                      Nenhum dado disponível para esta categoria
-                    </h3>
-                  </div>
+                  <StatisticsTables 
+                    championshipId={selectedChampionship} 
+                    category={selectedCategory} 
+                    type="teams"
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
