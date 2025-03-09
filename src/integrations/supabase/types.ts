@@ -784,6 +784,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      get_team_id_by_name: {
+        Args: {
+          team_name: string
+        }
+        Returns: string
+      }
       insert_standing: {
         Args: {
           p_team_id: string
