@@ -29,6 +29,150 @@ export const correctMatchDate = (dateStr: string): string => {
   return dateStr;
 };
 
+/**
+ * Finds duplicate matches and removes them, keeping only the oldest entry
+ */
+export const removeDuplicateMatches = async () => {
+  try {
+    // Get all matches
+    const { data: matches, error: fetchError } = await supabase
+      .from('matches')
+      .select('*')
+      .order('created_at', { ascending: true });
+    
+    if (fetchError) {
+      console.error('Error fetching matches:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+    
+    if (!matches || matches.length === 0) {
+      return { success: true, message: 'No matches found to check for duplicates' };
+    }
+    
+    // Group matches by unique combination of home_team, away_team, category, and date
+    const groupedMatches: Record<string, any[]> = {};
+    
+    matches.forEach(match => {
+      const key = `${match.home_team}-${match.away_team}-${match.category}-${match.date}`;
+      if (!groupedMatches[key]) {
+        groupedMatches[key] = [];
+      }
+      groupedMatches[key].push(match);
+    });
+    
+    // Find groups with more than one match (duplicates)
+    const duplicateGroups = Object.values(groupedMatches).filter(group => group.length > 1);
+    
+    if (duplicateGroups.length === 0) {
+      return { success: true, message: 'No duplicate matches found' };
+    }
+    
+    // For each group with duplicates, keep the oldest record and delete the others
+    let deletedCount = 0;
+    for (const group of duplicateGroups) {
+      // Sort by created_at to ensure we keep the oldest
+      group.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      
+      // Keep the oldest match (first in the sorted array)
+      const keepMatch = group[0];
+      
+      // Delete the newer duplicates
+      for (let i = 1; i < group.length; i++) {
+        const deleteMatch = group[i];
+        const { error: deleteError } = await supabase
+          .from('matches')
+          .delete()
+          .eq('id', deleteMatch.id);
+        
+        if (deleteError) {
+          console.error(`Error deleting duplicate match ${deleteMatch.id}:`, deleteError);
+        } else {
+          deletedCount++;
+        }
+      }
+      
+      // Update the kept match with the correct scores and status
+      // This ensures the original match has the latest information
+      const { error: updateError } = await supabase
+        .from('matches')
+        .update({
+          home_score: group[group.length - 1].home_score,
+          away_score: group[group.length - 1].away_score,
+          status: 'completed',
+          round: group[group.length - 1].round
+        })
+        .eq('id', keepMatch.id);
+      
+      if (updateError) {
+        console.error(`Error updating kept match ${keepMatch.id}:`, updateError);
+      }
+    }
+    
+    // Trigger standings recalculation
+    const { error: recalcError } = await supabase.rpc('recalculate_standings');
+    if (recalcError) {
+      console.error('Error recalculating standings:', recalcError);
+      return { 
+        success: true, 
+        message: `Removed ${deletedCount} duplicate matches, but standings recalculation failed: ${recalcError.message}` 
+      };
+    }
+    
+    return { 
+      success: true, 
+      message: `Successfully removed ${deletedCount} duplicate matches and recalculated standings` 
+    };
+  } catch (error) {
+    console.error('Unexpected error removing duplicate matches:', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
+
+/**
+ * Updates match dates according to correction rules
+ */
+export const updateMatchDates = async () => {
+  try {
+    // First, get all matches with the old dates
+    const { data: matches, error: fetchError } = await supabase
+      .from('matches')
+      .select('id, date');
+    
+    if (fetchError) {
+      console.error('Error fetching matches:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+    
+    if (!matches || matches.length === 0) {
+      return { success: true, message: 'No matches found to update dates' };
+    }
+    
+    const updatePromises = matches.map(match => {
+      const correctedDate = correctMatchDate(match.date);
+      
+      if (correctedDate !== match.date) {
+        return supabase
+          .from('matches')
+          .update({ date: correctedDate })
+          .eq('id', match.id);
+      }
+      
+      // Return a resolved promise if no update is needed
+      return Promise.resolve({ data: null, error: null });
+    });
+    
+    await Promise.all(updatePromises);
+    
+    return { 
+      success: true, 
+      message: `Updated match dates according to correction rules` 
+    };
+  } catch (error) {
+    console.error('Error updating match dates:', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
+
 export const addMatch = async (matchData: MatchData) => {
   try {
     // Apply date correction

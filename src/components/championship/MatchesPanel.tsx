@@ -30,8 +30,22 @@ const MatchesPanel: React.FC<MatchesPanelProps> = ({ matches, isLoading, selecte
   // Group matches by date
   const groupedMatches: Record<string, ChampionshipMatch[]> = {};
   
+  // Create a Set to track unique matches to avoid duplicates
+  const uniqueMatchKeys = new Set<string>();
+  
   filteredMatches.forEach(match => {
-    // Use the date as is for grouping
+    // Create a unique key for this match
+    const matchKey = `${match.home_team}-${match.away_team}-${match.category}-${match.date}`;
+    
+    // Skip if we've already processed this match (prevents duplicates)
+    if (uniqueMatchKeys.has(matchKey)) {
+      return;
+    }
+    
+    // Mark this match as processed
+    uniqueMatchKeys.add(matchKey);
+    
+    // Use the date for grouping
     const matchDate = match.date;
     
     if (!groupedMatches[matchDate]) {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -55,6 +54,7 @@ const queryClient = new QueryClient({
 
 import AddMatchDataPage from './pages/admin/AddMatchDataPage';
 import BatchPlayerRegistrationPage from './pages/admin/BatchPlayerRegistrationPage';
+import DatabaseCleanup from './pages/admin/DatabaseCleanup';
 
 function App() {
   return (
@@ -122,6 +122,7 @@ function App() {
                 <Route path="/admin/sync" element={<ProtectedAdminDashboard />} />
                 <Route path="/admin/add-match-data" element={<AddMatchDataPage />} />
                 <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPage />} />
+                <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
 
                 {/* Redirects */}
                 <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
