@@ -21,7 +21,7 @@ const MatchesPanel: React.FC<MatchesPanelProps> = ({ matches, isLoading, selecte
     }
     
     if (activeTab === 'upcoming') {
-      return ['scheduled', 'confirmed'].includes(match.status);
+      return ['scheduled', 'confirmed', 'in_progress'].includes(match.status);
     } else {
       return ['completed', 'finalizado', 'encerrado'].includes(match.status);
     }
@@ -153,7 +153,7 @@ const MatchesPanel: React.FC<MatchesPanelProps> = ({ matches, isLoading, selecte
                           <span className="font-medium">{match.home_team_name || 'Time A'}</span>
                         </div>
                         
-                        {activeTab === 'completed' ? (
+                        {activeTab === 'completed' || match.status === 'completed' || match.status === 'finalizado' || match.status === 'encerrado' ? (
                           <div className="mx-4 px-3 py-1 bg-gray-100 rounded-md flex items-center justify-center">
                             <span className="font-bold text-lg text-[#1a237e]">{match.home_score || 0}</span>
                             <span className="text-gray-400 mx-1">-</span>

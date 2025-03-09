@@ -53,8 +53,8 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const showScore = status === 'live' || status === 'finished';
 
   return (
-    <div className="glass-card overflow-hidden transition-all duration-300 hover:shadow-md">
-      <div className="bg-blue-primary text-white px-4 py-2 flex justify-between items-center">
+    <div className={`glass-card overflow-hidden transition-all duration-300 hover:shadow-md ${status === 'finished' ? 'bg-gray-50' : ''}`}>
+      <div className={`px-4 py-2 flex justify-between items-center ${status === 'finished' ? 'bg-blue-800 text-white' : 'bg-blue-primary text-white'}`}>
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium">{category}</span>
           {group && (
