@@ -1,11 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
-import { getChampionshipStandings } from '@/lib/championshipApi';
-import { ChampionshipStanding } from '@/types/championship';
-import { AlertCircle, Loader2, Trophy } from 'lucide-react';
+import { Loader2, Trophy, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ChampionshipStanding } from '@/types/championship';
 
 export interface StandingsTableProps {
   championshipId: string;
@@ -23,52 +21,52 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
         setLoading(true);
         setError(null);
         
-        if (!championshipId) {
+        if (!category || category === 'all') {
           setStandings([]);
+          setLoading(false);
           return;
         }
         
-        // Buscar diretamente do Supabase se a categoria for especificada
-        if (category !== 'all') {
-          console.log(`Buscando classificação para categoria: ${category}`);
-          
-          const { data, error } = await supabase
-            .from('standings')
-            .select(`
-              *,
-              teams:team_id (
-                name,
-                logo
-              )
-            `)
-            .eq('category', category)
-            .order('position', { ascending: true });
-          
-          if (error) throw error;
-          
-          console.log(`Dados retornados do Supabase: ${data?.length || 0} registros`);
-          
-          const formattedData = data.map(item => ({
-            position: item.position,
-            team_id: item.team_id,
-            team_name: item.teams?.name || 'Time Desconhecido',
-            team_logo: item.teams?.logo || null,
-            points: item.points,
-            played: item.played,
-            won: item.won,
-            drawn: item.drawn,
-            lost: item.lost,
-            goals_for: item.goals_for,
-            goals_against: item.goals_against,
-            goal_difference: item.goal_difference
-          }));
-          
-          setStandings(formattedData);
-        } else {
-          // Caso contrário, usar a função da API
-          const standingsData = await getChampionshipStandings(championshipId, category);
-          setStandings(standingsData);
+        // Log the query parameters for debugging
+        console.log(`Fetching standings for category: ${category}`);
+        
+        // Get teams with standings directly from Supabase
+        const { data, error } = await supabase
+          .from('standings')
+          .select(`
+            *,
+            teams:team_id (
+              name,
+              logo
+            )
+          `)
+          .eq('category', category)
+          .order('position', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching standings:', error);
+          throw error;
         }
+        
+        console.log(`Retrieved ${data?.length || 0} standings records`);
+        
+        // Format data for display
+        const formattedData = data.map(item => ({
+          position: item.position,
+          team_id: item.team_id,
+          team_name: item.teams?.name || 'Time Desconhecido',
+          team_logo: item.teams?.logo || null,
+          points: item.points,
+          played: item.played,
+          won: item.won,
+          drawn: item.drawn,
+          lost: item.lost,
+          goals_for: item.goals_for,
+          goals_against: item.goals_against,
+          goal_difference: item.goal_difference
+        }));
+        
+        setStandings(formattedData);
       } catch (err) {
         console.error('Error loading standings:', err);
         setError('Não foi possível carregar a classificação.');
@@ -102,7 +100,11 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
     return (
       <div className="text-center py-8">
         <Trophy className="h-8 w-8 mx-auto text-gray-300 mb-2" />
-        <p className="text-gray-500">Nenhuma classificação disponível para esta categoria.</p>
+        <p className="text-gray-500">
+          {category === 'all' 
+            ? 'Selecione uma categoria para visualizar a classificação.' 
+            : 'Nenhuma classificação disponível para esta categoria.'}
+        </p>
       </div>
     );
   }

@@ -75,7 +75,7 @@ const LoadBaseForteData = () => {
           description: "Resultados do Campeonato Base Forte 2024 atualizados com sucesso.",
         });
         
-        setResults(result.results);
+        setResults(result.updates.map(update => update.message));
       } else {
         toast({
           variant: "destructive",
@@ -83,7 +83,7 @@ const LoadBaseForteData = () => {
           description: result.error || "Ocorreu um erro durante a atualização dos resultados.",
         });
         
-        setResults(result.results);
+        setResults(result.updates.map(update => update.message));
       }
     } catch (error) {
       console.error('Erro inesperado:', error);

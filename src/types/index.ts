@@ -1,5 +1,4 @@
 
-// Add or update this interface in your types file
 export interface Match {
   id: string;
   date: string;
@@ -48,12 +47,23 @@ export interface Team {
   category?: string;
   group_name?: string;
   active?: boolean;
+  
+  // Adding properties to solve errors in TeamDetailView and TeamManagement
+  email?: string;
+  phone?: string;
+  websiteUrl?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  foundationDate?: string;
 }
 
 export interface User {
   id: string;
   email: string;
   teamId?: string;
+  name?: string;
 }
 
 export interface Championship {
@@ -70,3 +80,60 @@ export interface Championship {
   sponsors: string[];
   status: 'upcoming' | 'ongoing' | 'finished';
 }
+
+// Add types that are used in admin components
+export type MatchStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'postponed';
+
+export interface AdminMatch extends Match {
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+  championship?: Championship;
+}
+
+export interface TopScorer {
+  id: string;
+  player_id: string;
+  team_id: string;
+  goals: number;
+  category: string;
+  championship_id?: string;
+  player_name?: string;
+  team_name?: string;
+  team_logo?: string;
+}
+
+export interface YellowCardLeader {
+  id: string;
+  player_id: string;
+  team_id: string;
+  yellow_cards: number;
+  category: string;
+  championship_id?: string;
+  player_name?: string;
+  team_name?: string;
+  team_logo?: string;
+}
+
+export interface GalleryImage {
+  id: string;
+  title: string;
+  description?: string;
+  image_url: string;
+  championship_id?: string;
+  featured?: boolean;
+  created_at?: string;
+}
+
+export interface TransparencyDocument {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  file_url: string;
+  icon_type: string;
+  published_date: string;
+  created_at?: string;
+}
+

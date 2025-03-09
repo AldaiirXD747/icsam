@@ -36,13 +36,17 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/teams" element={<Teams />} />
+          <Route path="/times" element={<Teams />} />
           <Route path="/championships" element={<Championships />} />
+          <Route path="/campeonatos" element={<Championships />} />
           <Route path="/championships/:id" element={<Championship />} />
+          <Route path="/campeonatos/:id" element={<Championship />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/contato" element={<Contact />} />
           <Route path="/partidas" element={<Matches />} />
           <Route path="/jogos" element={<Matches />} />
           <Route path="/estatisticas" element={<Statistics />} />
-          <Route path="/estatisticas/base-forte-2025" element={<Statistics />} />
+          <Route path="/estatisticas/base-forte-2024" element={<Statistics />} />
           <Route path="/classificacao" element={<Standings />} />
           
           {/* Admin Routes */}
