@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Calendar, Search, Filter, MapPin } from 'lucide-react';
@@ -33,7 +32,6 @@ const Matches = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Animation variants
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -55,14 +53,12 @@ const Matches = () => {
       try {
         setLoading(true);
         
-        // Primeiro, vamos buscar todos os times para ter acesso aos logos
         const { data: teamsData, error: teamsError } = await supabase
           .from('teams')
           .select('id, name, logo');
         
         if (teamsError) throw teamsError;
         
-        // Criar um mapa de ID do time para seu logo
         const logoMap: {[key: string]: string} = {};
         teamsData?.forEach(team => {
           logoMap[team.id] = team.logo || '/placeholder.svg';
@@ -70,7 +66,6 @@ const Matches = () => {
         
         setTeamLogos(logoMap);
         
-        // Agora buscar as partidas
         const { data, error } = await supabase
           .from('matches')
           .select(`
@@ -82,11 +77,9 @@ const Matches = () => {
         
         if (error) throw error;
         
-        // Convert database matches to application Match type
         const formattedMatches = data?.map(match => {
           const appMatch = convertDbMatchToMatch(match);
           
-          // Add team names if available
           if (match.home_team_details) {
             appMatch.home_team_name = match.home_team_details.name;
             appMatch.homeTeamName = match.home_team_details.name;
@@ -112,14 +105,12 @@ const Matches = () => {
     fetchMatches();
   }, []);
 
-  // Função para mapear o status para o tipo esperado pelo MatchCard
   const mapStatus = (status: string): 'scheduled' | 'live' | 'finished' => {
     if (status === 'in_progress') return 'live';
     if (status === 'completed') return 'finished';
     return 'scheduled';
   };
 
-  // Função para agrupar partidas por data
   const groupMatchesByDate = (matches: Match[]) => {
     const groups: {[key: string]: Match[]} = {};
     
@@ -134,7 +125,6 @@ const Matches = () => {
     return groups;
   };
 
-  // Filtrar partidas
   const filteredMatches = matches.filter(match => {
     const matchesSearch = 
       match.home_team_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,10 +138,8 @@ const Matches = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
   
-  // Agrupar partidas filtradas por data
   const groupedMatches = groupMatchesByDate(filteredMatches);
   
-  // Obter datas únicas e ordenadas
   const sortedDates = Object.keys(groupedMatches).sort((a, b) => {
     const dateA = new Date(a.split('/').reverse().join('-'));
     const dateB = new Date(b.split('/').reverse().join('-'));
@@ -325,7 +313,6 @@ const Matches = () => {
   );
 };
 
-// Componente para os filtros em formato de pílula
 const Pill = ({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) => (
   <button
     className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 ${
