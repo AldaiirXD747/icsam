@@ -9,7 +9,7 @@ export const getChampionshipById = async (id: string): Promise<ChampionshipFull 
       .from('championships')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     
@@ -163,6 +163,10 @@ export const getChampionshipMatches = async (
 
 // Get standings for a championship
 export const getChampionshipStandings = async (championshipId: string, category: string, groupName?: string): Promise<ChampionshipStanding[]> => {
+  if (!championshipId || !category) {
+    return [];
+  }
+  
   try {
     const { data: standings, error: standingsError } = await supabase
       .from('standings')
@@ -170,10 +174,13 @@ export const getChampionshipStandings = async (championshipId: string, category:
         *,
         team:team_id(id, name, logo)
       `)
-      .eq('category', category)
-      .order('position', { ascending: true });
+      .eq('category', category);
     
     if (standingsError) throw standingsError;
+    
+    if (!standings || standings.length === 0) {
+      return [];
+    }
     
     if (groupName) {
       return standings

@@ -22,6 +22,11 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
         setLoading(true);
         setError(null);
         
+        if (!championshipId) {
+          setStandings([]);
+          return;
+        }
+        
         // Use the category parameter to fetch the standings
         const standingsData = await getChampionshipStandings(championshipId, category === 'all' ? 'SUB-11' : category);
         setStandings(standingsData);
@@ -33,9 +38,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
       }
     };
 
-    if (championshipId) {
-      loadStandings();
-    }
+    loadStandings();
   }, [championshipId, category]);
 
   if (loading) {
@@ -92,6 +95,10 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
                     src={standing.team_logo}
                     alt={standing.team_name}
                     className="h-6 w-6 mr-2 object-contain"
+                    onError={(e) => {
+                      // If image fails to load, use a default placeholder
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    }}
                   />
                 )}
                 <span>{standing.team_name}</span>

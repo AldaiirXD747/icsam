@@ -40,7 +40,7 @@ const Standings = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Todos os campeonatos</SelectItem>
-                      <SelectItem value="base-forte-2025">Campeonato Base Forte 2025</SelectItem>
+                      <SelectItem value="base-forte-2025">Campeonato Base Forte</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -57,6 +57,8 @@ const Standings = () => {
                       <SelectItem value="all">Todas as categorias</SelectItem>
                       <SelectItem value="SUB-11">SUB-11</SelectItem>
                       <SelectItem value="SUB-13">SUB-13</SelectItem>
+                      <SelectItem value="SUB-15">SUB-15</SelectItem>
+                      <SelectItem value="SUB-17">SUB-17</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
