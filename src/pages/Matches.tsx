@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Calendar, Search, Filter, MapPin } from 'lucide-react';
 import { Match } from '@/types';
-import { convertDbMatchToMatch } from '@/utils/typeConverters';
 import Navbar from '@/components/Navbar';
 import MatchCard from '@/components/MatchCard';
 import Footer from '@/components/Footer';
@@ -16,12 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -80,27 +74,32 @@ const Matches = () => {
         console.log("Partidas carregadas:", data?.length || 0);
         
         if (data && data.length > 0) {
-          const formattedMatches = data.map(match => {
-            return {
-              id: match.id,
-              date: match.date,
-              time: match.time,
-              home_team: match.home_team,
-              away_team: match.away_team,
-              home_score: match.home_score,
-              away_score: match.away_score,
-              status: match.status,
-              category: match.category,
-              location: match.location,
-              round: match.round,
-              home_team_name: match.home_team_details?.name || 'Time da Casa',
-              away_team_name: match.away_team_details?.name || 'Time Visitante',
-              homeTeamName: match.home_team_details?.name || 'Time da Casa',
-              awayTeamName: match.away_team_details?.name || 'Time Visitante',
-              homeTeamLogo: match.home_team_details?.logo || '',
-              awayTeamLogo: match.away_team_details?.logo || ''
-            };
-          });
+          // Correctly convert to Match type including all required properties
+          const formattedMatches: Match[] = data.map(match => ({
+            id: match.id,
+            date: match.date,
+            time: match.time,
+            home_team: match.home_team,
+            away_team: match.away_team,
+            home_score: match.home_score,
+            away_score: match.away_score,
+            status: match.status,
+            category: match.category,
+            location: match.location,
+            round: match.round,
+            championship_id: match.championship_id || null,
+            // Additional properties for display
+            home_team_name: match.home_team_details?.name || 'Time da Casa',
+            away_team_name: match.away_team_details?.name || 'Time Visitante',
+            homeTeam: {
+              name: match.home_team_details?.name || 'Time da Casa',
+              logo: match.home_team_details?.logo || ''
+            },
+            awayTeam: {
+              name: match.away_team_details?.name || 'Time Visitante',
+              logo: match.away_team_details?.logo || ''
+            }
+          }));
           
           setMatches(formattedMatches);
         } else {
@@ -289,13 +288,13 @@ const Matches = () => {
                         <MatchCard
                           id={Number(match.id)}
                           homeTeam={{
-                            name: match.home_team_name || 'Time da Casa',
-                            logo: match.homeTeamLogo || teamLogos[match.home_team] || '/placeholder.svg',
+                            name: match.homeTeam?.name || 'Time da Casa',
+                            logo: match.homeTeam?.logo || teamLogos[match.home_team] || '/placeholder.svg',
                             score: match.home_score
                           }}
                           awayTeam={{
-                            name: match.away_team_name || 'Time Visitante',
-                            logo: match.awayTeamLogo || teamLogos[match.away_team] || '/placeholder.svg',
+                            name: match.awayTeam?.name || 'Time Visitante',
+                            logo: match.awayTeam?.logo || teamLogos[match.away_team] || '/placeholder.svg',
                             score: match.away_score
                           }}
                           category={match.category}

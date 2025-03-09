@@ -30,6 +30,8 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
         
         // Buscar diretamente do Supabase se a categoria for especificada
         if (category !== 'all') {
+          console.log(`Buscando classificação para categoria: ${category}`);
+          
           const { data, error } = await supabase
             .from('standings')
             .select(`
@@ -43,6 +45,8 @@ const StandingsTable: React.FC<StandingsTableProps> = ({ championshipId, categor
             .order('position', { ascending: true });
           
           if (error) throw error;
+          
+          console.log(`Dados retornados do Supabase: ${data?.length || 0} registros`);
           
           const formattedData = data.map(item => ({
             position: item.position,
