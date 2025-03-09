@@ -64,8 +64,8 @@ const Matches = () => {
           .from('matches')
           .select(`
             *,
-            home_team_details:teams!home_team(id, name, logo),
-            away_team_details:teams!away_team(id, name, logo)
+            home_team_details:teams!matches_home_team_fkey(id, name, logo),
+            away_team_details:teams!matches_away_team_fkey(id, name, logo)
           `)
           .order('date', { ascending: true });
         

@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 
 interface MatchResult {
   date: string;
@@ -9,154 +8,165 @@ interface MatchResult {
   category: string;
   homeScore: number;
   awayScore: number;
+  round?: string;
+  status?: string;
 }
 
 export const updateMatchResults = async (results: MatchResult[]) => {
-  const updates: {success: boolean, message: string}[] = [];
-  
+  const updates: { success: boolean; message: string }[] = [];
+  let hasErrors = false;
+
   try {
+    // First, get all teams to map names to IDs
+    const { data: teams, error: teamsError } = await supabase
+      .from('teams')
+      .select('id, name, category');
+    
+    if (teamsError) {
+      console.error('Error fetching teams:', teamsError);
+      return { 
+        success: false, 
+        error: teamsError.message, 
+        updates: [{ success: false, message: `Erro ao buscar times: ${teamsError.message}` }] 
+      };
+    }
+    
+    // Group teams by name and category
+    const teamMap: Record<string, Record<string, string>> = {};
+    
+    teams?.forEach(team => {
+      if (!teamMap[team.name.toUpperCase()]) {
+        teamMap[team.name.toUpperCase()] = {};
+      }
+      teamMap[team.name.toUpperCase()][team.category] = team.id;
+    });
+    
+    // Process each match result
     for (const result of results) {
-      // Step 1: Get team IDs from team names
-      const homeTeamResponse = await supabase
-        .from('teams')
-        .select('id')
-        .eq('name', result.homeTeamName)
-        .single();
-      
-      if (homeTeamResponse.error) {
-        updates.push({ 
-          success: false, 
-          message: `Erro ao buscar time da casa ${result.homeTeamName}: ${homeTeamResponse.error.message}` 
-        });
-        continue;
-      }
-      
-      const awayTeamResponse = await supabase
-        .from('teams')
-        .select('id')
-        .eq('name', result.awayTeamName)
-        .single();
-      
-      if (awayTeamResponse.error) {
-        updates.push({ 
-          success: false, 
-          message: `Erro ao buscar time visitante ${result.awayTeamName}: ${awayTeamResponse.error.message}` 
-        });
-        continue;
-      }
-      
-      const homeTeamId = homeTeamResponse.data.id;
-      const awayTeamId = awayTeamResponse.data.id;
-      
-      // Step 2: Find the match
-      const matchResponse = await supabase
-        .from('matches')
-        .select('id, status')
-        .eq('date', result.date)
-        .eq('home_team', homeTeamId)
-        .eq('away_team', awayTeamId)
-        .eq('category', result.category);
-      
-      if (matchResponse.error) {
-        updates.push({ 
-          success: false, 
-          message: `Erro ao buscar partida: ${matchResponse.error.message}` 
-        });
-        continue;
-      }
-      
-      if (matchResponse.data.length === 0) {
-        updates.push({ 
-          success: false, 
-          message: `Partida não encontrada: ${result.homeTeamName} vs ${result.awayTeamName} em ${result.date} (${result.category})` 
-        });
-        continue;
-      }
-      
-      // Step 3: Update the match result
-      const match = matchResponse.data[0];
-      const updateResponse = await supabase
-        .from('matches')
-        .update({
-          home_score: result.homeScore,
-          away_score: result.awayScore,
-          status: 'completed'
-        })
-        .eq('id', match.id);
-      
-      if (updateResponse.error) {
-        updates.push({ 
-          success: false, 
-          message: `Erro ao atualizar partida ${result.homeTeamName} vs ${result.awayTeamName}: ${updateResponse.error.message}` 
-        });
-      } else {
-        updates.push({ 
-          success: true, 
-          message: `Atualizado: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName} (${result.category})` 
-        });
+      try {
+        const homeTeamName = result.homeTeamName.toUpperCase();
+        const awayTeamName = result.awayTeamName.toUpperCase();
+        
+        // Check if teams exist in the database
+        if (!teamMap[homeTeamName] || !teamMap[homeTeamName][result.category]) {
+          const message = `Time ${result.homeTeamName} não encontrado para categoria ${result.category}`;
+          console.error(message);
+          updates.push({ success: false, message });
+          hasErrors = true;
+          continue;
+        }
+        
+        if (!teamMap[awayTeamName] || !teamMap[awayTeamName][result.category]) {
+          const message = `Time ${result.awayTeamName} não encontrado para categoria ${result.category}`;
+          console.error(message);
+          updates.push({ success: false, message });
+          hasErrors = true;
+          continue;
+        }
+        
+        const homeTeamId = teamMap[homeTeamName][result.category];
+        const awayTeamId = teamMap[awayTeamName][result.category];
+        
+        // Check if match already exists
+        const { data: existingMatch, error: checkError } = await supabase
+          .from('matches')
+          .select('id')
+          .eq('home_team', homeTeamId)
+          .eq('away_team', awayTeamId)
+          .eq('category', result.category)
+          .eq('date', result.date);
+        
+        if (checkError) {
+          console.error('Error checking for existing match:', checkError);
+          updates.push({ success: false, message: `Erro ao verificar partida: ${checkError.message}` });
+          hasErrors = true;
+          continue;
+        }
+        
+        // Update or insert match
+        if (existingMatch && existingMatch.length > 0) {
+          // Update existing match
+          const { error: updateError } = await supabase
+            .from('matches')
+            .update({
+              home_score: result.homeScore,
+              away_score: result.awayScore,
+              status: result.status || (result.homeScore !== null ? 'completed' : 'scheduled'),
+              round: result.round || null
+            })
+            .eq('id', existingMatch[0].id);
+          
+          if (updateError) {
+            console.error('Error updating match:', updateError);
+            updates.push({ success: false, message: `Erro ao atualizar partida: ${updateError.message}` });
+            hasErrors = true;
+          } else {
+            updates.push({ 
+              success: true, 
+              message: `Placar atualizado: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName}` 
+            });
+          }
+        } else {
+          // Insert new match
+          const { error: insertError } = await supabase
+            .from('matches')
+            .insert({
+              date: result.date,
+              time: '14:00',  // Default time if not provided
+              location: 'São Paulo',  // Default location if not provided
+              category: result.category,
+              home_team: homeTeamId,
+              away_team: awayTeamId,
+              home_score: result.homeScore,
+              away_score: result.awayScore,
+              status: result.status || (result.homeScore !== null ? 'completed' : 'scheduled'),
+              round: result.round || null
+            });
+          
+          if (insertError) {
+            console.error('Error inserting match:', insertError);
+            updates.push({ success: false, message: `Erro ao inserir partida: ${insertError.message}` });
+            hasErrors = true;
+          } else {
+            updates.push({ 
+              success: true, 
+              message: `Partida inserida: ${result.homeTeamName} ${result.homeScore} x ${result.awayScore} ${result.awayTeamName}` 
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error processing match:', error);
+        updates.push({ success: false, message: `Erro inesperado: ${error instanceof Error ? error.message : 'Desconhecido'}` });
+        hasErrors = true;
       }
     }
     
-    // Trigger standings recalculation
-    const { error: recalcError } = await supabase.rpc('recalculate_standings');
-    if (recalcError) {
-      updates.push({ 
-        success: false, 
-        message: `Erro ao recalcular classificação: ${recalcError.message}` 
-      });
-    } else {
-      updates.push({ 
-        success: true, 
-        message: `Classificação recalculada com sucesso` 
-      });
+    // Recalculate standings
+    try {
+      const { error: recalcError } = await supabase.rpc('recalculate_standings');
+      if (recalcError) {
+        console.error('Error recalculating standings:', recalcError);
+        updates.push({ success: false, message: `Erro ao recalcular classificações: ${recalcError.message}` });
+        hasErrors = true;
+      } else {
+        updates.push({ success: true, message: 'Classificações recalculadas com sucesso' });
+      }
+    } catch (error) {
+      console.error('Error calling recalculate_standings:', error);
+      updates.push({ success: false, message: `Erro ao recalcular classificações: ${error instanceof Error ? error.message : 'Desconhecido'}` });
+      hasErrors = true;
     }
     
     return {
-      success: updates.every(update => update.success),
-      updates
+      success: !hasErrors,
+      updates: updates
     };
   } catch (error) {
-    console.error('Erro inesperado:', error);
+    console.error('Unexpected error in updateMatchResults:', error);
     return {
       success: false,
-      updates: [...updates, { success: false, message: `Erro inesperado: ${error.message || 'Desconhecido'}` }]
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+      updates: [{ success: false, message: `Erro inesperado: ${error instanceof Error ? error.message : 'Desconhecido'}` }]
     };
   }
-};
-
-// Function to update results based on the provided list
-export const updateBaseForteMatchResults = async () => {
-  // February 22, 2024 matches
-  const feb22Matches: MatchResult[] = [
-    { date: '2024-02-22', homeTeamName: 'Lyon', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 0, awayScore: 0 },
-    { date: '2024-02-22', homeTeamName: 'Lyon', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 3, awayScore: 1 },
-    { date: '2024-02-22', homeTeamName: 'Atlético City', awayTeamName: 'Guerreiros', category: 'SUB-13', homeScore: 7, awayScore: 0 },
-    { date: '2024-02-22', homeTeamName: 'Atlético City', awayTeamName: 'Guerreiros', category: 'SUB-11', homeScore: 2, awayScore: 0 },
-    { date: '2024-02-23', homeTeamName: 'Federal', awayTeamName: 'Estrela Vermelha', category: 'SUB-13', homeScore: 5, awayScore: 1 },
-    { date: '2024-02-23', homeTeamName: 'Federal', awayTeamName: 'Estrela Vermelha', category: 'SUB-11', homeScore: 2, awayScore: 0 },
-    { date: '2024-02-23', homeTeamName: 'Alvinegro', awayTeamName: 'Furacão', category: 'SUB-11', homeScore: 0, awayScore: 8 },
-    { date: '2024-02-23', homeTeamName: 'Alvinegro', awayTeamName: 'Furacão', category: 'SUB-13', homeScore: 0, awayScore: 9 }
-  ];
-  
-  // March 8, 2024 matches
-  const mar8Matches: MatchResult[] = [
-    { date: '2024-03-08', homeTeamName: 'Lyon', awayTeamName: 'Guerreiros', category: 'SUB-13', homeScore: 5, awayScore: 0 },
-    { date: '2024-03-08', homeTeamName: 'Lyon', awayTeamName: 'Guerreiros', category: 'SUB-11', homeScore: 1, awayScore: 2 },
-    { date: '2024-03-08', homeTeamName: 'Monte', awayTeamName: 'BSA', category: 'SUB-11', homeScore: 4, awayScore: 1 },
-    { date: '2024-03-08', homeTeamName: 'Monte', awayTeamName: 'BSA', category: 'SUB-13', homeScore: 1, awayScore: 0 },
-    { date: '2024-03-08', homeTeamName: 'Furacão', awayTeamName: 'Estrela Vermelha', category: 'SUB-11', homeScore: 12, awayScore: 0 },
-    { date: '2024-03-08', homeTeamName: 'Furacão', awayTeamName: 'Estrela Vermelha', category: 'SUB-13', homeScore: 3, awayScore: 1 },
-    { date: '2024-03-08', homeTeamName: 'Alvinegro', awayTeamName: 'Grêmio Ocidental', category: 'SUB-13', homeScore: 0, awayScore: 4 },
-    { date: '2024-03-08', homeTeamName: 'Alvinegro', awayTeamName: 'Grêmio Ocidental', category: 'SUB-11', homeScore: 1, awayScore: 4 }
-  ];
-  
-  // Update both sets of matches
-  const feb22Results = await updateMatchResults(feb22Matches);
-  const mar8Results = await updateMatchResults(mar8Matches);
-  
-  // Combine the results
-  return {
-    success: feb22Results.success && mar8Results.success,
-    updates: [...feb22Results.updates, ...mar8Results.updates]
-  };
 };

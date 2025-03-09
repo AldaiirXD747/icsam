@@ -1,4 +1,3 @@
-
 export interface Match {
   id: string;
   date: string;
@@ -136,4 +135,3 @@ export interface TransparencyDocument {
   published_date: string;
   created_at?: string;
 }
-
