@@ -10,7 +10,7 @@ import { PlusCircle, Pencil, Trash2, Calendar } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
 import { Match, MatchStatus, AdminMatch } from '@/types';
-import { convertDbMatchToAdminMatch, convertMatchToDbMatch } from '@/utils/typeConverters';
+import { convertToAdminMatch, convertMatchToDbMatch } from '@/utils/typeConverters';
 
 type MatchFormData = {
   date: string;
@@ -74,11 +74,11 @@ const MatchManagement = () => {
       if (error) throw error;
 
       const transformedData = data.map(match => 
-        convertDbMatchToAdminMatch(
-          match, 
-          match.home_team_details?.name || '', 
-          match.away_team_details?.name || ''
-        )
+        convertToAdminMatch({
+          ...match,
+          homeTeamName: match.home_team_details?.name || '',
+          awayTeamName: match.away_team_details?.name || ''
+        })
       );
 
       setMatches(transformedData);
@@ -152,12 +152,18 @@ const MatchManagement = () => {
         awayTeam: formData.awayTeam,
         homeScore: formData.homeScore,
         awayScore: formData.awayScore,
-        status: formData.status,
+        status: formData.status as MatchStatus,
         category: formData.category,
         round: formData.round,
         championshipId: formData.championshipId,
         homeTeamName: teams.find(t => t.id === formData.homeTeam)?.name || '',
         awayTeamName: teams.find(t => t.id === formData.awayTeam)?.name || '',
+        
+        home_team: formData.homeTeam,
+        away_team: formData.awayTeam,
+        home_score: formData.homeScore,
+        away_score: formData.awayScore,
+        championship_id: formData.championshipId,
       };
       
       const matchData = convertMatchToDbMatch(adminMatch);
@@ -181,11 +187,11 @@ const MatchManagement = () => {
         throw new Error('No data returned after inserting match');
       }
 
-      const newMatch = convertDbMatchToAdminMatch(
-        data[0],
-        data[0].home_team_details?.name || '',
-        data[0].away_team_details?.name || ''
-      );
+      const newMatch = convertToAdminMatch({
+        ...data[0],
+        homeTeamName: data[0].home_team_details?.name || '',
+        awayTeamName: data[0].away_team_details?.name || ''
+      });
 
       setMatches([newMatch, ...matches]);
 
@@ -219,7 +225,30 @@ const MatchManagement = () => {
     if (!selectedMatch || !validateForm()) return;
 
     try {
-      const matchData = convertMatchToDbMatch(formData as AdminMatch);
+      const updatedMatch: AdminMatch = {
+        ...selectedMatch,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        home_team: formData.homeTeam,
+        away_team: formData.awayTeam,
+        home_score: formData.homeScore,
+        away_score: formData.awayScore,
+        status: formData.status as MatchStatus,
+        category: formData.category,
+        round: formData.round,
+        championship_id: formData.championshipId,
+        
+        homeTeam: formData.homeTeam,
+        awayTeam: formData.awayTeam,
+        homeScore: formData.homeScore,
+        awayScore: formData.awayScore,
+        championshipId: formData.championshipId,
+        homeTeamName: teams.find(t => t.id === formData.homeTeam)?.name || '',
+        awayTeamName: teams.find(t => t.id === formData.awayTeam)?.name || '',
+      };
+      
+      const matchData = convertMatchToDbMatch(updatedMatch);
 
       const { data, error } = await supabase
         .from('matches')
@@ -233,14 +262,14 @@ const MatchManagement = () => {
 
       if (error) throw error;
 
-      const updatedMatch = convertDbMatchToAdminMatch(
-        data[0],
-        data[0].home_team_details?.name || '',
-        data[0].away_team_details?.name || ''
-      );
+      const updatedAdminMatch = convertToAdminMatch({
+        ...data[0],
+        homeTeamName: data[0].home_team_details?.name || '',
+        awayTeamName: data[0].away_team_details?.name || ''
+      });
 
       setMatches(matches.map(m => 
-        m.id === selectedMatch.id ? updatedMatch : m
+        m.id === selectedMatch.id ? updatedAdminMatch : m
       ));
 
       toast({
@@ -308,7 +337,7 @@ const MatchManagement = () => {
     setActiveTab('edit');
   };
 
-  const mapStatusForForm = (uiStatus: MatchStatus): MatchStatus => {
+  const mapStatusForForm = (uiStatus: string): MatchStatus => {
     if (uiStatus === 'in_progress') return 'in_progress';
     if (uiStatus === 'completed') return 'completed';
     if (uiStatus === 'scheduled') return 'scheduled';

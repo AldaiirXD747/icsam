@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { updateBaseForteResults } from './baseForteUpdater';
+import { useToast } from "@/components/ui/use-toast";
 
 export const loadBaseForte2024Data = async () => {
   try {
@@ -215,4 +216,29 @@ const updateBaseForteData = async () => {
     });
     return false;
   }
+};
+
+const handleData = (data: any) => {
+  if (!data || !data.success) {
+    console.error('Error in data response:', data?.error || 'Unknown error');
+    return null;
+  }
+  
+  if (data.updates && Array.isArray(data.updates)) {
+    return data.updates;
+  }
+  
+  return null;
+};
+
+const notifySuccess = (message: string) => {
+  console.log('Success:', message);
+  // The toast should be passed in or used within a React component
+  // toast({ title: "Success", description: message });
+};
+
+const notifyError = (message: string) => {
+  console.error('Error:', message);
+  // The toast should be passed in or used within a React component
+  // toast({ variant: "destructive", title: "Error", description: message });
 };

@@ -69,6 +69,31 @@ export const addGalleryImage = async (image: Omit<GalleryImage, 'id' | 'created_
   }
 };
 
+// Add multiple gallery images (a new function for batch uploads)
+export const addMultipleGalleryImages = async (championshipId: string, images: any[]): Promise<boolean> => {
+  try {
+    // For simplicity, we'll assume each image has a file and a URL
+    const imageData = images.map(image => ({
+      title: image.name || 'Gallery Image',
+      description: '',
+      image_url: image.preview || '',
+      championship_id: championshipId,
+      featured: false
+    }));
+    
+    const { error } = await supabase
+      .from('gallery_images')
+      .insert(imageData);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error adding multiple gallery images:', error);
+    return false;
+  }
+};
+
 // Update an existing gallery image
 export const updateGalleryImage = async (image: GalleryImage): Promise<GalleryImage | null> => {
   try {

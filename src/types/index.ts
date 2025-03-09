@@ -99,7 +99,17 @@ export interface Championship {
 }
 
 // Add types that are used in admin components
-export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'finalizado' | 'encerrado' | 'canceled';
+export type MatchStatus = 
+  | 'scheduled' 
+  | 'live' 
+  | 'finished' 
+  | 'in_progress' 
+  | 'completed' 
+  | 'cancelled' 
+  | 'canceled' 
+  | 'postponed' 
+  | 'finalizado' 
+  | 'encerrado';
 
 export interface AdminMatch extends Match {
   homeTeamName?: string;

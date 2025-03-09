@@ -8,8 +8,8 @@ export const convertToAdminMatch = (match: any): AdminMatch => {
     id: match.id,
     date: match.date,
     time: match.time,
-    home_team: match.home_team,
-    away_team: match.away_team,
+    home_team: match.home_team || match.homeTeam || '',
+    away_team: match.away_team || match.awayTeam || '',
     home_score: match.home_score || match.homeScore || null,
     away_score: match.away_score || match.awayScore || null,
     category: match.category,
@@ -19,11 +19,11 @@ export const convertToAdminMatch = (match: any): AdminMatch => {
     championship_id: match.championship_id || match.championshipId || null,
     
     // For frontend compatibility
-    homeTeam: match.homeTeam || match.home_team,
-    awayTeam: match.awayTeam || match.away_team,
-    homeScore: match.homeScore || match.home_score,
-    awayScore: match.awayScore || match.away_score,
-    championshipId: match.championshipId || match.championship_id,
+    homeTeam: match.homeTeam || match.home_team || '',
+    awayTeam: match.awayTeam || match.away_team || '',
+    homeScore: match.homeScore || match.home_score || null,
+    awayScore: match.awayScore || match.away_score || null,
+    championshipId: match.championshipId || match.championship_id || null,
     
     // Add team name and logo properties
     home_team_name: match.home_team_name || match.homeTeamName || null,
@@ -37,6 +37,27 @@ export const convertToAdminMatch = (match: any): AdminMatch => {
     awayTeamLogo: match.awayTeamLogo || match.away_team_logo || null,
   };
 };
+
+// Function to convert an AdminMatch object to a format suitable for database operations
+export const convertMatchToDbMatch = (match: AdminMatch | any): any => {
+  return {
+    id: match.id,
+    date: match.date,
+    time: match.time,
+    home_team: typeof match.homeTeam === 'object' ? match.homeTeam.id : (match.home_team || match.homeTeam),
+    away_team: typeof match.awayTeam === 'object' ? match.awayTeam.id : (match.away_team || match.awayTeam),
+    home_score: match.home_score || match.homeScore,
+    away_score: match.away_score || match.awayScore,
+    category: match.category,
+    status: match.status,
+    location: match.location,
+    round: match.round,
+    championship_id: match.championship_id || match.championshipId,
+  };
+};
+
+// Alias for backward compatibility
+export const convertDbMatchToAdminMatch = convertToAdminMatch;
 
 // Function to convert a TopScorer object
 export const convertToTopScorer = (scorer: any): TopScorer => {
@@ -84,3 +105,7 @@ export const convertToYellowCardLeader = (leader: any): YellowCardLeader => {
     team: leader.team
   };
 };
+
+// Add aliases for backward compatibility
+export const normalizeTopScorer = convertToTopScorer;
+export const normalizeYellowCardLeader = convertToYellowCardLeader;

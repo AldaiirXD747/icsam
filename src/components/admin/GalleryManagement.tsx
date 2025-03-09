@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -47,9 +46,29 @@ import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Plus, Image, Star, Loader2 } from 'lucide-react';
 import { Championship, GalleryImage } from '@/types';
 import { getChampionships } from '@/lib/api';
-import { getGalleryImages, addGalleryImage, updateGalleryImage, deleteGalleryImage, addMultipleGalleryImages } from '@/lib/galleryApi';
+import { getGalleryImages, addGalleryImage, updateGalleryImage, deleteGalleryImage } from '@/lib/galleryApi';
 import { MultiFileUpload, FileWithPreview } from '@/components/ui/multi-file-upload';
 import { Tabs as TabsUI, TabsList as TabsListUI, TabsTrigger as TabsTriggerUI, TabsContent as TabsContentUI } from "@/components/ui/tabs";
+
+const addMultipleGalleryImages = async (championshipId: string, images: FileWithPreview[]): Promise<boolean> => {
+  try {
+    const promises = images.map(image => 
+      addGalleryImage({
+        title: image.name || 'Gallery Image',
+        description: '',
+        image_url: image.preview || '',
+        championship_id: championshipId,
+        featured: false
+      })
+    );
+    
+    await Promise.all(promises);
+    return true;
+  } catch (error) {
+    console.error('Error adding multiple gallery images:', error);
+    return false;
+  }
+};
 
 const GalleryManagement: React.FC = () => {
   const { toast } = useToast();
@@ -70,7 +89,6 @@ const GalleryManagement: React.FC = () => {
   const [multipleFiles, setMultipleFiles] = useState<FileWithPreview[]>([]);
   const [uploadMode, setUploadMode] = useState<'single' | 'multiple'>('single');
   
-  // Queries
   const { data: images = [], isLoading: isImagesLoading } = useQuery({
     queryKey: ['galleryImages'],
     queryFn: getGalleryImages,
@@ -81,9 +99,16 @@ const GalleryManagement: React.FC = () => {
     queryFn: getChampionships,
   });
   
-  // Mutations
   const addImageMutation = useMutation({
-    mutationFn: addGalleryImage,
+    mutationFn: (data: any) => {
+      return addGalleryImage({
+        title: data.title,
+        description: data.description,
+        championship_id: data.championshipId,
+        image_url: data.imageUrl,
+        featured: data.featured
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['galleryImages'] });
       toast({
@@ -162,14 +187,12 @@ const GalleryManagement: React.FC = () => {
     }
   });
   
-  // Filters
   const filteredImages = images.filter(img => 
     (activeTab === "all" || img.championshipId === activeTab) &&
     (img.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
      (img.description && img.description.toLowerCase().includes(searchTerm.toLowerCase())))
   );
   
-  // Form handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -186,9 +209,6 @@ const GalleryManagement: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
-      // In a real implementation, you would upload this file to your server/storage
-      // and then set the returned URL to the imageUrl field
-      // For this mock, we'll just set a placeholder
       setFormData(prev => ({ 
         ...prev, 
         imageUrl: URL.createObjectURL(e.target.files[0])
@@ -221,8 +241,10 @@ const GalleryManagement: React.FC = () => {
         images: multipleFiles
       });
     } else {
-      // Single image upload
-      addImageMutation.mutate(formData);
+      addImageMutation.mutate({
+        ...formData,
+        image_url: formData.imageUrl
+      });
     }
   };
   

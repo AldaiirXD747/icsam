@@ -6,7 +6,9 @@ import { useAuth } from './useAuth';
 // Master admin email
 const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
 
-export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' | 'team') => {
+type AllowedRole = 'admin' | 'team' | 'team_manager' | string;
+
+export const withAuth = (Component: React.ComponentType, requiredRole?: AllowedRole | AllowedRole[]) => {
   return (props: any) => {
     const { session, user, loading, checkAdminAccess } = useAuth();
     const navigate = useNavigate();
@@ -40,7 +42,10 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
           return;
         }
         
-        if (requiredRole === 'admin') {
+        // Support array of roles
+        const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        
+        if (roles.includes('admin')) {
           const isAdmin = await checkAdminAccess();
           console.log('Admin access check result:', isAdmin);
           
@@ -51,7 +56,7 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
             return;
           }
           setHasAccess(true);
-        } else if (requiredRole === 'team') {
+        } else if (roles.includes('team')) {
           // No more team access
           console.log('Team access is no longer available');
           navigate('/', { replace: true });

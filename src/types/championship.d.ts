@@ -1,3 +1,4 @@
+
 export interface ChampionshipStanding {
   position: number;
   team_id: string;
@@ -13,7 +14,17 @@ export interface ChampionshipStanding {
   goal_difference: number;
 }
 
-export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'in_progress' | 'completed' | 'cancelled' | 'postponed' | 'finalizado' | 'encerrado';
+export type MatchStatus = 
+  | 'scheduled' 
+  | 'live' 
+  | 'finished' 
+  | 'in_progress' 
+  | 'completed' 
+  | 'cancelled' 
+  | 'canceled' 
+  | 'postponed' 
+  | 'finalizado' 
+  | 'encerrado';
 
 // Additional types needed for admin components
 export interface ChampionshipMatch {
