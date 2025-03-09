@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,18 +21,29 @@ const AddMatchData = () => {
   };
 
   /**
-   * Maps specific weekday dates to the correct weekend dates in March 2025
-   * If the date isn't specifically mapped, it adjusts to the nearest weekend
+   * Maps specific dates according to the defined mapping rules:
+   * 21/02/2025 -> 22/02/2025
+   * 22/02/2025 -> 23/02/2025
+   * 07/03/2025 -> 08/03/2025
+   * 08/03/2025 -> 09/03/2025
    */
   const adjustToWeekend = (dateStr: string): string => {
+    // First check if the date is already in correct format
     const date = new Date(dateStr);
     
-    // First check if the date is already on a weekend
-    if (isWeekend(dateStr)) {
-      return dateStr;
+    // Apply the specific date mappings
+    // Format in the database is YYYY-MM-DD
+    if (dateStr === '2025-02-21') {
+      return '2025-02-22';
+    } else if (dateStr === '2025-02-22') {
+      return '2025-02-23'; 
+    } else if (dateStr === '2025-03-07') {
+      return '2025-03-08';
+    } else if (dateStr === '2025-03-08') {
+      return '2025-03-09';
     }
     
-    // Special handling for March 2025 dates - map to 08/03/2025 (Saturday) and 09/03/2025 (Sunday)
+    // Special handling for March 2025 dates
     const month = date.getMonth(); // 0-indexed, so 2 = March
     const year = date.getFullYear();
     
@@ -55,12 +65,28 @@ const AddMatchData = () => {
       }
     }
     
-    // Default: Calculate days until Saturday (6 - day)
-    const daysToSaturday = (6 - date.getDay()) % 7;
-    date.setDate(date.getDate() + daysToSaturday);
+    // For February 2025 dates
+    if (month === 1 && year === 2025) {
+      const day = date.getDate();
+      
+      if (day <= 21) {
+        // Map to Saturday February 22
+        return '2025-02-22';
+      } else {
+        // Map to Sunday February 23
+        return '2025-02-23';
+      }
+    }
     
-    // Format back to YYYY-MM-DD
-    return date.toISOString().split('T')[0];
+    // If not a special case and not on weekend, move to nearest weekend
+    if (!isWeekend(dateStr)) {
+      const daysToSaturday = (6 - date.getDay()) % 7;
+      date.setDate(date.getDate() + daysToSaturday);
+      return date.toISOString().split('T')[0];
+    }
+    
+    // Already a weekend date and not in our mapping rules, return as is
+    return dateStr;
   };
 
   const parseMatchData = (input: string): MatchData[] => {
@@ -86,11 +112,8 @@ const AddMatchData = () => {
           const [day, month, year] = datePart.split('/');
           let formattedDate = `${year}-${month}-${day}`;
           
-          // Ensure date is on a weekend
-          if (!isWeekend(formattedDate)) {
-            formattedDate = adjustToWeekend(formattedDate);
-            console.log(`Date adjusted to weekend: ${formattedDate}`);
-          }
+          // Apply date mapping to ensure correct dates
+          formattedDate = adjustToWeekend(formattedDate);
           
           currentDate = formattedDate;
         }

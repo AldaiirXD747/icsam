@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,14 +26,36 @@ const MatchesPanel: React.FC<MatchesPanelProps> = ({ matches, isLoading, selecte
     }
   });
   
-  // Group matches by date
+  // Group matches by date with corrected dates
   const groupedMatches: Record<string, ChampionshipMatch[]> = {};
   
   filteredMatches.forEach(match => {
-    if (!groupedMatches[match.date]) {
-      groupedMatches[match.date] = [];
+    // Apply date mapping/correction
+    let correctedDate = match.date;
+    
+    // Apply the date mapping
+    if (match.date === '2025-02-21') {
+      correctedDate = '2025-02-22';
+    } else if (match.date === '2025-02-22') {
+      correctedDate = '2025-02-23';
+    } else if (match.date === '2025-03-07') {
+      correctedDate = '2025-03-08';
+    } else if (match.date === '2025-03-08') {
+      correctedDate = '2025-03-09';
     }
-    groupedMatches[match.date].push(match);
+    
+    // Use the corrected date for grouping
+    if (!groupedMatches[correctedDate]) {
+      groupedMatches[correctedDate] = [];
+    }
+    
+    // Create a new match object with the corrected date
+    const matchWithCorrectedDate = {
+      ...match,
+      date: correctedDate
+    };
+    
+    groupedMatches[correctedDate].push(matchWithCorrectedDate);
   });
   
   // Sort dates chronologically
