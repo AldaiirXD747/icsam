@@ -6,7 +6,6 @@ import Index from '@/pages/Index';
 import About from '@/pages/About';
 import Teams from '@/pages/Teams';
 import Championships from '@/pages/Championships';
-import ChampionshipDetail from '@/pages/ChampionshipDetail';
 import Contact from '@/pages/Contact';
 import Matches from '@/pages/Matches';
 import Statistics from '@/pages/Statistics';
@@ -29,7 +28,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/teams" element={<Teams />} />
           <Route path="/championships" element={<Championships />} />
-          <Route path="/championships/:id" element={<ChampionshipDetail />} />
+          <Route path="/championships/:id" element={<div>Championship Details</div>} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/partidas" element={<Matches />} />
           <Route path="/jogos" element={<Matches />} />
