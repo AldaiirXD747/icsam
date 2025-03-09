@@ -1,3 +1,4 @@
+
 import { createContext, ReactNode, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -15,6 +16,9 @@ export interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Define the master admin email
+const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -44,14 +48,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           try {
             console.log('Found custom session, setting user from localStorage');
             const customSession = JSON.parse(customSessionStr);
-            setUser(customSession.user as unknown as User);
+            
+            // Only set user if it's the master admin
+            if (customSession.user?.email === MASTER_ADMIN_EMAIL) {
+              setUser(customSession.user as unknown as User);
+            } else {
+              // Remove non-master session
+              localStorage.removeItem('custom_auth_session');
+            }
           } catch (e) {
             console.error('Error parsing custom session:', e);
             localStorage.removeItem('custom_auth_session');
           }
         } else {
-          setSession(data.session);
-          setUser(data.session?.user ?? null);
+          // Only set session if it's for the master admin
+          if (data.session?.user?.email === MASTER_ADMIN_EMAIL) {
+            setSession(data.session);
+            setUser(data.session.user);
+          } else if (data.session) {
+            // Sign out non-master users
+            await supabase.auth.signOut();
+          }
         }
       } catch (error) {
         console.error('Unexpected error during getSession:', error);
@@ -70,23 +87,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Prevent redirect loops by checking the redirecting state
         if (redirecting) return;
         
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+        // Only allow master admin email
+        if (newSession?.user?.email === MASTER_ADMIN_EMAIL) {
+          setSession(newSession);
+          setUser(newSession.user);
+        } else if (newSession) {
+          // Sign out non-master users
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+        
         setLoading(false);
         
         // Handle sign in and sign out events
         if (event === 'SIGNED_IN') {
-          setRedirecting(true);
-          toast({
-            title: 'Login realizado com sucesso',
-            variant: 'default',
-          });
-          
-          // Use setTimeout to avoid potential race conditions
-          setTimeout(() => {
-            navigate('/admin', { replace: true });
-            setRedirecting(false);
-          }, 100);
+          if (newSession?.user?.email === MASTER_ADMIN_EMAIL) {
+            setRedirecting(true);
+            toast({
+              title: 'Login realizado com sucesso',
+              variant: 'default',
+            });
+            
+            // Use setTimeout to avoid potential race conditions
+            setTimeout(() => {
+              navigate('/admin', { replace: true });
+              setRedirecting(false);
+            }, 100);
+          } else {
+            toast({
+              title: 'Acesso negado',
+              description: 'Apenas o administrador principal pode acessar o sistema.',
+              variant: 'destructive',
+            });
+            
+            // Sign out non-master users
+            await supabase.auth.signOut();
+          }
         } else if (event === 'SIGNED_OUT') {
           setRedirecting(true);
           toast({
@@ -113,6 +153,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Attempting login with email:', email);
+      
+      // Check if the email is the master admin email
+      if (email !== MASTER_ADMIN_EMAIL) {
+        console.error('Login failed: Only the master admin can access the system');
+        return { 
+          success: false, 
+          error: 'Apenas o administrador principal pode acessar o sistema.' 
+        };
+      }
       
       // First try with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -197,49 +246,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   // Check if user has team access
   const checkTeamAccess = async () => {
-    if (!user) {
-      // Check if there's a custom auth session
-      const customSession = localStorage.getItem('custom_auth_session');
-      if (!customSession) return false;
-      
-      try {
-        const parsedSession = JSON.parse(customSession);
-        if (parsedSession.user?.user_metadata?.role === 'team_manager') {
-          return true;
-        }
-      } catch (e) {
-        console.error('Error parsing custom session:', e);
-        return false;
-      }
-      
-      return false;
-    }
-    
-    try {
-      // Check for team_id in user metadata
-      const role = user.user_metadata?.role;
-      
-      if (role === 'team_manager') {
-        return true;
-      }
-      
-      // Alternatively, check the team_accounts table
-      const { data, error } = await supabase
-        .from('team_accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error checking team access:', error);
-        return false;
-      }
-      
-      return !!data;
-    } catch (error) {
-      console.error('Error checking team access:', error);
-      return false;
-    }
+    return false; // No more team access
   };
   
   // Check if user has admin access
@@ -247,15 +254,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Checking admin access...');
       
-      // First check custom authentication
-      const customSession = localStorage.getItem('custom_auth_session');
-      if (customSession) {
+      // Only allow the master admin email
+      if (user?.email === MASTER_ADMIN_EMAIL) {
+        return true;
+      }
+      
+      // Custom session check
+      const customSessionStr = localStorage.getItem('custom_auth_session');
+      if (customSessionStr) {
         try {
-          const parsedSession = JSON.parse(customSession);
-          console.log('Custom session found:', parsedSession);
+          const customSession = JSON.parse(customSessionStr);
           
-          if (parsedSession.user?.user_metadata?.role === 'admin') {
-            console.log('Admin access granted via custom session');
+          if (customSession.user?.email === MASTER_ADMIN_EMAIL) {
             return true;
           }
         } catch (e) {
@@ -263,37 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      // Then check Supabase authentication
-      if (!user) {
-        console.log('No user found, denying admin access');
-        return false;
-      }
-      
-      // Check role from user metadata
-      const role = user.user_metadata?.role;
-      console.log('User role from metadata:', role);
-      
-      if (role === 'admin') {
-        console.log('Admin access granted via user metadata');
-        return true;
-      }
-      
-      // Alternatively, check the app_users table
-      console.log('Checking app_users table for admin access...');
-      const { data, error } = await supabase
-        .rpc('verify_user_credentials', {
-          p_email: user.email || '',
-          p_password: '' // Password not needed for this check
-        });
-      
-      if (error) {
-        console.error('Error checking admin access:', error);
-        return false;
-      }
-      
-      const isAdmin = data.some(userData => userData.role === 'admin');
-      console.log('Admin access from app_users table:', isAdmin);
-      return isAdmin;
+      return false;
     } catch (error) {
       console.error('Error checking admin access:', error);
       return false;

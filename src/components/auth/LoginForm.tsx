@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,9 +15,12 @@ interface LoginFormProps {
   onLoginSuccess: () => void;
 }
 
+// Master admin email
+const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
+
 const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
+    email: MASTER_ADMIN_EMAIL, // Pre-fill the email field with the master admin email
     password: '',
     rememberMe: false
   });
@@ -27,7 +30,6 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { signIn } = useAuth();
-  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -45,6 +47,13 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    
+    // Check if the email is the master admin email
+    if (formData.email !== MASTER_ADMIN_EMAIL) {
+      setError('Apenas o administrador principal pode acessar o sistema.');
+      setLoading(false);
+      return;
+    }
     
     try {
       console.log('Attempting login with:', formData.email);
@@ -92,6 +101,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           required
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-primary"
           placeholder="seu-email@exemplo.com"
+          readOnly // Make the email field read-only since only the master admin can login
         />
       </div>
       

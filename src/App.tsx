@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -25,14 +26,11 @@ import ResetPassword from './pages/ResetPassword';
 // Páginas Auth
 import Login from './pages/Login';
 import Reset from './pages/Reset';
+import TeamLogin from './pages/TeamLogin'; // Keep for displaying "access unavailable" message
 
 // Páginas Admin
 import AdminDashboard from './pages/AdminDashboard';
 import AdminStandings from './pages/AdminStandings';
-
-// Páginas de time
-import TeamLogin from './pages/TeamLogin';
-import TeamDashboard from './pages/TeamDashboard';
 
 // Componentes
 import { Toaster } from './components/ui/toaster';
@@ -43,7 +41,6 @@ import BackToTopButton from './components/BackToTopButton';
 // Wrap protected routes
 const ProtectedAdminDashboard = withAuth(AdminDashboard, 'admin');
 const ProtectedAdminStandings = withAuth(AdminStandings, 'admin');
-const ProtectedTeamDashboard = withAuth(TeamDashboard, 'team');
 
 // Create a client
 const queryClient = new QueryClient({
@@ -126,12 +123,10 @@ function App() {
                 <Route path="/admin/add-match-data" element={<AddMatchDataPage />} />
                 <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPage />} />
 
-                {/* Rotas de Time Protegidas */}
-                <Route path="/team/dashboard" element={<ProtectedTeamDashboard />} />
-
                 {/* Redirects */}
                 <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
-                <Route path="/team" element={<Navigate to="/team/dashboard" replace />} />
+                <Route path="/team" element={<Navigate to="/team/login" replace />} />
+                <Route path="/team/dashboard" element={<Navigate to="/team/login" replace />} />
 
                 {/* Rota 404 */}
                 <Route path="*" element={<NotFound />} />

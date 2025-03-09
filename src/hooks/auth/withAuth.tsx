@@ -3,9 +3,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
+// Master admin email
+const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
+
 export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' | 'team') => {
   return (props: any) => {
-    const { session, user, loading, checkAdminAccess, checkTeamAccess } = useAuth();
+    const { session, user, loading, checkAdminAccess } = useAuth();
     const navigate = useNavigate();
     const [hasAccess, setHasAccess] = useState(false);
     const [checking, setChecking] = useState(true);
@@ -27,6 +30,16 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
           return;
         }
         
+        // Only allow access to master admin email
+        const userEmail = user?.email || '';
+        
+        if (userEmail !== MASTER_ADMIN_EMAIL) {
+          console.log('Not the master admin, redirecting to login');
+          navigate('/login', { replace: true });
+          setChecking(false);
+          return;
+        }
+        
         if (requiredRole === 'admin') {
           const isAdmin = await checkAdminAccess();
           console.log('Admin access check result:', isAdmin);
@@ -39,18 +52,13 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
           }
           setHasAccess(true);
         } else if (requiredRole === 'team') {
-          const hasTeamAccess = await checkTeamAccess();
-          console.log('Team access check result:', hasTeamAccess);
-          
-          if (!hasTeamAccess) {
-            console.log('No team access, redirecting to team login');
-            navigate('/team/login', { replace: true });
-            setChecking(false);
-            return;
-          }
-          setHasAccess(true);
+          // No more team access
+          console.log('Team access is no longer available');
+          navigate('/', { replace: true });
+          setChecking(false);
+          return;
         } else {
-          // No specific role required, just need to be authenticated
+          // No specific role required, just need to be authenticated as master admin
           setHasAccess(true);
         }
         
@@ -58,7 +66,7 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: 'admin' 
       };
       
       checkAccess();
-    }, [session, user, loading, navigate, checkAdminAccess, checkTeamAccess, checking, requiredRole]);
+    }, [session, user, loading, navigate, checkAdminAccess, checking, requiredRole]);
     
     if (loading || checking) {
       return (
