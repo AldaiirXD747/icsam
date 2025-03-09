@@ -1,132 +1,292 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileCheck, Loader2, RefreshCw, Table } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, DatabaseIcon } from 'lucide-react';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import { updateBaseForteMatchResults } from '@/utils/updateMatchResults';
+import { updateMatchResults } from '@/utils/updateMatchResults';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 const UpdateMatchResults = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [resultStatus, setResultStatus] = useState<{
+    success: boolean;
+    message?: string;
+    updates?: {success: boolean; message: string}[];
+  } | null>(null);
+  
+  const [jsonData, setJsonData] = useState<string>('');
+  
   const { toast } = useToast();
 
   const handleUpdateResults = async () => {
-    if (!confirm("Tem certeza que deseja atualizar os resultados das partidas? Isso substituirá os dados existentes.")) {
+    if (!jsonData.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira os dados dos resultados.",
+        variant: "destructive",
+      });
       return;
     }
     
+    setLoading(true);
+    setResultStatus(null);
+    
     try {
-      setIsLoading(true);
-      setResults([]);
+      // Parse the JSON data
+      const matchResults = JSON.parse(jsonData);
       
-      setResults(prev => [...prev, "Iniciando atualização dos resultados das partidas..."]);
+      if (!Array.isArray(matchResults)) {
+        throw new Error('Os dados devem ser um array de partidas.');
+      }
       
-      const result = await updateBaseForteMatchResults();
+      const result = await updateMatchResults(matchResults);
       
       if (result.success) {
-        toast({
-          title: "Operação concluída",
-          description: "Resultados das partidas atualizados com sucesso.",
+        setResultStatus({
+          success: true,
+          message: "Resultados atualizados com sucesso!",
+          updates: result.updates
         });
         
-        // Convert the update results to strings for display
-        const updateMessages = result.updates.map(update => 
-          update.success ? `✅ ${update.message}` : `❌ ${update.message}`
-        );
-        
-        setResults(updateMessages);
+        toast({
+          title: "Dados atualizados!",
+          description: "Os resultados das partidas foram atualizados com sucesso.",
+          variant: "default",
+        });
       } else {
-        toast({
-          variant: "destructive",
-          title: "Erros na operação",
-          description: "Houve erros durante a atualização dos resultados.",
+        setResultStatus({
+          success: false,
+          message: `Erro ao atualizar resultados: ${result.error || 'Erro desconhecido'}`,
+          updates: result.updates
         });
         
-        // Convert the update results to strings for display
-        const updateMessages = result.updates.map(update => 
-          update.success ? `✅ ${update.message}` : `❌ ${update.message}`
-        );
-        
-        setResults(updateMessages);
+        toast({
+          title: "Erro",
+          description: `Não foi possível atualizar todos os resultados: ${result.error || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error('Erro inesperado:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro inesperado",
-        description: "Ocorreu um erro durante a atualização dos resultados.",
+      console.error("Error updating match results:", error);
+      
+      setResultStatus({
+        success: false,
+        message: `Erro no processamento: ${error instanceof Error ? error.message : 'Desconhecido'}`,
       });
       
-      setResults(prev => [...prev, `❌ Erro inesperado: ${error.message || 'Desconhecido'}`]);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao processar os dados. Verifique o formato do JSON.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  const exampleData = [
+    {
+      date: "2024-05-01",
+      homeTeamName: "Time A",
+      awayTeamName: "Time B",
+      category: "SUB-11",
+      homeScore: 2,
+      awayScore: 1,
+      round: "Rodada 1",
+      status: "completed"
+    },
+    {
+      date: "2024-05-01",
+      homeTeamName: "Time C",
+      awayTeamName: "Time D",
+      category: "SUB-13",
+      homeScore: 0,
+      awayScore: 0,
+      round: "Rodada 1",
+      status: "scheduled"
+    }
+  ];
+
   return (
-    <AdminLayout>
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-6 text-[#1a237e]">Atualizar Resultados das Partidas</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Atualizar Resultados de Partidas</h1>
+      
+      <Tabs defaultValue="update">
+        <TabsList className="mb-4">
+          <TabsTrigger value="update">Atualizar Resultados</TabsTrigger>
+          <TabsTrigger value="info">Informações</TabsTrigger>
+        </TabsList>
         
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DatabaseIcon className="h-5 w-5 text-blue-500" />
-              Atualizar Resultados das Partidas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Esta operação irá atualizar os resultados das partidas do Campeonato Base Forte 2025 conforme especificado.
-              </p>
-              
-              <div className="flex flex-col space-y-2 text-sm text-amber-600">
-                <p>⚠️ Esta operação não removará as partidas existentes, apenas atualizará seus resultados.</p>
-                <p>⚠️ As classificações serão recalculadas com base nos novos resultados.</p>
+        <TabsContent value="update">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Table className="mr-2 h-5 w-5" />
+                Atualizar Resultados das Partidas
+              </CardTitle>
+              <CardDescription>
+                Insira os dados das partidas em formato JSON para atualizar os resultados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="jsonInput">Dados JSON</Label>
+                  <Textarea
+                    id="jsonInput"
+                    placeholder="Cole aqui o JSON com os dados das partidas..."
+                    rows={10}
+                    className="font-mono text-sm"
+                    value={jsonData}
+                    onChange={(e) => setJsonData(e.target.value)}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    Formato esperado: Array de objetos com date, homeTeamName, awayTeamName, category, homeScore, awayScore, etc.
+                  </p>
+                  <details className="mt-2">
+                    <summary className="text-sm text-blue-600 cursor-pointer">
+                      Ver exemplo de dados
+                    </summary>
+                    <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">
+                      {JSON.stringify(exampleData, null, 2)}
+                    </pre>
+                  </details>
+                </div>
               </div>
-              
+            </CardContent>
+            <CardFooter className="flex-col items-start space-y-4">
               <Button 
-                onClick={handleUpdateResults}
-                disabled={isLoading}
-                className="w-full bg-[#1a237e] hover:bg-[#0d1864]"
+                disabled={loading} 
+                onClick={handleUpdateResults} 
+                className="w-full sm:w-auto"
               >
-                {isLoading ? (
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Atualizando resultados...
+                    Processando dados...
                   </>
                 ) : (
                   <>
-                    <DatabaseIcon className="mr-2 h-4 w-4" />
-                    Atualizar Resultados das Partidas
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Atualizar Resultados
                   </>
                 )}
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+              
+              {resultStatus && (
+                <div className={`mt-4 w-full p-4 rounded-md ${resultStatus.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  <p className="font-medium">{resultStatus.message}</p>
+                  
+                  {resultStatus.updates && resultStatus.updates.length > 0 && (
+                    <div className="mt-2 max-h-64 overflow-y-auto">
+                      <p className="font-medium">Detalhes da atualização:</p>
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        {resultStatus.updates.map((update, index) => (
+                          <li key={index} className={`${update.success ? 'text-green-700' : 'text-red-700'}`}>
+                            {update.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardFooter>
+          </Card>
+        </TabsContent>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Resultados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {results.length === 0 ? (
-              <p className="text-sm text-gray-500">Os resultados da operação aparecerão aqui.</p>
-            ) : (
-              <div className="bg-gray-50 p-4 rounded-md font-mono text-sm max-h-96 overflow-y-auto">
-                {results.map((result, index) => (
-                  <div key={index} className="mb-1">{result}</div>
-                ))}
+        <TabsContent value="info">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sobre a Atualização de Resultados</CardTitle>
+              <CardDescription>
+                Informações sobre como atualizar resultados de partidas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Como funciona?</h3>
+                <p className="text-gray-600 mt-1">
+                  Esta ferramenta permite atualizar os resultados de múltiplas partidas de uma só vez, usando dados em formato JSON.
+                  O sistema tentará encontrar cada partida no banco de dados e atualizará os placares e status.
+                </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </AdminLayout>
+              
+              <div>
+                <h3 className="text-lg font-medium">Campos disponíveis</h3>
+                <div className="mt-2 border rounded overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campo</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Obrigatório</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                      <tr>
+                        <td className="px-4 py-2 font-medium">date</td>
+                        <td className="px-4 py-2">Data da partida (YYYY-MM-DD)</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">homeTeamName</td>
+                        <td className="px-4 py-2">Nome do time da casa</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">awayTeamName</td>
+                        <td className="px-4 py-2">Nome do time visitante</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">category</td>
+                        <td className="px-4 py-2">Categoria (SUB-11, SUB-13, etc)</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">homeScore</td>
+                        <td className="px-4 py-2">Placar do time da casa</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">awayScore</td>
+                        <td className="px-4 py-2">Placar do time visitante</td>
+                        <td className="px-4 py-2">Sim</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">round</td>
+                        <td className="px-4 py-2">Rodada ou fase da partida</td>
+                        <td className="px-4 py-2">Não</td>
+                      </tr>
+                      <tr>
+                        <td className="px-4 py-2 font-medium">status</td>
+                        <td className="px-4 py-2">Status da partida (scheduled, in_progress, completed, etc)</td>
+                        <td className="px-4 py-2">Não</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-medium">Observações importantes</h3>
+                <ul className="list-disc pl-5 mt-1 space-y-1 text-gray-600">
+                  <li>O sistema tentará encontrar a partida pelo time da casa, time visitante, categoria e data</li>
+                  <li>Se a partida não for encontrada, ela será criada automaticamente</li>
+                  <li>A classificação é recalculada automaticamente após as atualizações</li>
+                  <li>Times que não existem no sistema serão ignorados com mensagens de erro</li>
+                  <li>Se o status não for informado, será definido como "completed" para partidas com placar</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

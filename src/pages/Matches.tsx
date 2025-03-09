@@ -93,11 +93,11 @@ const Matches = () => {
             away_team_name: match.away_team_details?.name || 'Time Visitante',
             homeTeam: {
               name: match.home_team_details?.name || 'Time da Casa',
-              logo: match.home_team_details?.logo || ''
+              logo: match.home_team_details?.logo || '/placeholder.svg'
             },
             awayTeam: {
               name: match.away_team_details?.name || 'Time Visitante',
-              logo: match.away_team_details?.logo || ''
+              logo: match.away_team_details?.logo || '/placeholder.svg'
             }
           }));
           
