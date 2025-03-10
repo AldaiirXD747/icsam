@@ -52,6 +52,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Only set user if it's the master admin
             if (customSession.user?.email === MASTER_ADMIN_EMAIL) {
               setUser(customSession.user as unknown as User);
+              
+              // Redirect to admin if we're on login page
+              if (window.location.pathname === '/login') {
+                navigate('/admin', { replace: true });
+              }
             } else {
               // Remove non-master session
               localStorage.removeItem('custom_auth_session');
@@ -65,6 +70,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (data.session?.user?.email === MASTER_ADMIN_EMAIL) {
             setSession(data.session);
             setUser(data.session.user);
+            
+            // Redirect to admin if we're on login page
+            if (window.location.pathname === '/login') {
+              navigate('/admin', { replace: true });
+            }
           } else if (data.session) {
             // Sign out non-master users
             await supabase.auth.signOut();
@@ -172,6 +182,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!error) {
         console.log('Supabase Auth login successful:', data);
         localStorage.removeItem('custom_auth_session'); // Clear any custom session
+        setRedirecting(true);
+        
+        // Redirect manually to ensure navigation happens
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+          setRedirecting(false);
+        }, 100);
+        
         return { success: true };
       }
       
@@ -210,6 +228,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Set the session in the context
         setUser(sessionData.user as unknown as User);
+        
+        // Redirect manually to ensure navigation happens
+        setRedirecting(true);
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+          setRedirecting(false);
+        }, 100);
         
         return { success: true };
       }

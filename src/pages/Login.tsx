@@ -51,7 +51,10 @@ const Login = () => {
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');
     setIsRedirecting(true);
-    navigate('/admin', { replace: true });
+    // Adicionar um timeout para garantir que o redirecionamento aconteça após as mudanças de estado
+    setTimeout(() => {
+      navigate('/admin', { replace: true });
+    }, 100);
   };
 
   if (isRedirecting || loading) {

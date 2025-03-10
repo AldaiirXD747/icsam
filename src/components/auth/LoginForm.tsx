@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -80,6 +79,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     }
   };
 
+  
   return (
     <form onSubmit={handleSubmit}>
       {error && (
