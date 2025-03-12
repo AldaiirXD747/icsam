@@ -12,6 +12,7 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import Footer from '@/components/Footer';
 
 const Championships = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'ongoing' | 'upcoming' | 'finished'>('all');
@@ -261,6 +262,7 @@ const Championships = () => {
             </div>}
         </div>
       </main>
+      <Footer />
     </div>;
 };
 

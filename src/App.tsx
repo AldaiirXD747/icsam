@@ -61,15 +61,15 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/team-login" element={<TeamLogin />} />
             <Route path="/team-dashboard" element={<TeamDashboard />} />
-            <Route path="/teams" element={<Teams />} />
+            <Route path="/times" element={<Teams />} />
             <Route path="/team/:id" element={<TeamDetail />} />
             <Route path="/player/:id" element={<PlayerDetail />} />
-            <Route path="/championships" element={<Championships />} />
-            <Route path="/championship/:id" element={<Championship />} />
-            <Route path="/matches" element={<Matches />} />
+            <Route path="/campeonatos" element={<Championships />} />
+            <Route path="/campeonatos/:id" element={<Championship />} />
+            <Route path="/partidas" element={<Matches />} />
             <Route path="/match/:id" element={<MatchDetail />} />
-            <Route path="/statistics" element={<Statistics />} />
-            <Route path="/standings" element={<Standings />} />
+            <Route path="/estatisticas" element={<Statistics />} />
+            <Route path="/classificacao" element={<Standings />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/standings" element={<AdminStandings />} />
             <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
