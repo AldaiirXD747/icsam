@@ -39,13 +39,11 @@ export interface ChampionshipMatch {
   round: string | null;
   championship_id?: string | null;
   
-  // Adding additional properties for the UI
   home_team_name?: string;
   away_team_name?: string;
   home_team_logo?: string;
   away_team_logo?: string;
   
-  // Camel case alternatives for frontend compatibility
   homeTeam?: Team | string;
   awayTeam?: Team | string;
   homeScore?: number | null;

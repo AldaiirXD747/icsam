@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -8,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { getChampionships } from '@/lib/championshipApi';
+import { getChampionships } from '@/lib/api'; // Updated import
 import { getAllTeams } from '@/lib/teamApi';
 import { getAllMatches } from '@/lib/matchApi';
 import { MatchStatus, Team } from '@/types/championship';
