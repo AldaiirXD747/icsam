@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -104,6 +103,25 @@ const MatchStatisticsManagement: React.FC = () => {
         
         // Transform received data to match our CustomMatch type
         const transformedData: CustomMatch[] = (data as any[]).map(item => {
+          // Ensure home_players and away_players are correctly parsed as Player[] arrays
+          const homePlayersArray: Player[] = Array.isArray(item.home_players) 
+            ? item.home_players.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                number: p.number,
+                position: p.position
+              }))
+            : [];
+            
+          const awayPlayersArray: Player[] = Array.isArray(item.away_players) 
+            ? item.away_players.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                number: p.number,
+                position: p.position
+              }))
+            : [];
+          
           return {
             match_id: item.match_id,
             match_date: item.match_date,
@@ -116,8 +134,8 @@ const MatchStatisticsManagement: React.FC = () => {
             home_team_name: item.home_team_name,
             away_team_id: item.away_team_id,
             away_team_name: item.away_team_name,
-            home_players: Array.isArray(item.home_players) ? item.home_players : [],
-            away_players: Array.isArray(item.away_players) ? item.away_players : []
+            home_players: homePlayersArray,
+            away_players: awayPlayersArray
           };
         });
         
