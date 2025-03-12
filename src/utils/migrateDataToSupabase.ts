@@ -1,6 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { migrateDataToSupabase } from "@/utils/dataMigration"; 
+import { cleanMatchesOnly, migrateDataToSupabase as migrate } from "@/utils/dataMigration";
 
-// Re-export the main migration function for backward compatibility
-export { migrateDataToSupabase };
+// Re-export the function for compatibility
+export const migrateDataToSupabase = migrate;
+
+export default migrateDataToSupabase;
