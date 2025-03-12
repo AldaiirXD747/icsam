@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 
@@ -11,12 +10,10 @@ interface TeamCardProps {
 
 const TeamCard: React.FC<TeamCardProps> = ({ id, name, logo, categories }) => {
   return (
-    <Link to={`/teams/${id}`} className="block group">
+    <Link to={`/team/${id}`} className="block group">
       <div className="glass-card p-6 rounded-xl bg-gradient-to-br from-blue-50 to-white border border-blue-100 shadow-md flex flex-col items-center h-full transition-all duration-300 hover:shadow-lg hover:translate-y-[-5px] relative overflow-hidden">
-        {/* Efeito de brilho no hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out"></div>
         
-        {/* Logo container com efeito de brilho */}
         <div className="w-28 h-28 flex items-center justify-center mb-5 p-3 rounded-full bg-white shadow-sm border border-blue-50">
           {logo ? (
             <img 
