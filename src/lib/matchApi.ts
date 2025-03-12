@@ -1,4 +1,3 @@
-
 import { ChampionshipMatch } from '@/types/championship';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -184,6 +183,61 @@ export const deleteMatch = async (id: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Error deleting match:', error);
+    return false;
+  }
+};
+
+export const deleteAllMatchData = async (): Promise<boolean> => {
+  try {
+    // Delete match statistics first (foreign key constraint)
+    const { error: statsError } = await supabase
+      .from('match_statistics')
+      .delete()
+      .neq('match_id', ''); // Delete all
+
+    if (statsError) {
+      console.error('Error deleting match statistics:', statsError);
+      throw statsError;
+    }
+
+    // Delete all matches
+    const { error: matchError } = await supabase
+      .from('matches')
+      .delete()
+      .neq('id', ''); // Delete all
+
+    if (matchError) {
+      console.error('Error deleting matches:', matchError);
+      throw matchError;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting match data:', error);
+    return false;
+  }
+};
+
+export const resetMatchResults = async (): Promise<boolean> => {
+  try {
+    // Reset match scores and status
+    const { error } = await supabase
+      .from('matches')
+      .update({
+        home_score: null,
+        away_score: null,
+        status: 'scheduled'
+      })
+      .neq('id', '');
+
+    if (error) {
+      console.error('Error resetting match results:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error resetting match results:', error);
     return false;
   }
 };

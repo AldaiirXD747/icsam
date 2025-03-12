@@ -20,9 +20,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("championships");
   const { user, isLoaded } = useUser();
 
-  // In a real application, we would check if the user is authenticated
-  // and has the appropriate permissions to access the admin dashboard
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
