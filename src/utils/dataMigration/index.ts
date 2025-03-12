@@ -5,7 +5,7 @@ export const cleanMatchesOnly = async () => {
   try {
     console.log("Iniciando limpeza de partidas, estatísticas e classificações...");
     
-    // Define tables to clean
+    // Define tables to clean with proper typing
     const tablesToClean = [
       "goals",
       "match_events",
@@ -14,11 +14,12 @@ export const cleanMatchesOnly = async () => {
       "yellow_card_leaders",
       "standings",
       "matches"
-    ];
+    ] as const; // Make this a readonly tuple to preserve literal types
     
     // Delete data from each table
     for (const table of tablesToClean) {
       console.log(`Removendo registros da tabela ${table}...`);
+      // Now 'table' has the correct literal type that supabase.from() expects
       const { error } = await supabase
         .from(table)
         .delete()
@@ -50,7 +51,7 @@ export const cleanAllData = async () => {
   try {
     console.log("Iniciando limpeza completa de dados...");
     
-    // Define tables to clean
+    // Define tables to clean with proper typing
     const tablesToClean = [
       "goals",
       "match_events",
@@ -62,7 +63,7 @@ export const cleanAllData = async () => {
       "players",
       "teams",
       "championships"
-    ];
+    ] as const; // Make this a readonly tuple to preserve literal types
     
     // Delete data from each table
     for (const table of tablesToClean) {
@@ -106,7 +107,7 @@ export const resetMatchResultsAndStandings = async () => {
       return { success: false, error: matchError.message };
     }
     
-    // Clear match-related tables
+    // Clear match-related tables with proper typing
     const relatedTables = [
       "goals",
       "match_events",
@@ -114,7 +115,7 @@ export const resetMatchResultsAndStandings = async () => {
       "top_scorers",
       "yellow_card_leaders",
       "standings"
-    ];
+    ] as const; // Make this a readonly tuple to preserve literal types
     
     for (const table of relatedTables) {
       const { error } = await supabase
