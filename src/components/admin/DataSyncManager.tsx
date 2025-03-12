@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -249,7 +250,7 @@ const DataSyncManager = () => {
                   variant="destructive" 
                   onClick={handleResetResults}
                   disabled={isResetting}
-                  className="flex items-center bg-amber-500 hover:bg-amber-600 text-white"
+                  className="flex items-center"
                 >
                   {isResetting ? (
                     <>
