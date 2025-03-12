@@ -7,7 +7,9 @@ export interface FileWithPreview extends File {
 export interface MultiFileUploadProps {
   onFilesChange: (files: FileWithPreview[]) => void;
   maxFiles?: number;
-  accept?: string;
+  maxSize?: number;
+  disabled?: boolean;
+  maxSizeError?: string;
+  uploadAreaLabel?: string;
+  noFilesMessage?: string;
 }
-
-export const MultiFileUpload: React.FC<MultiFileUploadProps>;

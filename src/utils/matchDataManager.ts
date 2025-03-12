@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// Add type for MatchData
+// Updated MatchData interface
 export interface MatchData {
   date: string;
   time: string;
@@ -11,6 +11,8 @@ export interface MatchData {
   category: string;
   championship_id: string;
   round?: string;
+  homeTeamName?: string;  // Add this field
+  awayTeamName?: string;  // Add this field
 }
 
 // Add the missing function

@@ -5,8 +5,8 @@ export const cleanMatchesOnly = async () => {
   try {
     console.log("Iniciando limpeza de partidas, estatísticas e classificações...");
     
-    // Delete in the right order to respect foreign key constraints
-    const tables = [
+    // Define tables to clean
+    const tablesToClean = [
       "goals",
       "match_events",
       "match_statistics",
@@ -16,7 +16,8 @@ export const cleanMatchesOnly = async () => {
       "matches"
     ];
     
-    for (const table of tables) {
+    // Delete data from each table
+    for (const table of tablesToClean) {
       console.log(`Removendo registros da tabela ${table}...`);
       const { error } = await supabase
         .from(table)
@@ -49,8 +50,8 @@ export const cleanAllData = async () => {
   try {
     console.log("Iniciando limpeza completa de dados...");
     
-    // Delete in the right order to respect foreign key constraints
-    const tables = [
+    // Define tables to clean
+    const tablesToClean = [
       "goals",
       "match_events",
       "match_statistics",
@@ -63,7 +64,8 @@ export const cleanAllData = async () => {
       "championships"
     ];
     
-    for (const table of tables) {
+    // Delete data from each table
+    for (const table of tablesToClean) {
       console.log(`Removendo registros da tabela ${table}...`);
       const { error } = await supabase
         .from(table)
