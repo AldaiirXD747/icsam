@@ -1,728 +1,472 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
-import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Pencil, Trash2, Calendar } from 'lucide-react';
-import { format, parse } from 'date-fns';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 import { supabase } from "@/integrations/supabase/client";
-import { Match, MatchStatus, AdminMatch } from '@/types';
-import { convertToAdminMatch, convertMatchToDbMatch } from '@/utils/typeConverters';
+import { ChampionshipMatch, MatchStatus, Team } from '@/types/championship';
 
-type MatchFormData = {
-  date: string;
-  time: string;
-  location: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  status: MatchStatus;
-  category: string;
-  round: string | null;
-  championshipId: string | null;
-};
+const formSchema = z.object({
+  date: z.date({
+    required_error: "A date is required.",
+  }),
+  time: z.string().min(1, {
+    message: "Time is required",
+  }),
+  home_team: z.string().min(1, {
+    message: "Home team is required",
+  }),
+  away_team: z.string().min(1, {
+    message: "Away team is required",
+  }),
+  home_score: z.string().nullable(),
+  away_score: z.string().nullable(),
+  category: z.string().min(1, {
+    message: "Category is required",
+  }),
+  status: z.string(),
+  location: z.string().min(1, {
+    message: "Location is required",
+  }),
+  round: z.string().nullable(),
+  championship_id: z.string().nullable(),
+})
 
 const MatchManagement = () => {
-  const [matches, setMatches] = useState<AdminMatch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('list');
-  const [selectedMatch, setSelectedMatch] = useState<AdminMatch | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterChampionship, setFilterChampionship] = useState("all");
-  const [championships, setChampionships] = useState<{ id: string; name: string }[]>([]);
-  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
-
-  const [formData, setFormData] = useState<MatchFormData>({
-    date: '',
-    time: '',
-    location: '',
-    homeTeam: '',
-    awayTeam: '',
-    homeScore: null,
-    awayScore: null,
-    status: 'scheduled',
-    category: '',
-    round: null,
-    championshipId: null,
-  });
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [championships, setChampionships] = useState<{ id: string; name: string; }[]>([]);
+  const [matchData, setMatchData] = useState<Partial<ChampionshipMatch>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchMatches();
-    fetchChampionshipList();
-    fetchTeamList();
+    fetchData();
   }, []);
 
-  const fetchMatches = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          home_team_details:teams!matches_home_team_fkey(id, name),
-          away_team_details:teams!matches_away_team_fkey(id, name)
-        `)
-        .order('date', { ascending: false });
+      // Fetch teams
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('id, name, logo')
+        .order('name');
 
-      if (error) throw error;
+      if (teamsError) throw teamsError;
+      setTeams(teamsData || []);
 
-      const transformedData = data.map(match => 
-        convertToAdminMatch({
-          ...match,
-          homeTeamName: match.home_team_details?.name || '',
-          awayTeamName: match.away_team_details?.name || ''
-        })
-      );
+      // Fetch championships
+      const { data: championshipsData, error: championshipsError } = await supabase
+        .from('championships')
+        .select('id, name')
+        .order('name');
 
-      setMatches(transformedData);
+      if (championshipsError) throw championshipsError;
+      setChampionships(championshipsData || []);
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      console.error('Error fetching data:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao carregar partidas",
-        description: "Não foi possível carregar as partidas."
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados."
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchChampionshipList = async () => {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      date: new Date(),
+      time: '16:00',
+      home_team: '',
+      away_team: '',
+      home_score: null,
+      away_score: null,
+      category: 'Sub-17',
+      status: 'scheduled',
+      location: '',
+      round: null,
+      championship_id: null,
+    },
+  })
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { data, error } = await supabase
-        .from('championships')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-
-      setChampionships(data || []);
-    } catch (error) {
-      console.error('Error fetching championships:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar campeonatos",
-        description: "Não foi possível carregar a lista de campeonatos."
-      });
-    }
-  };
-
-  const fetchTeamList = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, name')
-        .order('name');
-
-      if (error) throw error;
-
-      setTeams(data || []);
-    } catch (error) {
-      console.error('Error fetching teams:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar times",
-        description: "Não foi possível carregar a lista de times."
-      });
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddMatch = async () => {
-    if (!validateForm()) return;
-
-    try {
-      const adminMatch: AdminMatch = {
-        id: '', // This will be generated by the database
-        date: formData.date,
-        time: formData.time,
-        location: formData.location,
-        homeTeam: formData.homeTeam,
-        awayTeam: formData.awayTeam,
-        homeScore: formData.homeScore,
-        awayScore: formData.awayScore,
-        status: formData.status as MatchStatus,
-        category: formData.category,
-        round: formData.round,
-        championshipId: formData.championshipId,
-        homeTeamName: teams.find(t => t.id === formData.homeTeam)?.name || '',
-        awayTeamName: teams.find(t => t.id === formData.awayTeam)?.name || '',
-        
-        home_team: formData.homeTeam,
-        away_team: formData.awayTeam,
-        home_score: formData.homeScore,
-        away_score: formData.awayScore,
-        championship_id: formData.championshipId,
+      // Convert form values to match the database schema
+      const matchToCreate = {
+        date: format(values.date, 'yyyy-MM-dd'),
+        time: values.time,
+        home_team: values.home_team,
+        away_team: values.away_team,
+        home_score: values.home_score ? parseInt(values.home_score, 10) : null,
+        away_score: values.away_score ? parseInt(values.away_score, 10) : null,
+        category: values.category,
+        status: values.status,
+        location: values.location,
+        round: values.round,
+        championship_id: values.championship_id,
       };
-      
-      const matchData = convertMatchToDbMatch(adminMatch);
-      console.log('Match data to insert:', matchData);
-      
+
+      // Insert the new match into the database
       const { data, error } = await supabase
         .from('matches')
-        .insert(matchData)
-        .select(`
-          *,
-          home_team_details:teams!matches_home_team_fkey(id, name),
-          away_team_details:teams!matches_away_team_fkey(id, name)
-        `);
+        .insert([matchToCreate]);
 
       if (error) {
-        console.error('Error inserting match:', error);
-        throw error;
+        console.error('Error creating match:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao criar partida",
+          description: "Não foi possível criar a partida."
+        });
+        return;
       }
-
-      if (!data || data.length === 0) {
-        throw new Error('No data returned after inserting match');
-      }
-
-      const newMatch = convertToAdminMatch({
-        ...data[0],
-        homeTeamName: data[0].home_team_details?.name || '',
-        awayTeamName: data[0].away_team_details?.name || ''
-      });
-
-      setMatches([newMatch, ...matches]);
 
       toast({
-        title: "Partida adicionada com sucesso!",
-        description: "A partida foi adicionada com sucesso.",
-        variant: "default"
+        title: "Sucesso",
+        description: "Partida criada com sucesso!",
       });
 
-      resetForm();
-      setActiveTab('list');
+      // Reset the form after successful submission
+      form.reset();
     } catch (error) {
-      console.error('Error adding match:', error);
-      let errorMessage = "Não foi possível adicionar a partida. ";
-      
-      if (error instanceof Error) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += "Verifique se todos os campos estão preenchidos corretamente.";
-      }
-      
+      console.error('Error creating match:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao adicionar partida",
-        description: errorMessage
+        title: "Erro ao criar partida",
+        description: "Ocorreu um erro ao criar a partida."
       });
     }
   };
 
-  const handleUpdateMatch = async () => {
-    if (!selectedMatch || !validateForm()) return;
-
-    try {
-      const updatedMatch: AdminMatch = {
-        ...selectedMatch,
-        date: formData.date,
-        time: formData.time,
-        location: formData.location,
-        home_team: formData.homeTeam,
-        away_team: formData.awayTeam,
-        home_score: formData.homeScore,
-        away_score: formData.awayScore,
-        status: formData.status as MatchStatus,
-        category: formData.category,
-        round: formData.round,
-        championship_id: formData.championshipId,
-        
-        homeTeam: formData.homeTeam,
-        awayTeam: formData.awayTeam,
-        homeScore: formData.homeScore,
-        awayScore: formData.awayScore,
-        championshipId: formData.championshipId,
-        homeTeamName: teams.find(t => t.id === formData.homeTeam)?.name || '',
-        awayTeamName: teams.find(t => t.id === formData.awayTeam)?.name || '',
-      };
-      
-      const matchData = convertMatchToDbMatch(updatedMatch);
-
-      const { data, error } = await supabase
-        .from('matches')
-        .update(matchData)
-        .eq('id', selectedMatch.id)
-        .select(`
-          *,
-          home_team_details:teams!matches_home_team_fkey(id, name),
-          away_team_details:teams!matches_away_team_fkey(id, name)
-        `);
-
-      if (error) throw error;
-
-      const updatedAdminMatch = convertToAdminMatch({
-        ...data[0],
-        homeTeamName: data[0].home_team_details?.name || '',
-        awayTeamName: data[0].away_team_details?.name || ''
-      });
-
-      setMatches(matches.map(m => 
-        m.id === selectedMatch.id ? updatedAdminMatch : m
-      ));
-
-      toast({
-        title: "Partida atualizada",
-        description: "A partida foi atualizada com sucesso."
-      });
-
-      resetForm();
-      setSelectedMatch(null);
-      setActiveTab('list');
-    } catch (error) {
-      console.error('Error updating match:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao atualizar partida",
-        description: "Não foi possível atualizar a partida. Verifique se todos os campos estão preenchidos corretamente."
-      });
-    }
-  };
-
-  const handleDeleteMatch = async (matchId: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta partida?")) return;
-
-    try {
-      const { error } = await supabase
-        .from('matches')
-        .delete()
-        .eq('id', matchId);
-
-      if (error) throw error;
-
-      setMatches(matches.filter(match => match.id !== matchId));
-
-      toast({
-        title: "Partida removida",
-        description: "A partida foi removida com sucesso."
-      });
-    } catch (error) {
-      console.error('Error deleting match:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao remover partida",
-        description: "Não foi possível remover a partida."
-      });
-    }
-  };
-
-  const handleEditMatch = (match: AdminMatch) => {
-    setSelectedMatch(match);
-
-    setFormData({
-      date: match.date,
-      time: match.time,
-      location: match.location,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      homeScore: match.homeScore,
-      awayScore: match.awayScore,
-      status: mapStatusForForm(match.status),
-      category: match.category,
-      round: match.round || null,
-      championshipId: match.championshipId || null,
-    });
-
-    setActiveTab('edit');
-  };
-
-  const mapStatusForForm = (uiStatus: string): MatchStatus => {
-    if (uiStatus === 'in_progress') return 'in_progress';
-    if (uiStatus === 'completed') return 'completed';
-    if (uiStatus === 'scheduled') return 'scheduled';
-    if (uiStatus === 'postponed') return 'postponed';
-    if (uiStatus === 'canceled') return 'canceled';
+  // Update the function that handles team selection to properly type cast
+  const handleTeamSelection = (teamId: string, type: 'home' | 'away') => {
+    const selectedTeam = teams.find(team => team.id === teamId);
     
-    return 'scheduled';
+    if (type === 'home') {
+      setMatchData({
+        ...matchData,
+        home_team: teamId,
+        home_team_name: selectedTeam?.name || '',
+        home_team_logo: selectedTeam?.logo || ''
+      });
+    } else {
+      setMatchData({
+        ...matchData,
+        away_team: teamId,
+        away_team_name: selectedTeam?.name || '',
+        away_team_logo: selectedTeam?.logo || ''
+      });
+    }
   };
 
-  const mapStatusForDisplay = (dbStatus: string): string => {
-    if (dbStatus === 'in_progress') return 'Em andamento';
-    if (dbStatus === 'completed') return 'Finalizado';
-    if (dbStatus === 'scheduled') return 'Agendado';
-    if (dbStatus === 'postponed') return 'Adiado';
-    if (dbStatus === 'canceled') return 'Cancelado';
-    
-    return dbStatus;
-  };
-
-  const resetForm = () => {
-    setFormData({
-      date: '',
-      time: '',
-      location: '',
-      homeTeam: '',
-      awayTeam: '',
-      homeScore: null,
-      awayScore: null,
-      status: 'scheduled',
-      category: '',
-      round: null,
-      championshipId: null,
+  // Fix match status handling
+  const handleStatusChange = (status: string) => {
+    // Safely cast the status to MatchStatus
+    const matchStatus = status as MatchStatus;
+    setMatchData({
+      ...matchData,
+      status: matchStatus
     });
-  };
-
-  const validateForm = () => {
-    const requiredFields = ['date', 'time', 'location', 'homeTeam', 'awayTeam', 'category', 'status'] as const;
-    const missingFields = requiredFields.filter(field => !formData[field]);
-
-    if (missingFields.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Campos obrigatórios",
-        description: `Por favor, preencha os campos: ${missingFields.join(', ')}.`
-      });
-      return false;
-    }
-
-    if (formData.homeTeam === formData.awayTeam) {
-      toast({
-        variant: "destructive",
-        title: "Times inválidos",
-        description: "O time da casa e o time visitante devem ser diferentes."
-      });
-      return false;
-    }
-
-    return true;
-  };
-
-  const filteredMatches = matches.filter(match => {
-    const matchesSearch =
-      match.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (match.homeTeamName && match.homeTeamName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (match.awayTeamName && match.awayTeamName.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesCategory = filterCategory === "all" || match.category === filterCategory;
-    const matchesStatus = filterStatus === "all" || match.status === filterStatus;
-    const matchesChampionship = filterChampionship === "all" || match.championshipId === filterChampionship;
-
-    return matchesSearch && matchesCategory && matchesStatus && matchesChampionship;
-  });
-
-  const formatStatus = (status: MatchStatus): string => {
-    return mapStatusForDisplay(status);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[#1a237e]">Gerenciamento de Partidas</h2>
-        {activeTab === 'list' && (
-          <Button
-            onClick={() => setActiveTab('add')}
-            className="flex items-center gap-2 bg-[#1a237e] text-white hover:bg-blue-800"
-          >
-            <PlusCircle size={16} />
-            Adicionar Nova Partida
-          </Button>
-        )}
-      </div>
+    <div className="container mx-auto p-4">
+      <h2 className="text-2xl font-bold text-[#1a237e] mb-4">Gerenciar Partidas</h2>
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Escolha uma data</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date()
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Data da partida.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      {activeTab === 'list' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar partidas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div className="flex gap-2">
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="rounded-md border border-input px-3 py-2 text-sm"
-              >
-                <option value="all">Todas as Categorias</option>
-                <option value="SUB-11">SUB-11</option>
-                <option value="SUB-13">SUB-13</option>
-                <option value="SUB-15">SUB-15</option>
-                <option value="SUB-17">SUB-17</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded-md border border-input px-3 py-2 text-sm"
-              >
-                <option value="all">Todos os Status</option>
-                <option value="scheduled">Agendado</option>
-                <option value="in_progress">Em Andamento</option>
-                <option value="completed">Finalizado</option>
-                <option value="postponed">Adiado</option>
-                <option value="canceled">Cancelado</option>
-              </select>
-              <select
-                value={filterChampionship}
-                onChange={(e) => setFilterChampionship(e.target.value)}
-                className="rounded-md border border-input px-3 py-2 text-sm"
-              >
-                <option value="all">Todos os Campeonatos</option>
-                {championships.map(championship => (
-                  <option key={championship.id} value={championship.id}>{championship.name}</option>
-                ))}
-              </select>
-            </div>
+          <FormField
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Horário</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Horário da partida.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-4">
+            <FormField
+              control={form.control}
+              name="home_team"
+              render={({ field }) => (
+                <FormItem className="w-1/2">
+                  <FormLabel>Time da Casa</FormLabel>
+                  <Select onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o time da casa" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Time que jogará em casa.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="away_team"
+              render={({ field }) => (
+                <FormItem className="w-1/2">
+                  <FormLabel>Time Visitante</FormLabel>
+                  <Select onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o time visitante" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Time que jogará como visitante.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          {isLoading ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Carregando partidas...</p>
-            </div>
-          ) : filteredMatches.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Nenhuma partida encontrada.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMatches.map(match => (
-                <Card key={match.id} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="p-4">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <p className="font-semibold">Data:</p>
-                          <p>{new Date(match.date).toLocaleDateString('pt-BR')}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Hora:</p>
-                          <p>{match.time}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Local:</p>
-                          <p>{match.location}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Categoria:</p>
-                          <p>{match.category}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Status:</p>
-                          <p>{formatStatus(match.status)}</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Campeonato:</p>
-                          <p>{championships.find(c => c.id === match.championshipId)?.name || 'Nenhum'}</p>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <p className="font-semibold">Times:</p>
-                        <p>{match.homeTeamName} x {match.awayTeamName}</p>
-                      </div>
-                      <div className="mt-2">
-                        <p className="font-semibold">Placar:</p>
-                        <p>{match.homeScore !== null ? match.homeScore : '-'} x {match.awayScore !== null ? match.awayScore : '-'}</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-end p-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white"
-                        onClick={() => handleEditMatch(match)}
-                      >
-                        <Pencil size={16} className="text-blue-800" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 bg-white/80 hover:bg-white ml-2"
-                        onClick={() => handleDeleteMatch(match.id)}
-                      >
-                        <Trash2 size={16} className="text-red-600" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+          <div className="flex gap-4">
+            <FormField
+              control={form.control}
+              name="home_score"
+              render={({ field }) => (
+                <FormItem className="w-1/2">
+                  <FormLabel>Placar Casa</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Gols do time da casa" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Número de gols marcados pelo time da casa.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      {(activeTab === 'add' || activeTab === 'edit') && (
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-xl font-bold mb-4 text-[#1a237e]">
-              {activeTab === 'add' ? 'Adicionar Nova Partida' : 'Editar Partida'}
-            </h3>
+            <FormField
+              control={form.control}
+              name="away_score"
+              render={({ field }) => (
+                <FormItem className="w-1/2">
+                  <FormLabel>Placar Visitante</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Gols do time visitante" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Número de gols marcados pelo time visitante.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Data *</Label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="time">Hora *</Label>
-                <Input
-                  id="time"
-                  name="time"
-                  type="time"
-                  value={formData.time}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Local *</Label>
-                <Input
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Ex: Campo do Instituto - Santa Maria, DF"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria *</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  placeholder="Ex: SUB-11"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="homeTeam">Time da Casa *</Label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, homeTeam: value }))}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o time da casa" defaultValue={formData.homeTeam} />
-                  </SelectTrigger>
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Categoria</FormLabel>
+                <Select onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a categoria" />
+                    </SelectTrigger>
+                  </FormControl>
                   <SelectContent>
-                    {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                    <SelectItem value="Sub-15">Sub-15</SelectItem>
+                    <SelectItem value="Sub-17">Sub-17</SelectItem>
+                    <SelectItem value="Sub-20">Sub-20</SelectItem>
+                    <SelectItem value="Profissional">Profissional</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Categoria da partida.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Agendado</SelectItem>
+                    <SelectItem value="live">Ao vivo</SelectItem>
+                    <SelectItem value="in_progress">Em progresso</SelectItem>
+                    <SelectItem value="finished">Finalizado</SelectItem>
+                    <SelectItem value="completed">Completo</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="postponed">Adiado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Status da partida.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Localização</FormLabel>
+                <FormControl>
+                  <Input placeholder="Local da partida" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Local onde a partida será realizada.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="round"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rodada</FormLabel>
+                <FormControl>
+                  <Input placeholder="Rodada da partida" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Rodada em que a partida será realizada.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="championship_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Campeonato</FormLabel>
+                <Select onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o campeonato" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {championships.map((championship) => (
+                      <SelectItem key={championship.id} value={championship.id}>{championship.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+                <FormDescription>
+                  Campeonato ao qual a partida pertence.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <div className="space-y-2">
-                <Label htmlFor="awayTeam">Time Visitante *</Label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, awayTeam: value }))}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o time visitante" defaultValue={formData.awayTeam} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="homeScore">Placar Time da Casa</Label>
-                <Input
-                  id="homeScore"
-                  name="homeScore"
-                  type="number"
-                  value={formData.homeScore || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, homeScore: e.target.value === '' ? null : parseInt(e.target.value) }))}
-                  placeholder="Ex: 2"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="awayScore">Placar Time Visitante</Label>
-                <Input
-                  id="awayScore"
-                  name="awayScore"
-                  type="number"
-                  value={formData.awayScore || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, awayScore: e.target.value === '' ? null : parseInt(e.target.value) }))}
-                  placeholder="Ex: 1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-input px-3 py-2"
-                >
-                  <option value="scheduled">Agendado</option>
-                  <option value="in_progress">Em andamento</option>
-                  <option value="completed">Finalizado</option>
-                  <option value="postponed">Adiado</option>
-                  <option value="canceled">Cancelado</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="round">Rodada</Label>
-                <Input
-                  id="round"
-                  name="round"
-                  value={formData.round || ''}
-                  onChange={handleInputChange}
-                  placeholder="Ex: Final"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="championshipId">Campeonato</Label>
-                <select
-                  id="championshipId"
-                  name="championshipId"
-                  value={formData.championshipId || ''}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-input px-3 py-2"
-                >
-                  <option value="">Nenhum</option>
-                  {championships.map(championship => (
-                    <option key={championship.id} value={championship.id}>{championship.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  resetForm();
-                  setSelectedMatch(null);
-                  setActiveTab('list');
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-[#1a237e] text-white hover:bg-blue-800"
-                onClick={activeTab === 'add' ? handleAddMatch : handleUpdateMatch}
-              >
-                {activeTab === 'add' ? 'Adicionar Partida' : 'Atualizar Partida'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <Button type="submit">Criar Partida</Button>
+        </form>
+      </Form>
     </div>
   );
 };

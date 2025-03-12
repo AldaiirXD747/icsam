@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './App.css';
 
 // Pages
@@ -45,6 +46,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './hooks/auth/AuthContext';
 import { withAuth } from './hooks/auth/withAuth';
 
+// Create a client
+const queryClient = new QueryClient();
+
+// Apply withAuth HOC
 const AdminDashboardAuth = withAuth(AdminDashboard, ['admin']);
 const AdminStandingsAuth = withAuth(AdminStandings, ['admin']);
 const UpdateMatchResultsAuth = withAuth(UpdateMatchResults, ['admin']);
@@ -57,42 +62,44 @@ const TeamDashboardAuth = withAuth(TeamDashboard, ['team', 'team_manager']);
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/sobre" element={<Sobre />} />
-            <Route path="/times" element={<Teams />} />
-            <Route path="/time/:teamId" element={<TeamDetail />} />
-            <Route path="/campeonatos" element={<Championships />} />
-            <Route path="/campeonato/:championshipId" element={<Championship />} />
-            <Route path="/partidas" element={<Matches />} />
-            <Route path="/partida/:matchId" element={<MatchDetail />} />
-            <Route path="/jogador/:playerId" element={<PlayerDetail />} />
-            <Route path="/tabelas" element={<Standings />} />
-            <Route path="/estatisticas" element={<Statistics />} />
-            <Route path="/galeria" element={<Gallery />} />
-            <Route path="/contato" element={<Contact />} />
-            <Route path="/transparencia" element={<Transparencia />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/team-login" element={<TeamLogin />} />
-            <Route path="/reset" element={<Reset />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/admin" element={<AdminDashboardAuth />} />
-            <Route path="/admin/tabelas" element={<AdminStandingsAuth />} />
-            <Route path="/admin/update-match-results" element={<UpdateMatchResultsAuth />} />
-            <Route path="/admin/add-match-data" element={<AddMatchDataPageAuth />} />
-            <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPageAuth />} />
-            <Route path="/admin/load-base-forte-data" element={<LoadBaseForteDataAuth />} />
-            <Route path="/admin/database-cleanup" element={<DatabaseCleanupAuth />} />
-            <Route path="/team-dashboard" element={<TeamDashboardAuth />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <ScrollToTop />
-          <BackToTopButton />
-          <Toaster />
-        </AuthProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/sobre" element={<Sobre />} />
+              <Route path="/times" element={<Teams />} />
+              <Route path="/time/:teamId" element={<TeamDetail />} />
+              <Route path="/campeonatos" element={<Championships />} />
+              <Route path="/campeonato/:championshipId" element={<Championship />} />
+              <Route path="/partidas" element={<Matches />} />
+              <Route path="/partida/:matchId" element={<MatchDetail />} />
+              <Route path="/jogador/:playerId" element={<PlayerDetail />} />
+              <Route path="/tabelas" element={<Standings />} />
+              <Route path="/estatisticas" element={<Statistics />} />
+              <Route path="/galeria" element={<Gallery />} />
+              <Route path="/contato" element={<Contact />} />
+              <Route path="/transparencia" element={<Transparencia />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/team-login" element={<TeamLogin />} />
+              <Route path="/reset" element={<Reset />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/admin" element={<AdminDashboardAuth />} />
+              <Route path="/admin/tabelas" element={<AdminStandingsAuth />} />
+              <Route path="/admin/update-match-results" element={<UpdateMatchResultsAuth />} />
+              <Route path="/admin/add-match-data" element={<AddMatchDataPageAuth />} />
+              <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPageAuth />} />
+              <Route path="/admin/load-base-forte-data" element={<LoadBaseForteDataAuth />} />
+              <Route path="/admin/database-cleanup" element={<DatabaseCleanupAuth />} />
+              <Route path="/team-dashboard" element={<TeamDashboardAuth />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <ScrollToTop />
+            <BackToTopButton />
+            <Toaster />
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     </div>
   );
 }

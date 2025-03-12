@@ -1,4 +1,3 @@
-
 export interface ChampionshipStanding {
   position: number;
   team_id: string;
@@ -26,7 +25,6 @@ export type MatchStatus =
   | 'finalizado' 
   | 'encerrado';
 
-// Additional types needed for admin components
 export interface ChampionshipMatch {
   id: string;
   date: string;
