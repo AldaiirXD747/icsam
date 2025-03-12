@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,6 @@ const LoadBaseForteData = () => {
     
     try {
       // First, clean up any problematic data
-      await removeDuplicateMatches();
       await removeGhostMatches();
       
       // Update with the Base Forte results
