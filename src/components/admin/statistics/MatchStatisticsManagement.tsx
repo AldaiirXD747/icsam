@@ -42,7 +42,6 @@ import * as z from "zod";
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from 'lucide-react';
-import { MatchWithPlayers } from '@/types/championship';
 
 interface Player {
   id: string;
@@ -103,23 +102,8 @@ const MatchStatisticsManagement: React.FC = () => {
           throw error;
         }
         
-        // Convert the JSON strings to actual arrays of Player objects
-        return (data as MatchWithPlayers[]).map(match => {
-          // Parse the JSON home_players and away_players
-          const homePlayers = Array.isArray(match.home_players) 
-            ? match.home_players.map(p => p as unknown as Player)
-            : [];
-          
-          const awayPlayers = Array.isArray(match.away_players) 
-            ? match.away_players.map(p => p as unknown as Player)
-            : [];
-          
-          return {
-            ...match,
-            home_players: homePlayers,
-            away_players: awayPlayers
-          } as Match;
-        });
+        // Convert the data to the Match type
+        return data as Match[];
       } catch (error) {
         console.error("Erro ao buscar partidas:", error);
         return [];
@@ -354,9 +338,9 @@ const MatchStatisticsManagement: React.FC = () => {
                             <Input 
                               type="number" 
                               min={1} 
-                              max={10} 
+                              max={10}
                               {...field} 
-                              onChange={e => field.onChange(parseInt(e.target.value))} 
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
                             />
                           </FormControl>
                           <FormMessage />
@@ -373,11 +357,12 @@ const MatchStatisticsManagement: React.FC = () => {
                           <FormControl>
                             <Input 
                               type="number" 
-                              min={1} 
-                              max={120} 
-                              placeholder="Opcional" 
-                              {...field} 
-                              onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)} 
+                              min={1}
+                              max={120}
+                              placeholder="Ex: 23"
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                             />
                           </FormControl>
                           <FormMessage />
@@ -392,18 +377,20 @@ const MatchStatisticsManagement: React.FC = () => {
                         <FormItem>
                           <FormLabel>Tempo</FormLabel>
                           <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
+                            onValueChange={field.onChange}
+                            value={field.value || ''}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Opcional" />
+                                <SelectValue placeholder="Selecione o tempo" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="first_half">Primeiro Tempo</SelectItem>
-                              <SelectItem value="second_half">Segundo Tempo</SelectItem>
-                              <SelectItem value="extra_time">Prorrogação</SelectItem>
+                              <SelectItem value="first">1º Tempo</SelectItem>
+                              <SelectItem value="second">2º Tempo</SelectItem>
+                              <SelectItem value="extra_first">1º Tempo Extra</SelectItem>
+                              <SelectItem value="extra_second">2º Tempo Extra</SelectItem>
+                              <SelectItem value="penalties">Pênaltis</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -412,20 +399,11 @@ const MatchStatisticsManagement: React.FC = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="mt-4 bg-blue-primary hover:bg-blue-700"
-                  >
+                  <Button type="submit" className="mt-4">
                     Adicionar Estatística
                   </Button>
                 </form>
               </Form>
-            )}
-
-            {selectedTeam && teamPlayers.length === 0 && (
-              <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
-                <p>Não há jogadores cadastrados para este time. Adicione jogadores ao time antes de registrar estatísticas.</p>
-              </div>
             )}
           </div>
         </CardContent>

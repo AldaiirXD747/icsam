@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -205,7 +204,7 @@ const MatchManagement = () => {
         home_score: values.home_score ? parseInt(values.home_score, 10) : null,
         away_score: values.away_score ? parseInt(values.away_score, 10) : null,
         category: values.category,
-        status: values.status,
+        status: values.status as MatchStatus,
         location: values.location,
         round: values.round,
         championship_id: values.championship_id,
@@ -258,7 +257,7 @@ const MatchManagement = () => {
         home_score: values.home_score ? parseInt(values.home_score, 10) : null,
         away_score: values.away_score ? parseInt(values.away_score, 10) : null,
         category: values.category,
-        status: values.status,
+        status: values.status as MatchStatus,
         location: values.location,
         round: values.round,
         championship_id: values.championship_id,

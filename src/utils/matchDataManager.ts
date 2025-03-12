@@ -11,8 +11,10 @@ export interface MatchData {
   category: string;
   championship_id: string;
   round?: string;
-  homeTeamName?: string;  // Add this field
-  awayTeamName?: string;  // Add this field
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 // Add the missing function
