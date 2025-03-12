@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -236,7 +235,7 @@ const DataSyncManager = () => {
           
           <TabsContent value="reset">
             <div className="space-y-4">
-              <Alert variant="warning">
+              <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Atenção: Reset de Resultados</AlertTitle>
                 <AlertDescription>
@@ -247,7 +246,7 @@ const DataSyncManager = () => {
               
               <div className="flex flex-col gap-4">
                 <Button 
-                  variant="warning" 
+                  variant="destructive" 
                   onClick={handleResetResults}
                   disabled={isResetting}
                   className="flex items-center bg-amber-500 hover:bg-amber-600 text-white"

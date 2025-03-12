@@ -1,4 +1,3 @@
-
 export interface ChampionshipStanding {
   position: number;
   team_id: string;
@@ -48,8 +47,8 @@ export interface ChampionshipMatch {
   away_team_logo?: string;
   
   // Camel case alternatives for frontend compatibility
-  homeTeam?: string;
-  awayTeam?: string;
+  homeTeam?: Team;
+  awayTeam?: Team;
   homeScore?: number | null;
   awayScore?: number | null;
   championshipId?: string | null;
@@ -57,6 +56,12 @@ export interface ChampionshipMatch {
   awayTeamName?: string;
   homeTeamLogo?: string;
   awayTeamLogo?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  logo?: string;
 }
 
 export interface ChampionshipTeam {
@@ -98,16 +103,16 @@ export interface MatchWithPlayers {
   away_players: any[];
 }
 
+export type UserRole = 'admin' | 'team_manager';
+
 export interface UserAccount {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   created_at: string;
   teams?: any[]; // For compatibility with UserManagement component
 }
-
-export type UserRole = 'admin' | 'team' | 'user' | 'team_manager';
 
 export interface CreateUserPayload {
   name: string;
