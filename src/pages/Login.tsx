@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ui/use-toast';
 import LoginForm from '@/components/auth/LoginForm';
 import ResetSuccessMessage from '@/components/auth/ResetSuccessMessage';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth';
 
 // Define the master admin email
 const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
@@ -51,7 +51,7 @@ const Login = () => {
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');
     setIsRedirecting(true);
-    // Adicionar um timeout para garantir que o redirecionamento aconteça após as mudanças de estado
+    // Add a timeout to ensure the redirection happens after state changes
     setTimeout(() => {
       navigate('/admin', { replace: true });
     }, 100);

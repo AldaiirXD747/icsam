@@ -1,5 +1,5 @@
 
-import { AuthProvider, AuthProviderWrapper, useAuth, withAuth } from './auth';
+import { AuthProvider, useAuth, withAuth } from './auth';
 
-export { AuthProvider, AuthProviderWrapper, useAuth, withAuth };
+export { AuthProvider, useAuth, withAuth };
 export default useAuth;
