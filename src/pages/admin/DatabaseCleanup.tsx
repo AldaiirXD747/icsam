@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2, Trash2, DatabaseIcon, AlertTriangle, CheckCircle } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { removeGhostMatches, removeSpecificMatches } from '@/utils/matchDataManager';
+import { cleanMatchesOnly } from '@/utils/dataMigration';
 
 const DatabaseCleanup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +99,49 @@ const DatabaseCleanup = () => {
     }
   };
 
+  const handleRemoveAllMatches = async () => {
+    if (!confirm("Tem certeza que deseja remover TODAS as partidas? Essa operação não pode ser desfeita e removerá todas as estatísticas, classificações e resultados.")) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setResults([]);
+      
+      setResults(prev => [...prev, "Iniciando remoção de TODAS as partidas..."]);
+      
+      const result = await cleanMatchesOnly();
+      
+      if (result.success) {
+        toast({
+          title: "Operação concluída",
+          description: "Todas as partidas removidas com sucesso.",
+        });
+        
+        setResults(prev => [...prev, `✅ ${result.message}`]);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro na operação",
+          description: "Houve um erro durante a remoção das partidas.",
+        });
+        
+        setResults(prev => [...prev, `❌ Erro: ${result.error}`]);
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro inesperado",
+        description: "Ocorreu um erro durante a remoção das partidas.",
+      });
+      
+      setResults(prev => [...prev, `❌ Erro inesperado: ${error.message || 'Desconhecido'}`]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="container mx-auto py-8">
@@ -179,6 +223,49 @@ const DatabaseCleanup = () => {
                     <>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Remover Partidas Específicas
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="mb-6 col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+                Remover TODAS as Partidas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Esta operação irá remover <strong>TODAS</strong> as partidas do sistema, incluindo todas as estatísticas, 
+                  gols, eventos, cartões e classificações. Use com extrema cautela!
+                </p>
+                
+                <div className="flex flex-col space-y-2 text-sm text-red-600 border border-red-300 rounded-md p-3 bg-red-50">
+                  <p className="font-bold">⚠️ ATENÇÃO! OPERAÇÃO DESTRUTIVA!</p>
+                  <p>⚠️ Esta operação excluirá TODAS as partidas e dados relacionados!</p>
+                  <p>⚠️ Esta operação NÃO PODE ser desfeita!</p>
+                  <p>⚠️ Os times e campeonatos serão mantidos, mas todos os jogos e estatísticas serão removidos.</p>
+                </div>
+                
+                <Button 
+                  onClick={handleRemoveAllMatches}
+                  disabled={isLoading}
+                  variant="destructive"
+                  className="w-full bg-red-600 hover:bg-red-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Removendo todas as partidas...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      REMOVER TODAS AS PARTIDAS
                     </>
                   )}
                 </Button>
