@@ -16,17 +16,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { CalendarIcon, Filter, PlusCircle } from "lucide-react"
+import { CalendarIcon, Filter, PlusCircle, Pencil, Trash2, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { supabase } from "@/integrations/supabase/client";
 import { ChampionshipMatch, MatchStatus, Team } from '@/types/championship';
-import { getAllMatches } from '@/lib/matchApi';
+import { getAllMatches, updateMatch, deleteMatch } from '@/lib/matchApi';
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
   date: z.date({
@@ -64,8 +82,28 @@ const MatchManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categories, setCategories] = useState<string[]>([]);
+  const [editMatch, setEditMatch] = useState<ChampionshipMatch | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [matchToDelete, setMatchToDelete] = useState<string | null>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      date: new Date(),
+      time: '16:00',
+      home_team: '',
+      away_team: '',
+      home_score: null,
+      away_score: null,
+      category: 'Sub-17',
+      status: 'scheduled',
+      location: '',
+      round: null,
+      championship_id: null,
+    },
+  })
+
+  const editForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date(),
@@ -94,6 +132,25 @@ const MatchManagement = () => {
       setFilteredMatches(matches.filter(match => match.category === selectedCategory));
     }
   }, [selectedCategory, matches]);
+
+  useEffect(() => {
+    // Reset edit form when a match is selected for editing
+    if (editMatch) {
+      editForm.reset({
+        date: new Date(editMatch.date),
+        time: editMatch.time,
+        home_team: editMatch.home_team,
+        away_team: editMatch.away_team,
+        home_score: editMatch.home_score !== null ? String(editMatch.home_score) : null,
+        away_score: editMatch.away_score !== null ? String(editMatch.away_score) : null,
+        category: editMatch.category,
+        status: editMatch.status,
+        location: editMatch.location,
+        round: editMatch.round,
+        championship_id: editMatch.championship_id || null,
+      });
+    }
+  }, [editMatch, editForm]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -185,6 +242,88 @@ const MatchManagement = () => {
         title: "Erro ao criar partida",
         description: "Ocorreu um erro ao criar a partida."
       });
+    }
+  };
+
+  const onEdit = async (values: z.infer<typeof formSchema>) => {
+    if (!editMatch) return;
+    
+    try {
+      // Convert form values to match the database schema
+      const matchToUpdate = {
+        date: format(values.date, 'yyyy-MM-dd'),
+        time: values.time,
+        home_team: values.home_team,
+        away_team: values.away_team,
+        home_score: values.home_score ? parseInt(values.home_score, 10) : null,
+        away_score: values.away_score ? parseInt(values.away_score, 10) : null,
+        category: values.category,
+        status: values.status,
+        location: values.location,
+        round: values.round,
+        championship_id: values.championship_id,
+      };
+
+      const success = await updateMatch(editMatch.id, matchToUpdate);
+
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Partida atualizada com sucesso!",
+        });
+        setIsEditDialogOpen(false);
+        setEditMatch(null);
+        fetchData();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar partida",
+          description: "Ocorreu um erro ao atualizar a partida."
+        });
+      }
+    } catch (error) {
+      console.error('Error updating match:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar partida",
+        description: "Ocorreu um erro ao atualizar a partida."
+      });
+    }
+  };
+
+  const handleEdit = (match: ChampionshipMatch) => {
+    setEditMatch(match);
+    setIsEditDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!matchToDelete) return;
+    
+    try {
+      const success = await deleteMatch(matchToDelete);
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Partida excluída com sucesso!",
+        });
+        fetchData();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir partida",
+          description: "Ocorreu um erro ao excluir a partida."
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir partida",
+        description: "Ocorreu um erro ao excluir a partida."
+      });
+    } finally {
+      setMatchToDelete(null);
     }
   };
 
@@ -286,6 +425,26 @@ const MatchManagement = () => {
                       <Badge className={getStatusColor(match.status)}>
                         {getStatusText(match.status)}
                       </Badge>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(match)}
+                        className="h-8 px-2"
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setMatchToDelete(match.id)}
+                        className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -579,6 +738,318 @@ const MatchManagement = () => {
           </Form>
         </div>
       )}
+
+      {/* Edit Match Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Partida</DialogTitle>
+            <DialogDescription>
+              Edite os detalhes da partida. Pressione salvar quando terminar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEdit)} className="space-y-6">
+              <FormField
+                control={editForm.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Escolha uma data</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Data da partida.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horário</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Horário da partida.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="home_team"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Time da Casa</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o time da casa" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Time que jogará em casa.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="away_team"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Time Visitante</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o time visitante" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {teams.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Time que jogará como visitante.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="home_score"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Placar Casa</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Gols do time da casa" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Número de gols marcados pelo time da casa.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editForm.control}
+                  name="away_score"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Placar Visitante</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Gols do time visitante" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Número de gols marcados pelo time visitante.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={editForm.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a categoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Sub-15">Sub-15</SelectItem>
+                        <SelectItem value="Sub-17">Sub-17</SelectItem>
+                        <SelectItem value="Sub-20">Sub-20</SelectItem>
+                        <SelectItem value="Profissional">Profissional</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Categoria da partida.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="scheduled">Agendado</SelectItem>
+                        <SelectItem value="live">Ao vivo</SelectItem>
+                        <SelectItem value="in_progress">Em progresso</SelectItem>
+                        <SelectItem value="finished">Finalizado</SelectItem>
+                        <SelectItem value="completed">Completo</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                        <SelectItem value="postponed">Adiado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Status da partida.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Local da partida" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Local onde a partida será realizada.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="round"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rodada</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Rodada da partida" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Rodada em que a partida será realizada.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="championship_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campeonato</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o campeonato" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {championships.map((championship) => (
+                          <SelectItem key={championship.id} value={championship.id}>{championship.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Campeonato ao qual a partida pertence.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                  type="button"
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Salvar Alterações</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!matchToDelete} onOpenChange={(open) => !open && setMatchToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Partida</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a partida do sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
