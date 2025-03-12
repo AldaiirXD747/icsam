@@ -1,138 +1,120 @@
 
 import React from 'react';
-
-type MatchStatus = 'scheduled' | 'live' | 'finished';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { Clock, MapPin } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ChampionshipMatch, MatchStatus } from '@/types/championship';
 
 interface MatchCardProps {
-  id: number;
-  homeTeam: {
-    name: string;
-    logo: string;
-    score?: number;
-  };
-  awayTeam: {
-    name: string;
-    logo: string;
-    score?: number;
-  };
-  category: string;
-  date: string;
-  time: string;
-  group: string;
-  status: MatchStatus;
-  venue?: string;
+  match: ChampionshipMatch;
 }
 
-const StatusBadge: React.FC<{ status: MatchStatus }> = ({ status }) => {
-  const statusMap = {
-    scheduled: { text: 'Agendado', classes: 'bg-gray-100 text-gray-800' },
-    live: { text: 'Ao Vivo', classes: 'bg-red-100 text-red-800 animate-pulse' },
-    finished: { text: 'Finalizado', classes: 'bg-blue-100 text-blue-800' },
+const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
+  const getStatusBadgeColor = (status: MatchStatus) => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'live':
+      case 'in_progress':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'finished':
+      case 'completed':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'postponed':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
-  const { text, classes } = statusMap[status];
+  const getStatusLabel = (status: MatchStatus) => {
+    switch (status) {
+      case 'scheduled':
+        return 'Agendado';
+      case 'live':
+        return 'Ao vivo';
+      case 'in_progress':
+        return 'Em andamento';
+      case 'finished':
+      case 'completed':
+        return 'Finalizado';
+      case 'cancelled':
+        return 'Cancelado';
+      case 'postponed':
+        return 'Adiado';
+      default:
+        return status;
+    }
+  };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${classes}`}>
-      {text}
-    </span>
-  );
-};
-
-const MatchCard: React.FC<MatchCardProps> = ({
-  id,
-  homeTeam,
-  awayTeam,
-  category,
-  date,
-  time,
-  group,
-  status,
-  venue = "Campo Sintético - Quadra 120",
-}) => {
-  const showScore = status === 'live' || status === 'finished';
-  const defaultLogo = "/placeholder.svg";
-
-  // Ensure we have valid team logos - if not, use placeholder
-  const homeLogo = homeTeam.logo || defaultLogo;
-  const awayLogo = awayTeam.logo || defaultLogo;
-
-  return (
-    <div className={`glass-card overflow-hidden transition-all duration-300 hover:shadow-md ${status === 'finished' ? 'bg-gray-50' : ''}`}>
-      <div className={`px-4 py-2 flex justify-between items-center ${status === 'finished' ? 'bg-blue-800 text-white' : 'bg-blue-primary text-white'}`}>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium">{category}</span>
-          {group && (
-            <span className="text-xs px-2 py-0.5 bg-white bg-opacity-20 rounded-full">
-              Grupo {group}
-            </span>
-          )}
-        </div>
-        <StatusBadge status={status} />
-      </div>
-      
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-500">{date}</div>
-          <div className="text-sm font-medium">{time}</div>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          {/* Home Team */}
-          <div className="flex flex-col items-center w-2/5">
-            <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
-              <img 
-                src={homeLogo} 
-                alt={homeTeam.name} 
-                className="h-full object-contain"
-                onError={(e) => {
-                  // If image fails to load, replace with placeholder
-                  (e.target as HTMLImageElement).src = defaultLogo;
-                }}
-              />
+    <Link to={`/match/${match.id}`}>
+      <Card className="h-full hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 text-gray-400 mr-1" />
+              <span className="text-sm text-gray-600">{match.time}</span>
             </div>
-            <div className="text-center">
-              <p className="font-semibold text-blue-primary line-clamp-2 text-sm">{homeTeam.name}</p>
-            </div>
+            <Badge className={getStatusBadgeColor(match.status)}>
+              {getStatusLabel(match.status)}
+            </Badge>
           </div>
           
-          {/* Score */}
-          <div className="flex items-center justify-center w-1/5">
-            {showScore ? (
-              <div className="text-2xl font-bold">
-                <span className={status === 'live' && homeTeam.score && homeTeam.score > (awayTeam.score || 0) ? 'text-lime-primary' : ''}>
-                  {homeTeam.score || 0}
-                </span>
-                <span className="mx-1">-</span>
-                <span className={status === 'live' && awayTeam.score && awayTeam.score > (homeTeam.score || 0) ? 'text-lime-primary' : ''}>
-                  {awayTeam.score || 0}
-                </span>
+          <div className="flex justify-between items-center my-4">
+            <div className="flex flex-col items-center w-2/5">
+              <div className="w-12 h-12 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-2">
+                <img 
+                  src={match.home_team_logo || '/placeholder.svg'} 
+                  alt={match.home_team_name} 
+                  className="w-10 h-10 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
               </div>
-            ) : (
-              <div className="text-lg font-semibold text-gray-400">vs</div>
-            )}
+              <span className="text-sm font-medium text-center line-clamp-1">{match.home_team_name}</span>
+            </div>
+            
+            <div className="w-1/5 flex flex-col items-center">
+              <div className="text-xl font-bold">
+                {match.home_score !== null ? match.home_score : '-'} 
+                <span className="mx-1">×</span>
+                {match.away_score !== null ? match.away_score : '-'}
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center w-2/5">
+              <div className="w-12 h-12 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center mb-2">
+                <img 
+                  src={match.away_team_logo || '/placeholder.svg'} 
+                  alt={match.away_team_name} 
+                  className="w-10 h-10 object-contain" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <span className="text-sm font-medium text-center line-clamp-1">{match.away_team_name}</span>
+            </div>
           </div>
           
-          {/* Away Team */}
-          <div className="flex flex-col items-center w-2/5">
-            <div className="h-16 w-16 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
-              <img 
-                src={awayLogo} 
-                alt={awayTeam.name} 
-                className="h-full object-contain"
-                onError={(e) => {
-                  // If image fails to load, replace with placeholder
-                  (e.target as HTMLImageElement).src = defaultLogo;
-                }}
-              />
+          <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+            <div className="flex items-center">
+              <MapPin className="h-3 w-3 mr-1" />
+              <span className="line-clamp-1">{match.location}</span>
             </div>
-            <div className="text-center">
-              <p className="font-semibold text-blue-primary line-clamp-2 text-sm">{awayTeam.name}</p>
-            </div>
+            <Badge variant="outline" className="bg-blue-50 text-xs">
+              {match.category}
+            </Badge>
           </div>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 };
 

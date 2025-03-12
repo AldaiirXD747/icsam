@@ -73,6 +73,7 @@ function App() {
               <Route path="/campeonatos/:id" element={<Championship />} />
               <Route path="/partidas" element={<Matches />} />
               <Route path="/match/:id" element={<MatchDetail />} />
+              <Route path="/partida/:id" element={<MatchDetail />} /> {/* Added this route as an alternative */}
               <Route path="/estatisticas" element={<Statistics />} />
               <Route path="/classificacao" element={<Standings />} />
               <Route path="/admin" element={<AdminDashboard />} />

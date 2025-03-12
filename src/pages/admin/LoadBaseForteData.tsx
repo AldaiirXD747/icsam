@@ -1,71 +1,48 @@
+
 import React, { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Award, Calendar, ChevronRight, Clock, Database, FileCheck, Loader2, RefreshCw, Users2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { updateBaseForteResults } from '@/utils/baseForteUpdater';
+import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import AdminNav from '@/components/admin/AdminNav';
+import AdminLayout from '@/components/admin/AdminLayout';
+import { populateBaseForteMatches } from '@/utils/baseForteMatches';
 import { correctAllMatchDates, removeDuplicateMatches, removeGhostMatches } from '@/utils/matchDataManager';
 
 const LoadBaseForteData = () => {
-  const [loading, setLoading] = useState(false);
-  const [resultStatus, setResultStatus] = useState<{
-    success: boolean;
-    message?: string;
-    updates?: {success: boolean; message: string}[];
-  } | null>(null);
-  
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<{ step: string; success: boolean; message: string }[]>([]);
 
-  const handleUpdateBaseForteData = async () => {
+  const handleLoadBaseForteMatches = async () => {
     setLoading(true);
-    setResultStatus(null);
+    setResults([]);
     
     try {
-      // First, clean up any problematic data
-      await removeGhostMatches();
-      
-      // Update with the Base Forte results
-      const result = await updateBaseForteResults();
-      
-      console.log("Update result:", result);
+      const result = await populateBaseForteMatches();
       
       if (result.success) {
-        setResultStatus({
-          success: true,
-          message: "Dados do Campeonato Base Forte 2024 atualizados com sucesso!",
-          updates: result.updates
-        });
-        
+        setResults([{ step: 'Carga de partidas Base Forte', success: true, message: result.message || 'Partidas carregadas com sucesso!' }]);
         toast({
-          title: "Dados atualizados!",
-          description: "Os dados do Base Forte 2024 foram carregados com sucesso.",
+          title: "Sucesso!",
+          description: "Dados do Base Forte carregados com sucesso.",
           variant: "default",
         });
       } else {
-        setResultStatus({
-          success: false,
-          message: `Erro ao atualizar dados: ${result.error || 'Erro desconhecido'}`,
-          updates: result.updates
-        });
-        
+        setResults([{ step: 'Carga de partidas Base Forte', success: false, message: result.error || 'Erro ao carregar partidas.' }]);
         toast({
-          title: "Erro",
-          description: `Não foi possível carregar todos os dados: ${result.error || 'Erro desconhecido'}`,
+          title: "Erro!",
+          description: result.error || "Erro desconhecido ao carregar dados.",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Error updating Base Forte data:", error);
-      
-      setResultStatus({
-        success: false,
-        message: `Erro inesperado: ${error instanceof Error ? error.message : 'Desconhecido'}`,
-      });
-      
+      console.error("Error loading Base Forte data:", error);
+      setResults([{ step: 'Carga de partidas Base Forte', success: false, message: error instanceof Error ? error.message : 'Erro desconhecido' }]);
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao processar os dados.",
+        title: "Erro!",
+        description: "Erro ao carregar dados do Base Forte.",
         variant: "destructive",
       });
     } finally {
@@ -73,155 +50,165 @@ const LoadBaseForteData = () => {
     }
   };
 
+  const handleDataCleanup = async () => {
+    setLoading(true);
+    
+    const results = [];
+    
+    // Step 1: Remove ghost matches
+    try {
+      const resultGhost = await removeGhostMatches();
+      results.push({
+        step: "Remoção de partidas fantasmas",
+        success: resultGhost.success,
+        message: resultGhost.message || resultGhost.error || ""
+      });
+    } catch (error) {
+      results.push({
+        step: "Remoção de partidas fantasmas", 
+        success: false, 
+        message: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+    
+    // Step 2: Remove duplicate matches
+    try {
+      const resultDuplicates = await removeDuplicateMatches();
+      results.push({
+        step: "Remoção de partidas duplicadas",
+        success: resultDuplicates.success,
+        message: resultDuplicates.message || resultDuplicates.error || ""
+      });
+    } catch (error) {
+      results.push({
+        step: "Remoção de partidas duplicadas", 
+        success: false, 
+        message: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+    
+    // Step 3: Correct all match dates
+    try {
+      const resultDates = await correctAllMatchDates();
+      results.push({
+        step: "Correção de datas",
+        success: resultDates.success,
+        message: resultDates.message || resultDates.error || ""
+      });
+    } catch (error) {
+      results.push({
+        step: "Correção de datas", 
+        success: false, 
+        message: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+    
+    setResults(results);
+    setLoading(false);
+    
+    const allSuccess = results.every(r => r.success);
+    
+    toast({
+      title: allSuccess ? "Limpeza concluída!" : "Limpeza parcial",
+      description: allSuccess 
+        ? "Todas as etapas de limpeza foram concluídas com sucesso." 
+        : "Algumas etapas de limpeza não foram concluídas com sucesso.",
+      variant: allSuccess ? "default" : "destructive",
+    });
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Carregar Dados do Base Forte 2024</h1>
-      
-      <Tabs defaultValue="load">
-        <TabsList className="mb-4">
-          <TabsTrigger value="load">Carregar Dados</TabsTrigger>
-          <TabsTrigger value="info">Informações</TabsTrigger>
-        </TabsList>
+    <AdminLayout>
+      <div className="container mx-auto p-4">
+        <h2 className="text-2xl font-bold mb-6">Carregar Dados Base Forte</h2>
         
-        <TabsContent value="load">
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Carregar Partidas</CardTitle>
+            <CardDescription>
+              Carrega todas as partidas do campeonato Base Forte 2025 conforme especificação.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-4">
+              Esta operação irá carregar todas as partidas do campeonato Base Forte 2025, incluindo resultados das partidas já realizadas e jogos agendados.
+              Os dados inseridos são:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-gray-600 mb-4 space-y-1">
+              <li>Primeira Rodada (08/02/2025)</li>
+              <li>Segunda Rodada (14-15/02/2025)</li>
+              <li>Terceira Rodada (22-23/02/2025)</li>
+              <li>Quarta Rodada (08/03/2025)</li>
+              <li>Quinta Rodada (09/03/2025) - Agendada</li>
+              <li>Placeholders para semifinais e finais</li>
+            </ul>
+            <p className="text-sm text-yellow-600 mb-4">
+              <AlertTriangle className="inline-block h-4 w-4 mr-1" />
+              A tabela de classificação será recalculada automaticamente após a inserção dos dados.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              variant="default" 
+              onClick={handleLoadBaseForteMatches}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Carregando...
+                </>
+              ) : (
+                "Carregar Partidas Base Forte"
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleDataCleanup}
+              disabled={loading}
+            >
+              Executar limpeza de dados
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {results.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Database className="mr-2 h-5 w-5" />
-                Atualizar Base de Dados do Campeonato
-              </CardTitle>
-              <CardDescription>
-                Carrega os resultados das partidas do campeonato Base Forte 2024.
-              </CardDescription>
+              <CardTitle>Resultados</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">Período:</span>
-                    <span>08/02/2024 a 22/03/2024</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Users2 className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">Times:</span>
-                    <span>10 equipes em 2 categorias (SUB-11 e SUB-13)</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Award className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">Categorias:</span>
-                    <span>SUB-11 e SUB-13</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <FileCheck className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">Dados carregados:</span>
-                    <span>Partidas, placares, categorias e datas</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start space-y-4">
-              <Button 
-                disabled={loading} 
-                onClick={handleUpdateBaseForteData} 
-                className="w-full sm:w-auto"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Carregando dados...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Atualizar Dados do Base Forte 2024
-                  </>
-                )}
-              </Button>
-              
-              {resultStatus && (
-                <div className={`mt-4 w-full p-4 rounded-md ${resultStatus.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                  <p className="font-medium">{resultStatus.message}</p>
-                  
-                  {resultStatus.updates && resultStatus.updates.length > 0 && (
-                    <div className="mt-2 max-h-64 overflow-y-auto">
-                      <p className="font-medium">Detalhes da atualização:</p>
-                      <ul className="list-disc pl-5 mt-1 space-y-1">
-                        {resultStatus.updates.map((update, index) => (
-                          <li key={index} className={`${update.success ? 'text-green-700' : 'text-red-700'}`}>
-                            {update.message}
-                          </li>
-                        ))}
-                      </ul>
+                {results.map((result, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-4 rounded-md ${
+                      result.success ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      {result.success ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                      )}
+                      <div>
+                        <h3 className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+                          {result.step}
+                        </h3>
+                        <p className={`text-sm mt-1 ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+                          {result.message}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="info">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sobre o Processo de Carga</CardTitle>
-              <CardDescription>
-                Informações sobre o campeonato Base Forte 2024
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Como os dados são carregados?</h3>
-                <p className="text-gray-600 mt-1">
-                  Este processo carrega os resultados das partidas do campeonato Base Forte 2024, atualiza as classificações e gera estatísticas.
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Quais dados são carregados?</h3>
-                <ul className="list-disc pl-5 mt-1 space-y-1 text-gray-600">
-                  <li>Times participantes (Grupo A e B)</li>
-                  <li>Partidas da 1ª a 5ª rodada</li>
-                  <li>Resultados dos jogos disputados</li>
-                  <li>Datas, horários e locais das partidas</li>
-                  <li>Categorias (SUB-11 e SUB-13)</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Grupos do Campeonato</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  <div className="bg-blue-50 p-3 rounded-md">
-                    <h4 className="font-medium text-blue-800">Grupo A:</h4>
-                    <ul className="list-disc pl-5 mt-1 space-y-0.5 text-gray-700">
-                      <li>Alvinegro</li>
-                      <li>Estrela Vermelha</li>
-                      <li>Federal</li>
-                      <li>Furacão</li>
-                      <li>Grêmio Ocidental</li>
-                    </ul>
                   </div>
-                  
-                  <div className="bg-blue-50 p-3 rounded-md">
-                    <h4 className="font-medium text-blue-800">Grupo B:</h4>
-                    <ul className="list-disc pl-5 mt-1 space-y-0.5 text-gray-700">
-                      <li>Atlético City</li>
-                      <li>BSA</li>
-                      <li>Guerreiros</li>
-                      <li>Lyon</li>
-                      <li>Monte</li>
-                    </ul>
-                  </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 };
 
