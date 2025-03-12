@@ -102,8 +102,26 @@ const MatchStatisticsManagement: React.FC = () => {
           throw error;
         }
         
-        // Return the data properly typed
-        return data as CustomMatch[];
+        // Transform received data to match our CustomMatch type
+        const transformedData: CustomMatch[] = (data as any[]).map(item => {
+          return {
+            match_id: item.match_id,
+            match_date: item.match_date,
+            match_time: item.match_time,
+            match_location: item.match_location,
+            match_category: item.match_category,
+            match_status: item.match_status,
+            match_round: item.match_round,
+            home_team_id: item.home_team_id,
+            home_team_name: item.home_team_name,
+            away_team_id: item.away_team_id,
+            away_team_name: item.away_team_name,
+            home_players: Array.isArray(item.home_players) ? item.home_players : [],
+            away_players: Array.isArray(item.away_players) ? item.away_players : []
+          };
+        });
+        
+        return transformedData;
       } catch (error) {
         console.error("Erro ao buscar partidas:", error);
         return [] as CustomMatch[];
