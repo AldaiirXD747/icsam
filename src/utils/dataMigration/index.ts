@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -43,6 +42,89 @@ export const cleanAllData = async () => {
   } catch (error) {
     console.error("Erro durante a limpeza de dados:", error);
     return false;
+  }
+};
+
+// Function to reset match results and standings
+export const resetMatchResultsAndStandings = async () => {
+  try {
+    console.log("Iniciando reset de resultados de partidas e classificação...");
+    
+    // Reset match scores and status
+    const { error: matchError } = await supabase
+      .from('matches')
+      .update({
+        home_score: null,
+        away_score: null,
+        status: 'scheduled'
+      })
+      .eq('status', 'completed');
+    
+    if (matchError) {
+      console.error("Erro ao resetar resultados das partidas:", matchError);
+      return { success: false, error: matchError.message };
+    }
+    
+    // Reset standings data but keep team entries
+    const { error: standingsError } = await supabase
+      .from('standings')
+      .update({
+        position: 0,
+        points: 0,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goals_for: 0,
+        goals_against: 0,
+        goal_difference: 0
+      });
+    
+    if (standingsError) {
+      console.error("Erro ao resetar a classificação:", standingsError);
+      return { success: false, error: standingsError.message };
+    }
+    
+    // Clear goals table
+    const { error: goalsError } = await supabase
+      .from('goals')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    if (goalsError) {
+      console.error("Erro ao apagar gols:", goalsError);
+      return { success: false, error: goalsError.message };
+    }
+    
+    // Reset top scorers
+    const { error: scorersError } = await supabase
+      .from('top_scorers')
+      .update({
+        goals: 0
+      });
+    
+    if (scorersError) {
+      console.error("Erro ao resetar artilheiros:", scorersError);
+      return { success: false, error: scorersError.message };
+    }
+    
+    // Reset yellow cards
+    const { error: cardsError } = await supabase
+      .from('yellow_card_leaders')
+      .update({
+        yellow_cards: 0
+      });
+    
+    if (cardsError) {
+      console.error("Erro ao resetar cartões amarelos:", cardsError);
+      return { success: false, error: cardsError.message };
+    }
+    
+    console.log("Reset de resultados e classificação concluído com sucesso!");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro inesperado durante o reset:", error);
+    return { success: false, error: error instanceof Error ? error.message : 'Erro desconhecido' };
   }
 };
 

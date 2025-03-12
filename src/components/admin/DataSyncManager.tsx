@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
-import { cleanAllData, migrateDataToSupabase } from '@/utils/dataMigration';
+import { Database, RefreshCw, AlertTriangle, Trash2, RotateCcw } from 'lucide-react';
+import { cleanAllData, migrateDataToSupabase, resetMatchResultsAndStandings } from '@/utils/dataMigration';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 const DataSyncManager = () => {
   const [isMigrating, setIsMigrating] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [activeTab, setActiveTab] = useState('sync');
   const [migrationResult, setMigrationResult] = useState<{ success: boolean; message: string } | null>(null);
   const { toast } = useToast();
@@ -96,6 +97,56 @@ const DataSyncManager = () => {
     }
   };
 
+  const handleResetResults = async () => {
+    if (!confirm("ATENÇÃO: Esta ação irá apagar TODOS os resultados de partidas e resetar a classificação. Deseja continuar?")) {
+      return;
+    }
+    
+    try {
+      setIsResetting(true);
+      setMigrationResult(null);
+      
+      const result = await resetMatchResultsAndStandings();
+      
+      if (result.success) {
+        setMigrationResult({
+          success: true,
+          message: "Todos os resultados de partidas e classificações foram resetados com sucesso!"
+        });
+        
+        toast({
+          title: "Sucesso",
+          description: "Todos os resultados e classificações foram resetados. Você pode inserir os novos resultados agora.",
+        });
+      } else {
+        setMigrationResult({
+          success: false,
+          message: `Erro durante o reset: ${result.error || 'Erro desconhecido'}`
+        });
+        
+        toast({
+          title: "Erro",
+          description: `Houve um erro durante o reset: ${result.error || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro durante o reset de resultados:", error);
+      setMigrationResult({
+        success: false,
+        message: `Erro durante o reset: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
+      
+      toast({
+        title: "Erro",
+        description: "Houve um erro durante o reset de resultados.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const handleRecalculateStandings = async () => {
     try {
       setIsMigrating(true);
@@ -146,6 +197,7 @@ const DataSyncManager = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="sync">Sincronização</TabsTrigger>
+            <TabsTrigger value="reset">Reset de Resultados</TabsTrigger>
             <TabsTrigger value="clean">Limpeza de Dados</TabsTrigger>
           </TabsList>
           
@@ -175,6 +227,40 @@ const DataSyncManager = () => {
                     <>
                       <RefreshCw className="mr-2 h-4 w-4" />
                       Recalcular Classificação
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reset">
+            <div className="space-y-4">
+              <Alert variant="warning">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Atenção: Reset de Resultados</AlertTitle>
+                <AlertDescription>
+                  Esta ação irá apagar todos os resultados de partidas e resetar a classificação.
+                  Os times e partidas serão mantidos, mas os resultados e estatísticas serão zerados.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex flex-col gap-4">
+                <Button 
+                  variant="warning" 
+                  onClick={handleResetResults}
+                  disabled={isResetting}
+                  className="flex items-center bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  {isResetting ? (
+                    <>
+                      <RotateCcw className="mr-2 h-4 w-4 animate-spin" />
+                      Resetando Resultados...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Resetar Resultados e Classificação
                     </>
                   )}
                 </Button>
