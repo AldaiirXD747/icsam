@@ -19,8 +19,8 @@ export const getAllMatches = async (): Promise<ChampionshipMatch[]> => {
         status, 
         round, 
         championship_id,
-        home_team:home_team(name, logo),
-        away_team:away_team(name, logo)
+        home_team:home_team(id, name, logo),
+        away_team:away_team(id, name, logo)
       `)
       .order('date', { ascending: false });
 
@@ -35,12 +35,12 @@ export const getAllMatches = async (): Promise<ChampionshipMatch[]> => {
         id: match.id,
         date: match.date,
         time: match.time,
-        home_team: match.home_team as any,
-        away_team: match.away_team as any,
+        home_team: match.home_team?.id || '',
+        away_team: match.away_team?.id || '',
         home_score: match.home_score,
         away_score: match.away_score,
         category: match.category,
-        status: match.status as ChampionshipMatch['status'],
+        status: match.status,
         location: match.location,
         round: match.round,
         championship_id: match.championship_id,
@@ -48,8 +48,8 @@ export const getAllMatches = async (): Promise<ChampionshipMatch[]> => {
         away_team_name: match.away_team?.name || '',
         home_team_logo: match.home_team?.logo || '',
         away_team_logo: match.away_team?.logo || '',
-        homeTeam: match.home_team as any,
-        awayTeam: match.away_team as any,
+        homeTeam: match.home_team,
+        awayTeam: match.away_team,
         homeScore: match.home_score,
         awayScore: match.away_score,
         championshipId: match.championship_id,
@@ -84,8 +84,8 @@ export const getMatchById = async (id: string): Promise<ChampionshipMatch | null
         status, 
         round, 
         championship_id,
-        home_team:home_team(name, logo),
-        away_team:away_team(name, logo)
+        home_team:home_team(id, name, logo),
+        away_team:away_team(id, name, logo)
       `)
       .eq('id', id)
       .single();
@@ -106,12 +106,12 @@ export const getMatchById = async (id: string): Promise<ChampionshipMatch | null
       id: data.id,
       date: data.date,
       time: data.time,
-      home_team: data.home_team as any,
-      away_team: data.away_team as any,
+      home_team: data.home_team?.id || '',
+      away_team: data.away_team?.id || '',
       home_score: data.home_score,
       away_score: data.away_score,
       category: data.category,
-      status: data.status as ChampionshipMatch['status'],
+      status: data.status,
       location: data.location,
       round: data.round,
       championship_id: data.championship_id,
@@ -119,8 +119,8 @@ export const getMatchById = async (id: string): Promise<ChampionshipMatch | null
       away_team_name: data.away_team?.name || '',
       home_team_logo: data.home_team?.logo || '',
       away_team_logo: data.away_team?.logo || '',
-      homeTeam: data.home_team as any,
-      awayTeam: data.away_team as any,
+      homeTeam: data.home_team,
+      awayTeam: data.away_team,
       homeScore: data.home_score,
       awayScore: data.away_score,
       championshipId: data.championship_id,
