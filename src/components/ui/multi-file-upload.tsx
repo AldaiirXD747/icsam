@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,8 @@ export type FileWithPreview = {
   previewUrl: string;
   title: string;
   description: string;
+  name?: string;  // Added property to match usage in GalleryManagement
+  preview?: string;  // Added property to match usage in GalleryManagement
 };
 
 interface MultiFileUploadProps {
@@ -40,6 +41,8 @@ export const MultiFileUpload = ({
       previewUrl: URL.createObjectURL(file),
       title: file.name.split('.')[0], // Default title is filename without extension
       description: '',
+      name: file.name,
+      preview: file.name,
     }));
     
     const updatedFiles = [...selectedFiles, ...filesWithPreviews];

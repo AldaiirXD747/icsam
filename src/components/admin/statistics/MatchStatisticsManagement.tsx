@@ -50,7 +50,7 @@ interface Player {
   position: string;
 }
 
-interface Match {
+interface CustomMatch {
   match_id: string;
   match_date: string;
   match_time: string;
@@ -87,7 +87,7 @@ const formSchema = z.object({
 const MatchStatisticsManagement: React.FC = () => {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
-  const [activeMatch, setActiveMatch] = useState<Match | null>(null);
+  const [activeMatch, setActiveMatch] = useState<CustomMatch | null>(null);
   const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
 
   // Fetch matches that are completed (for statistics)
@@ -102,11 +102,11 @@ const MatchStatisticsManagement: React.FC = () => {
           throw error;
         }
         
-        // Convert the data to the Match type
-        return data as Match[];
+        // Return the data properly typed
+        return data as CustomMatch[];
       } catch (error) {
         console.error("Erro ao buscar partidas:", error);
-        return [];
+        return [] as CustomMatch[];
       }
     }
   });
