@@ -1,106 +1,85 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from "@/components/ui/toaster";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
 
-// Pages
 import Index from './pages/Index';
 import About from './pages/About';
-import Sobre from './pages/Sobre';
+import NotFound from './pages/NotFound';
+import Login from './pages/Login';
+import Reset from './pages/Reset';
+import ResetPassword from './pages/ResetPassword';
 import Teams from './pages/Teams';
 import TeamDetail from './pages/TeamDetail';
-import Championships from './pages/Championships';
 import Championship from './pages/Championship';
 import Matches from './pages/Matches';
 import MatchDetail from './pages/MatchDetail';
-import PlayerDetail from './pages/PlayerDetail';
-import Standings from './pages/Standings';
 import Statistics from './pages/Statistics';
+import Standings from './pages/Standings';
+import TeamLogin from './pages/TeamLogin';
+import TeamDashboard from './pages/TeamDashboard';
+import Transparencia from './pages/Transparencia';
 import Gallery from './pages/Gallery';
 import Contact from './pages/Contact';
-import Transparencia from './pages/Transparencia';
-import Login from './pages/Login';
-import TeamLogin from './pages/TeamLogin';
-import Reset from './pages/Reset';
-import ResetPassword from './pages/ResetPassword';
+import Championships from './pages/Championships';
+import Sobre from './pages/Sobre';
+import PlayerDetail from './pages/PlayerDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminStandings from './pages/AdminStandings';
-import TeamDashboard from './pages/TeamDashboard';
-import NotFound from './pages/NotFound';
-
-// Admin Pages
-import UpdateMatchResults from './pages/admin/UpdateMatchResults';
-import AddMatchDataPage from './pages/admin/AddMatchDataPage';
-import BatchPlayerRegistrationPage from './pages/admin/BatchPlayerRegistrationPage';
-import LoadBaseForteData from './pages/admin/LoadBaseForteData';
-import DatabaseCleanup from './pages/admin/DatabaseCleanup';
-
-// Components
+import { AuthProvider } from './hooks/auth';
+import { useUser } from './lib/clerk-mock';
 import ScrollToTop from './components/ScrollToTop';
-import BackToTopButton from './components/BackToTopButton';
+import { Toaster } from './components/ui/toaster';
 import ErrorBoundary from './components/ErrorBoundary';
-
-// Authentication
-import { AuthProvider } from './hooks/auth/AuthContext';
-import { withAuth } from './hooks/auth/withAuth';
-
-// Create a client
-const queryClient = new QueryClient();
-
-// Apply withAuth HOC
-const AdminDashboardAuth = withAuth(AdminDashboard, ['admin']);
-const AdminStandingsAuth = withAuth(AdminStandings, ['admin']);
-const UpdateMatchResultsAuth = withAuth(UpdateMatchResults, ['admin']);
-const AddMatchDataPageAuth = withAuth(AddMatchDataPage, ['admin']);
-const BatchPlayerRegistrationPageAuth = withAuth(BatchPlayerRegistrationPage, ['admin']);
-const LoadBaseForteDataAuth = withAuth(LoadBaseForteData, ['admin']);
-const DatabaseCleanupAuth = withAuth(DatabaseCleanup, ['admin']);
-const TeamDashboardAuth = withAuth(TeamDashboard, ['team', 'team_manager']);
+import { executeDataCleanup } from './utils/executeDataCleanup';
+import DatabaseCleanup from './pages/admin/DatabaseCleanup';
+import LoadBaseForteData from './pages/admin/LoadBaseForteData';
 
 function App() {
+  // Execute the data cleanup once
+  useEffect(() => {
+    // Execute the data cleanup function
+    executeDataCleanup().then(result => {
+      console.log("Cleanup completed on app load:", result);
+    });
+  }, []);
+
   return (
-    <div className="App">
-      <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <AuthProvider>
         <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/sobre" element={<Sobre />} />
-              <Route path="/times" element={<Teams />} />
-              <Route path="/time/:teamId" element={<TeamDetail />} />
-              <Route path="/campeonatos" element={<Championships />} />
-              <Route path="/campeonato/:championshipId" element={<Championship />} />
-              <Route path="/partidas" element={<Matches />} />
-              <Route path="/partida/:matchId" element={<MatchDetail />} />
-              <Route path="/jogador/:playerId" element={<PlayerDetail />} />
-              <Route path="/tabelas" element={<Standings />} />
-              <Route path="/estatisticas" element={<Statistics />} />
-              <Route path="/galeria" element={<Gallery />} />
-              <Route path="/contato" element={<Contact />} />
-              <Route path="/transparencia" element={<Transparencia />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/team-login" element={<TeamLogin />} />
-              <Route path="/reset" element={<Reset />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/admin" element={<AdminDashboardAuth />} />
-              <Route path="/admin/tabelas" element={<AdminStandingsAuth />} />
-              <Route path="/admin/update-match-results" element={<UpdateMatchResultsAuth />} />
-              <Route path="/admin/add-match-data" element={<AddMatchDataPageAuth />} />
-              <Route path="/admin/batch-player-registration" element={<BatchPlayerRegistrationPageAuth />} />
-              <Route path="/admin/load-base-forte-data" element={<LoadBaseForteDataAuth />} />
-              <Route path="/admin/database-cleanup" element={<DatabaseCleanupAuth />} />
-              <Route path="/team-dashboard" element={<TeamDashboardAuth />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <ScrollToTop />
-            <BackToTopButton />
-            <Toaster />
-          </AuthProvider>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/sobre" element={<Sobre />} />
+            <Route path="/transparencia" element={<Transparencia />} />
+            <Route path="/galeria" element={<Gallery />} />
+            <Route path="/contato" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/reset" element={<Reset />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/team-login" element={<TeamLogin />} />
+            <Route path="/team-dashboard" element={<TeamDashboard />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/team/:id" element={<TeamDetail />} />
+            <Route path="/player/:id" element={<PlayerDetail />} />
+            <Route path="/championships" element={<Championships />} />
+            <Route path="/championship/:id" element={<Championship />} />
+            <Route path="/matches" element={<Matches />} />
+            <Route path="/match/:id" element={<MatchDetail />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/standings" element={<Standings />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/standings" element={<AdminStandings />} />
+            <Route path="/admin/database-cleanup" element={<DatabaseCleanup />} />
+            <Route path="/admin/load-base-forte" element={<LoadBaseForteData />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
         </BrowserRouter>
-      </QueryClientProvider>
-    </div>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

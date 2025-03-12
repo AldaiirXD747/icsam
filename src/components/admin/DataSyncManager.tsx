@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database, RefreshCw, AlertTriangle, Trash2, RotateCcw } from 'lucide-react';
-import { cleanAllData, migrateDataToSupabase, resetMatchResultsAndStandings } from '@/utils/dataMigration';
+import { cleanAllData, migrateDataToSupabase, resetMatchResultsAndStandings, cleanMatchesOnly } from '@/utils/dataMigration';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -13,6 +13,7 @@ const DataSyncManager = () => {
   const [isMigrating, setIsMigrating] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isCleaningMatches, setIsCleaningMatches] = useState(false);
   const [activeTab, setActiveTab] = useState('sync');
   const [migrationResult, setMigrationResult] = useState<{ success: boolean; message: string } | null>(null);
   const { toast } = useToast();
@@ -94,6 +95,56 @@ const DataSyncManager = () => {
       });
     } finally {
       setIsCleaning(false);
+    }
+  };
+
+  const handleCleanMatchesOnly = async () => {
+    if (!confirm("ATENÇÃO: Esta ação irá REMOVER TODAS as partidas, estatísticas e classificações, mantendo apenas times e campeonatos. Deseja continuar?")) {
+      return;
+    }
+    
+    try {
+      setIsCleaningMatches(true);
+      setMigrationResult(null);
+      
+      const result = await cleanMatchesOnly();
+      
+      if (result.success) {
+        setMigrationResult({
+          success: true,
+          message: result.message || "Todos os dados de partidas foram removidos com sucesso!"
+        });
+        
+        toast({
+          title: "Sucesso",
+          description: "Todos os dados de partidas, estatísticas e classificações foram removidos. Times e campeonatos foram mantidos.",
+        });
+      } else {
+        setMigrationResult({
+          success: false,
+          message: `Erro durante a limpeza: ${result.error || 'Erro desconhecido'}`
+        });
+        
+        toast({
+          title: "Erro",
+          description: `Houve um erro durante a limpeza: ${result.error || 'Erro desconhecido'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Erro durante a limpeza de partidas:", error);
+      setMigrationResult({
+        success: false,
+        message: `Erro durante a limpeza: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      });
+      
+      toast({
+        title: "Erro",
+        description: "Houve um erro durante a limpeza de partidas.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCleaningMatches(false);
     }
   };
 
@@ -197,8 +248,8 @@ const DataSyncManager = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="sync">Sincronização</TabsTrigger>
-            <TabsTrigger value="reset">Reset de Resultados</TabsTrigger>
-            <TabsTrigger value="clean">Limpeza de Dados</TabsTrigger>
+            <TabsTrigger value="reset">Reset</TabsTrigger>
+            <TabsTrigger value="clean">Limpeza</TabsTrigger>
           </TabsList>
           
           <TabsContent value="sync">
@@ -261,6 +312,25 @@ const DataSyncManager = () => {
                     <>
                       <RotateCcw className="mr-2 h-4 w-4" />
                       Resetar Resultados e Classificação
+                    </>
+                  )}
+                </Button>
+                
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCleanMatchesOnly}
+                  disabled={isCleaningMatches}
+                  className="flex items-center"
+                >
+                  {isCleaningMatches ? (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4 animate-spin" />
+                      Removendo Partidas...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Remover TODAS as Partidas (mantendo times)
                     </>
                   )}
                 </Button>
