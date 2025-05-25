@@ -7,9 +7,6 @@ import LoginForm from '@/components/auth/LoginForm';
 import ResetSuccessMessage from '@/components/auth/ResetSuccessMessage';
 import { useAuth } from '@/hooks/auth';
 
-// Define the master admin email
-const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
-
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -79,7 +76,7 @@ const Login = () => {
                 Entre para acessar o painel administrativo
               </p>
               <p className="mt-2 text-sm text-blue-600">
-                Apenas o administrador principal ({MASTER_ADMIN_EMAIL}) pode acessar o sistema.
+                Digite qualquer email válido para acessar o sistema. A senha pode ficar em branco.
               </p>
             </div>
             

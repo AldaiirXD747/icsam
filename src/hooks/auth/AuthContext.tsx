@@ -17,9 +17,6 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Define the master admin email
-const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -48,26 +45,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           try {
             console.log('Found custom session, setting user from localStorage');
             const customSession = JSON.parse(customSessionStr);
+            setUser(customSession.user as unknown as User);
             
-            // Only set user if it's the master admin
-            if (customSession.user?.email === MASTER_ADMIN_EMAIL) {
-              setUser(customSession.user as unknown as User);
-              
-              // Redirect to admin if we're on login page
-              if (window.location.pathname === '/login') {
-                navigate('/admin', { replace: true });
-              }
-            } else {
-              // Remove non-master session
-              localStorage.removeItem('custom_auth_session');
+            // Redirect to admin if we're on login page
+            if (window.location.pathname === '/login') {
+              navigate('/admin', { replace: true });
             }
           } catch (e) {
             console.error('Error parsing custom session:', e);
             localStorage.removeItem('custom_auth_session');
           }
         } else {
-          // Only set session if it's for the master admin
-          if (data.session?.user?.email === MASTER_ADMIN_EMAIL) {
+          // Set session for any user
+          if (data.session) {
             setSession(data.session);
             setUser(data.session.user);
             
@@ -75,9 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (window.location.pathname === '/login') {
               navigate('/admin', { replace: true });
             }
-          } else if (data.session) {
-            // Sign out non-master users
-            await supabase.auth.signOut();
           }
         }
       } catch (error) {
@@ -97,15 +84,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Prevent redirect loops by checking the redirecting state
         if (redirecting) return;
         
-        // Only allow master admin email
-        if (newSession?.user?.email === MASTER_ADMIN_EMAIL) {
+        // Allow any user
+        if (newSession) {
           setSession(newSession);
           setUser(newSession.user);
-        } else if (newSession) {
-          // Sign out non-master users
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
         } else {
           setSession(null);
           setUser(null);
@@ -115,28 +97,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Handle sign in and sign out events
         if (event === 'SIGNED_IN') {
-          if (newSession?.user?.email === MASTER_ADMIN_EMAIL) {
-            setRedirecting(true);
-            toast({
-              title: 'Login realizado com sucesso',
-              variant: 'default',
-            });
-            
-            // Use setTimeout to avoid potential race conditions
-            setTimeout(() => {
-              navigate('/admin', { replace: true });
-              setRedirecting(false);
-            }, 100);
-          } else {
-            toast({
-              title: 'Acesso negado',
-              description: 'Apenas o administrador principal pode acessar o sistema.',
-              variant: 'destructive',
-            });
-            
-            // Sign out non-master users
-            await supabase.auth.signOut();
-          }
+          setRedirecting(true);
+          toast({
+            title: 'Login realizado com sucesso',
+            variant: 'default',
+          });
+          
+          // Use setTimeout to avoid potential race conditions
+          setTimeout(() => {
+            navigate('/admin', { replace: true });
+            setRedirecting(false);
+          }, 100);
         } else if (event === 'SIGNED_OUT') {
           setRedirecting(true);
           toast({
@@ -159,88 +130,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [navigate, toast, redirecting]);
   
-  // Sign in function
+  // Sign in function - accept any email and password
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Attempting login with email:', email);
       
-      // Check if the email is the master admin email
-      if (email !== MASTER_ADMIN_EMAIL) {
-        console.error('Login failed: Only the master admin can access the system');
+      // Allow any email, even empty password
+      if (!email) {
         return { 
           success: false, 
-          error: 'Apenas o administrador principal pode acessar o sistema.' 
+          error: 'Por favor, informe um email.' 
         };
       }
       
-      // First try with Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (!error) {
-        console.log('Supabase Auth login successful:', data);
-        localStorage.removeItem('custom_auth_session'); // Clear any custom session
-        setRedirecting(true);
-        
-        // Redirect manually to ensure navigation happens
-        setTimeout(() => {
-          navigate('/admin', { replace: true });
-          setRedirecting(false);
-        }, 100);
-        
-        return { success: true };
-      }
-      
-      console.log('Trying custom authentication after Supabase Auth failed with error:', error);
-      
-      // If Supabase Auth fails, try with custom authentication for app_users table
-      const { data: userData, error: customError } = await supabase
-        .rpc('verify_user_credentials', {
-          p_email: email,
-          p_password: password
-        });
-      
-      if (customError) {
-        console.error('Error in custom authentication:', customError);
-        return { success: false, error: customError.message };
-      }
-      
-      if (userData && userData.length > 0) {
-        const user = userData[0];
-        console.log('Custom auth login successful:', user);
-        
-        // Set user session manually since we're using custom auth
-        const sessionData = {
-          user: {
-            id: user.id,
-            email: user.email,
-            user_metadata: {
-              name: user.name,
-              role: user.role
-            }
+      // Create a fake session for any email
+      const sessionData = {
+        user: {
+          id: 'fake-user-' + Date.now(),
+          email: email,
+          user_metadata: {
+            name: email.split('@')[0],
+            role: 'admin'
           }
-        };
-        
-        // Store the session data in localStorage for persistence
-        localStorage.setItem('custom_auth_session', JSON.stringify(sessionData));
-        
-        // Set the session in the context
-        setUser(sessionData.user as unknown as User);
-        
-        // Redirect manually to ensure navigation happens
-        setRedirecting(true);
-        setTimeout(() => {
-          navigate('/admin', { replace: true });
-          setRedirecting(false);
-        }, 100);
-        
-        return { success: true };
-      }
+        }
+      };
       
-      console.error('Login failed: Invalid credentials');
-      return { success: false, error: 'Credenciais inválidas.' };
+      // Store the session data in localStorage for persistence
+      localStorage.setItem('custom_auth_session', JSON.stringify(sessionData));
+      
+      // Set the session in the context
+      setUser(sessionData.user as unknown as User);
+      
+      // Redirect manually to ensure navigation happens
+      setRedirecting(true);
+      setTimeout(() => {
+        navigate('/admin', { replace: true });
+        setRedirecting(false);
+      }, 100);
+      
+      return { success: true };
     } catch (error: any) {
       console.error('Unexpected error during sign in:', error);
       return { success: false, error: error.message || 'An unexpected error occurred' };
@@ -269,40 +197,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Check if user has team access
+  // Allow all team access
   const checkTeamAccess = async () => {
-    return false; // No more team access
+    return true;
   };
   
-  // Check if user has admin access
+  // Allow all admin access
   const checkAdminAccess = async () => {
-    try {
-      console.log('Checking admin access...');
-      
-      // Only allow the master admin email
-      if (user?.email === MASTER_ADMIN_EMAIL) {
-        return true;
-      }
-      
-      // Custom session check
-      const customSessionStr = localStorage.getItem('custom_auth_session');
-      if (customSessionStr) {
-        try {
-          const customSession = JSON.parse(customSessionStr);
-          
-          if (customSession.user?.email === MASTER_ADMIN_EMAIL) {
-            return true;
-          }
-        } catch (e) {
-          console.error('Error parsing custom session:', e);
-        }
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error checking admin access:', error);
-      return false;
-    }
+    return true;
   };
   
   return (

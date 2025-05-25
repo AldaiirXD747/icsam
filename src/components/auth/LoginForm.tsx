@@ -15,12 +15,9 @@ interface LoginFormProps {
   onLoginSuccess: () => void;
 }
 
-// Master admin email
-const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
-
 const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: MASTER_ADMIN_EMAIL, // Pre-fill the email field with the master admin email
+    email: '',
     password: '',
     rememberMe: false
   });
@@ -48,9 +45,9 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     setError(null);
     setLoading(true);
     
-    // Check if the email is the master admin email
-    if (formData.email !== MASTER_ADMIN_EMAIL) {
-      setError('Apenas o administrador principal pode acessar o sistema.');
+    // Accept any email, password can be empty
+    if (!formData.email) {
+      setError('Por favor, informe um email.');
       setLoading(false);
       return;
     }
@@ -70,7 +67,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         onLoginSuccess();
       } else {
         console.error('Login failed:', result.error);
-        setError(result.error || 'Credenciais inválidas. Tente novamente.');
+        setError(result.error || 'Erro no login. Tente novamente.');
       }
     } catch (error: any) {
       console.error('Erro de login:', error);
@@ -101,9 +98,9 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           onChange={handleChange}
           required
           className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-primary"
-          placeholder="seu-email@exemplo.com"
-          readOnly // Make the email field read-only since only the master admin can login
+          placeholder="qualquer-email@exemplo.com"
         />
+        <p className="text-xs text-gray-500 mt-1">Digite qualquer email válido</p>
       </div>
       
       <div className="mb-6">
@@ -117,9 +114,8 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required
             className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-primary"
-            placeholder="********"
+            placeholder="deixe em branco ou digite qualquer coisa"
           />
           <button
             type="button"
@@ -129,6 +125,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
             {showPassword ? <EyeOff size={20} className="text-gray-500" /> : <Eye size={20} className="text-gray-500" />}
           </button>
         </div>
+        <p className="text-xs text-gray-500 mt-1">Senha pode ficar em branco</p>
       </div>
       
       <div className="flex items-center justify-between mb-6">

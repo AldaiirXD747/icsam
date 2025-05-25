@@ -3,14 +3,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
-// Master admin email
-const MASTER_ADMIN_EMAIL = 'contato@institutocriancasantamaria.com.br';
-
 type AllowedRole = 'admin' | 'team' | 'team_manager' | string;
 
 export const withAuth = (Component: React.ComponentType, requiredRole?: AllowedRole | AllowedRole[]) => {
   return (props: any) => {
-    const { session, user, loading, checkAdminAccess } = useAuth();
+    const { session, user, loading } = useAuth();
     const navigate = useNavigate();
     const [hasAccess, setHasAccess] = useState(false);
     const [checking, setChecking] = useState(true);
@@ -32,46 +29,13 @@ export const withAuth = (Component: React.ComponentType, requiredRole?: AllowedR
           return;
         }
         
-        // Only allow access to master admin email
-        const userEmail = user?.email || '';
-        
-        if (userEmail !== MASTER_ADMIN_EMAIL) {
-          console.log('Not the master admin, redirecting to login');
-          navigate('/login', { replace: true });
-          setChecking(false);
-          return;
-        }
-        
-        // Support array of roles
-        const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-        
-        if (roles.includes('admin')) {
-          const isAdmin = await checkAdminAccess();
-          console.log('Admin access check result:', isAdmin);
-          
-          if (!isAdmin) {
-            console.log('Not an admin, redirecting to home');
-            navigate('/', { replace: true });
-            setChecking(false);
-            return;
-          }
-          setHasAccess(true);
-        } else if (roles.includes('team')) {
-          // No more team access
-          console.log('Team access is no longer available');
-          navigate('/', { replace: true });
-          setChecking(false);
-          return;
-        } else {
-          // No specific role required, just need to be authenticated as master admin
-          setHasAccess(true);
-        }
-        
+        // Allow access to anyone who is logged in
+        setHasAccess(true);
         setChecking(false);
       };
       
       checkAccess();
-    }, [session, user, loading, navigate, checkAdminAccess, checking, requiredRole]);
+    }, [session, user, loading, navigate, checking, requiredRole]);
     
     if (loading || checking) {
       return (
